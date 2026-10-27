@@ -798,9 +798,11 @@ const Net = {
   async get(url, kind, check){
     let last;
     for(const r of this.routes(url)){
-      const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 20000);
+      let timer;
       try{
-        const res = await fetch(r.u, {signal:ctl.signal, credentials:'omit', referrerPolicy:'no-referrer'});
+        /* No AbortSignal: some viewers/sandboxes wrap fetch and can't clone it. Timeout by race instead. */
+        const timeout = new Promise((_, rej) => { timer = setTimeout(() => rej(new Error('timed out')), 20000); });
+        const res = await Promise.race([fetch(r.u, {credentials:'omit', referrerPolicy:'no-referrer'}), timeout]);
         if(!res.ok) throw new Error('HTTP ' + res.status);
         if(kind === 'blob'){ const b = await res.blob(); if(b.size < 200) throw new Error('empty image'); return b; }
         const text = this.decode(await res.arrayBuffer(), res.headers.get('content-type'));

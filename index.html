@@ -256,7 +256,7 @@ details.more p{margin:8px 0 0;color:var(--ink-faint);font-weight:400;line-height
     <button class="pill primary" id="toggleLabels" aria-pressed="true" title="Show or hide titles and overlays on the cards">
       <span class="knob"></span><span>Toggle Labels</span>
     </button>
-    <button class="pill primary" id="btnAdd" title="Add a CD, with optional online lookup">＋ Add CD</button>
+    <button class="pill primary" id="btnAdd" title="Add a CD by hand">＋ Add CD</button>
     <button class="pill" id="btnImportSrc" title="Import CDs from rukojiDB, HIBIKIFORUM, DLsite Girls or SKiT Dolce">⇩ Import CDs</button>
     <button class="pill" id="btnExport" title="Download your whole collection as a JSON backup file">⬇ Backup</button>
     <button class="pill" id="btnImport" title="Restore a JSON backup file">⬆ Restore</button>
@@ -315,35 +315,7 @@ details.more p{margin:8px 0 0;color:var(--ink-faint);font-weight:400;line-height
     </aside>
     <div class="body">
       <h2 id="eHead">Add a CD</h2>
-      <p class="alt">Find it online, or fill it in by hand.</p>
-
-      <section class="lookup" aria-label="Find metadata online">
-        <h3>Find metadata online</h3>
-        <div class="lrow" style="flex-wrap:wrap">
-          <select class="sel" id="lkSrc" aria-label="Source">
-            <option value="all">All sources</option><option value="rukoji">rukojiDB</option>
-            <option value="hibiki">HIBIKIFORUM</option><option value="dlsite">DLsite Girls</option>
-            <option value="skit">SKiT Dolce</option><option value="teame">TEAM Entertainment</option>
-          </select>
-          <input class="in" id="lkInput" style="flex:1 1 220px;width:auto" placeholder="Paste a page link, or type a title to search…" autocomplete="off">
-          <button type="button" class="pill primary" id="lkGo">Look up</button>
-        </div>
-        <label class="check"><input type="checkbox" id="lkFill"> Only fill empty fields (use this to combine sources)</label>
-        <div class="lstatus" id="lkStatus" role="status"></div>
-        <ul class="results" id="lkResults"></ul>
-        <details class="more" id="lkMore">
-          <summary>Lookup blocked? Settings &amp; manual fallback</summary>
-          <p>A page opened from your disk can't read other websites directly, so lookups go through a free public CORS proxy (it can see which titles and addresses you look up). If it's down or blocked, paste the page's source here instead.</p>
-          <label for="lkHtml">Page source (open the page, press Ctrl+U, copy everything)</label>
-          <textarea class="in" id="lkHtml" rows="3" placeholder="&lt;!DOCTYPE html&gt;…"></textarea>
-          <div class="btnrow"><button type="button" class="pill sm" id="lkParse">Use pasted source</button></div>
-          <label for="lkProxies">CORS proxies, one per line ({url} = where the page address goes)</label>
-          <textarea class="in" id="lkProxies" rows="3"></textarea>
-          <label for="lkApi">HIBIKIFORUM api.php address</label>
-          <input class="in" id="lkApi" placeholder="http://hibikiforum.net/api.php">
-          <div class="btnrow"><button type="button" class="pill sm" id="lkSave">Save settings</button><button type="button" class="pill sm" id="lkReset">Reset to defaults</button></div>
-        </details>
-      </section>
+      <p class="alt">Fill it in by hand. (Bulk metadata comes from the Import tool or your JSON files.)</p>
 
       <form id="eForm">
         <div class="fgrid">
@@ -646,9 +618,8 @@ function renderPanel(c){
       <select class="sel" id="pSrc">${['', 'CD RIP', 'WEB RIP'].map(v => `<option value="${v}" ${c.sourceType === v ? 'selected' : ''}>${v || 'Not set'}</option>`).join('')}</select></div>
     <div class="field"><label>Rating</label><div class="stars" id="pStars">${[1,2,3,4,5].map(n => `<button class="${n <= c.rating ? 'on' : ''}" data-n="${n}" aria-label="${n} of 5">♥</button>`).join('')}</div></div>
     <textarea id="pNotes" placeholder="Notes, impressions, where the files live…" aria-label="Notes">${esc(c.notes)}</textarea>
-    <div class="btnrow"><button class="pill sm" id="pEdit">✎ Edit</button><button class="pill sm" id="pRefresh" title="Re-fetch details and cover online">↻ Refresh online</button></div>`;
+    <div class="btnrow"><button class="pill sm" id="pEdit">✎ Edit</button></div>`;
   $('#pEdit').onclick = () => { closeModal(); openEditor({id:c.id, returnTo:c.id}); };
-  $('#pRefresh').onclick = () => { closeModal(); openEditor({id:c.id, returnTo:c.id, auto:true}); };
   $('#pOwned').onclick = () => { const v = !DB.byId(c.id).owned; DB.update(c.id, {owned:v}); renderPanel(DB.byId(c.id)); render(); };
   $('#pSrc').onchange = e => { DB.update(c.id, {sourceType:e.target.value}); render(); };
   $('#pStars').onclick = e => { const b = e.target.closest('button'); if(!b) return; const n = +b.dataset.n; DB.update(c.id, {rating: DB.byId(c.id).rating === n ? 0 : n}); renderPanel(DB.byId(c.id)); render(); };
@@ -780,7 +751,7 @@ function cvNames(text){
    8. ONLINE SOURCES — network helper, covers, site adapters
    ===================================================================== */
 /* A page opened from disk can't read other sites directly (CORS), so every request tries a direct fetch
-   first and then falls back to free public CORS proxies. Both are editable in the Add CD dialog. */
+   first and then falls back to free public CORS proxies. The proxy list is editable in the Import dialog. */
 const DEFAULT_PROXIES = ['https://corsproxy.io/?url={url}', 'https://api.allorigins.win/raw?url={url}'];
 const hostOf = u => { try{ return new URL(u).host; }catch(e){ return 'proxy'; } };
 const absUrl = (u, base) => { try{ return new URL(u, base).href; }catch(e){ return u || ''; } };
@@ -1288,10 +1259,8 @@ const mergeMeta = (base, detail) => { const o = {...(base || {})}; for(const k i
    ===================================================================== */
 const ED = { id:null, slug:'', returnTo:null, coverData:'' };
 const el = id => document.getElementById(id);
-let LK = [];   // current lookup results
-const setStatus = (html, cls) => { const s = el('lkStatus'); s.className = 'lstatus ' + (cls || ''); s.innerHTML = html; };
 const spin = '<span class="spin"></span>';
-const failMsg = e => `Couldn't read that site (${esc(e.message)}). A page opened from disk can't read other websites directly, so lookups go through a free CORS proxy, which may be down or blocked. Try again, or open “Lookup blocked?” below to paste the page source.`;
+const failMsg = e => `Couldn't read that site (${esc(e.message)}). A page opened from disk can't read other websites directly, so lists go through a free CORS proxy, which may be down or blocked. Try again, or edit the proxy list under “Notes & proxy settings”.`;
 
 function setForm(c){
   const v = (id, x) => { el(id).value = x || ''; };
@@ -1300,73 +1269,11 @@ function setForm(c){
   v('fIllust', c.illustrator); v('fCategory', c.category); v('fPN', c.pn); v('fJAN', c.jan); v('fUrl', c.url);
   v('fSynopsis', c.synopsis); v('fTracks', tracksToText(c.tracks)); v('fBonuses', (c.bonuses || []).join('\n')); v('fCover', c.cover);
 }
-function applyMeta(m0){
-  const m = normMeta(m0), fill = el('lkFill').checked;
-  const put = (id, val) => { if(isEmpty(val) || String(val).trim() === '') return; if(fill && el(id).value.trim()) return; el(id).value = val; };
-  put('fTitle', m.title); put('fAlt', m.altTitle); put('fRelease', m.release); put('fRelNote', m.releaseNote);
-  put('fLabel', m.label); put('fSeries', m.series); put('fSeriesRo', m.seriesRomaji); put('fIllust', m.illustrator); put('fCategory', m.category);
-  put('fPN', m.pn); put('fJAN', m.jan); put('fSynopsis', m.synopsis); put('fUrl', m.url);
-  if(m.cast.length) put('fCast', castToText(m.cast));
-  if(m.scenario && m.scenario.length) put('fScenario', m.scenario.join(', '));
-  if(m.tracks && m.tracks.length) put('fTracks', tracksToText(m.tracks));
-  if(m.bonuses && m.bonuses.length) put('fBonuses', m.bonuses.join('\n'));
-  if(m.cover && !(fill && (el('fCover').value.trim() || ED.coverData))){ el('fCover').value = m.cover; ED.coverData = ''; }
-  if(m.id && !ED.id && !(fill && ED.slug)) ED.slug = m.id;
-  paintCover();
-}
 function paintCover(){
   const url = el('fCover').value.trim(), src = ED.coverData || url, t = el('fTitle').value || 'New CD';
   el('eCover').innerHTML = src
     ? `<img id="eCoverImg" src="${esc(src)}" data-src="${esc(url)}" data-title="${esc(t)}" alt="Cover preview" referrerpolicy="no-referrer">`
     : placeholder(t);
-}
-const thumbHTML = r => r.thumb ? `<img src="${esc(r.thumb)}" alt="" referrerpolicy="no-referrer" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'nothumb'}))">` : '<span class="nothumb"></span>';
-const subLine = r => [r.src, r.meta && r.meta.release, r.meta && r.meta.cast && r.meta.cast.length ? castLabel({cast:r.meta.cast.map(parsePerson)}) : '', r.price].filter(Boolean).map(esc).join(' · ');
-function showResults(list, msg){
-  LK = list;
-  el('lkResults').innerHTML = list.map((r, i) => `<li><button type="button" data-i="${i}">${thumbHTML(r)}
-      <span style="flex:1;min-width:0">${esc(r.title)}<br><small class="muted">${subLine(r)}</small></span></button></li>`).join('');
-  if(msg) setStatus(msg);
-}
-async function openSource(src, url){
-  const r = await src.fromUrl(url);
-  if(r.meta){ applyMeta(r.meta); setStatus(`Filled in from ${esc(src.name)}${r.meta._via ? ' (via ' + esc(r.meta._via) + ')' : ''}. Check the details and cover, then Save.`, 'ok'); el('lkResults').innerHTML = ''; }
-  else showResults(r.results, `${r.results.length} CD${r.results.length === 1 ? '' : 's'} in this series. Pick one:`);
-}
-async function runLookup(){
-  const q = el('lkInput').value.trim(); if(!q) return;
-  el('lkGo').disabled = true; el('lkResults').innerHTML = ''; setStatus(spin + 'Looking it up…');
-  try{
-    if(/^(https?:\/\/|www\.)/i.test(q) || /\.(com|net|jp)\//i.test(q)){
-      const url = /^https?:/i.test(q) ? q : (/hibikiforum/i.test(q) ? 'http://' : 'https://') + q;
-      const src = SOURCES.find(s => s.match(url));
-      if(!src) throw new Error('that address isn’t one I can read yet (rukoji.com, hibikiforum.net, dlsite.com, skitdolce.jp, team-e.co.jp)');
-      await openSource(src, url);
-    }else{
-      const sel = el('lkSrc').value, picks = SOURCES.filter(s => sel === 'all' || s.id === sel);
-      const settled = await Promise.allSettled(picks.map(s => s.search(q)));
-      const all = [], errs = [];
-      settled.forEach((r, i) => r.status === 'fulfilled' ? all.push(...r.value) : errs.push(`${picks[i].name}: ${r.reason && r.reason.message}`));
-      if(all.length) showResults(all, `${all.length} match${all.length === 1 ? '' : 'es'}. Pick one:` + (errs.length ? ` <span class="muted">(couldn’t reach: ${esc(errs.join('; '))})</span>` : ''));
-      else if(errs.length === picks.length){ setStatus(failMsg(new Error(errs.join('; '))), 'err'); el('lkMore').open = true; }
-      else setStatus('No matches. Try the Japanese title, or paste a page link.', 'err');
-    }
-  }catch(e){ setStatus(failMsg(e), 'err'); el('lkMore').open = true; }
-  finally{ el('lkGo').disabled = false; }
-}
-async function pickResult(i){
-  const r = LK[i]; if(!r) return;
-  if(r.meta && r.src === TeamE.name){ applyMeta(r.meta); setStatus(`Filled in from ${esc(r.src)}. Check the details and cover, then Save.`, 'ok'); return; }
-  const src = SOURCES.find(s => s.name === r.src);
-  setStatus(spin + 'Loading…');
-  try{
-    const res = await src.fromUrl(r.url);
-    if(res.meta){ applyMeta(mergeMeta(r.meta, res.meta)); setStatus(`Filled in from ${esc(src.name)}. Check the details and cover, then Save.`, 'ok'); el('lkResults').innerHTML = ''; }
-    else showResults(res.results, `${res.results.length} CDs in this series. Pick one:`);
-  }catch(e){
-    if(r.meta){ applyMeta(r.meta); setStatus('Couldn’t load the full page, so I filled in what the list showed.', 'err'); }
-    else{ setStatus(failMsg(e), 'err'); el('lkMore').open = true; }
-  }
 }
 function openEditor(opts = {}){
   ED.id = opts.id || null; ED.slug = ''; ED.returnTo = opts.returnTo || null;
@@ -1375,13 +1282,9 @@ function openEditor(opts = {}){
   el('eDelete').hidden = !c;
   setForm(c || {});
   ED.coverData = c ? (c.coverData || '') : '';
-  el('lkInput').value = c && c.url ? c.url : '';
-  el('lkResults').innerHTML = ''; setStatus('');
-  el('lkProxies').value = Net.proxies().join('\n'); el('lkApi').value = DB.setting('hibikiApi') || '';
   paintCover();
   const m = el('editor'); m.classList.add('open'); m.setAttribute('aria-hidden', 'false'); document.body.style.overflow = 'hidden';
-  setTimeout(() => (c ? el('fTitle') : el('lkInput')).focus(), 60);
-  if(opts.auto){ if(c && c.url) runLookup(); else setStatus('This CD has no source page saved yet — search by title or paste a link above.'); }
+  setTimeout(() => el('fTitle').focus(), 60);
 }
 function closeEditor(restore){
   const m = el('editor'); m.classList.remove('open'); m.setAttribute('aria-hidden', 'true'); document.body.style.overflow = '';
@@ -1390,26 +1293,6 @@ function closeEditor(restore){
 }
 el('btnAdd').onclick = () => openEditor();
 el('eClose').onclick = el('eCancel').onclick = () => closeEditor(true);
-el('lkGo').onclick = runLookup;
-el('lkInput').addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); runLookup(); } });
-el('lkResults').addEventListener('click', e => { const b = e.target.closest('button[data-i]'); if(b) pickResult(+b.dataset.i); });
-el('lkParse').onclick = () => {
-  const html = el('lkHtml').value.trim(); if(!html) return;
-  const url = el('lkInput').value.trim().startsWith('http') ? el('lkInput').value.trim() : el('fUrl').value.trim();
-  try{
-    const src = SOURCES.find(s => s.match(url)) || (/CD Info/.test(html) ? Rukoji : (/mw-content-text|mediawiki/i.test(html) ? Hibiki : (/dlsite/i.test(html) ? DLsite : TeamE)));
-    const r = src.parseHTML(html, url);
-    if(r.meta){ applyMeta(r.meta); setStatus('Filled in from the pasted page. Check the details, then Save.', 'ok'); }
-    else showResults(r.results, 'Pick one:');
-  }catch(e){ setStatus('Couldn’t read that source: ' + esc(e.message), 'err'); }
-};
-el('lkSave').onclick = () => {
-  const p = el('lkProxies').value.split('\n').map(x => x.trim()).filter(Boolean);
-  DB.setting('proxies', p.length ? p : DEFAULT_PROXIES); DB.setting('hibikiApi', el('lkApi').value.trim() || '');
-  toast('Lookup settings saved ♡');
-};
-el('lkReset').onclick = () => { DB.setting('proxies', DEFAULT_PROXIES); DB.setting('hibikiApi', ''); el('lkProxies').value = DEFAULT_PROXIES.join('\n'); el('lkApi').value = ''; toast('Back to defaults'); };
-
 let coverTimer;
 el('fCover').oninput = () => { clearTimeout(coverTimer); coverTimer = setTimeout(() => { ED.coverData = ''; paintCover(); }, 400); };
 el('eUpload').onclick = () => el('eFile').click();

@@ -1,0 +1,1538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Otome CD Shelf</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600&family=Quicksand:wght@500;600;700&family=Noto+Sans+JP:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F3E8FF; --bg-2:#FAF5FF; --card:#FFFFFF;
+  --accent:#A855F7; --accent-2:#C084FC; --accent-soft:#E9D5FF; --accent-faint:#F5ECFF;
+  --ink:#7E22CE; --ink-soft:#9A5BD0; --ink-faint:#B99BDB;
+  --pink:#F9A8D4; --pink-soft:#FDE4F1;
+  --shadow:0 10px 30px -12px rgba(126,34,206,.35);
+  --shadow-lg:0 24px 60px -18px rgba(126,34,206,.45);
+  --spring:cubic-bezier(.34,1.56,.64,1);
+  --font:'Quicksand','Noto Sans JP','Hiragino Maru Gothic ProN','Yu Gothic UI',system-ui,sans-serif;
+  --font-display:'Fredoka','Quicksand','Noto Sans JP',system-ui,sans-serif;
+  --min:190px; --gap:20px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0; min-height:100vh; font-family:var(--font); font-weight:600; color:var(--ink);
+  background:linear-gradient(180deg,var(--bg-2) 0%,var(--bg) 100%) fixed;
+}
+/* floating bubbles */
+body::before,body::after{content:"";position:fixed;z-index:-1;border-radius:50%;filter:blur(2px);pointer-events:none}
+body::before{width:420px;height:420px;left:-120px;top:120px;background:radial-gradient(circle at 30% 30%,#fff 0,rgba(233,213,255,.9) 40%,rgba(233,213,255,0) 70%)}
+body::after{width:520px;height:520px;right:-160px;bottom:-120px;background:radial-gradient(circle at 30% 30%,#fff 0,rgba(249,168,212,.45) 40%,rgba(249,168,212,0) 70%)}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--accent-2);outline-offset:3px}
+
+/* ---------- header ---------- */
+.top{position:sticky;top:0;z-index:20;padding:14px 28px 14px;background:rgba(250,245,255,.82);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:2px solid var(--accent-soft);border-radius:0 0 32px 32px;box-shadow:0 8px 24px -16px rgba(126,34,206,.4)}
+.row{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:12px;margin-right:auto}
+.logo{width:46px;height:46px;border-radius:50% 50% 50% 18%;background:linear-gradient(135deg,var(--accent-2),var(--pink));display:grid;place-items:center;color:#fff;font-size:22px;box-shadow:var(--shadow);transform:rotate(-6deg)}
+.brand h1{margin:0;font-family:var(--font-display);font-size:26px;font-weight:600;letter-spacing:.2px;line-height:1}
+.brand small{display:block;font-size:12px;color:var(--ink-faint);margin-top:4px;font-weight:600}
+.pill{border:2px solid var(--accent-soft);background:#fff;border-radius:999px;padding:9px 16px;transition:transform .25s var(--spring),box-shadow .2s,background .2s,border-color .2s;display:inline-flex;align-items:center;gap:8px;font-weight:700;font-size:14px;line-height:1}
+.pill:hover{transform:translateY(-2px) scale(1.03);box-shadow:var(--shadow);border-color:var(--accent-2)}
+.pill:active{transform:scale(.96)}
+.pill.primary{background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#fff;border-color:transparent;box-shadow:var(--shadow)}
+.pill[aria-pressed="false"]{background:var(--accent-faint)}
+.pill .knob{width:30px;height:18px;border-radius:999px;background:rgba(255,255,255,.55);position:relative;transition:background .2s}
+.pill .knob::after{content:"";position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.2);transition:transform .3s var(--spring)}
+.pill[aria-pressed="true"] .knob::after{transform:translateX(12px)}
+.pill[aria-pressed="false"] .knob{background:var(--accent-soft)}
+.stats{display:flex;gap:8px}
+.stat{background:var(--pink-soft);border-radius:999px;padding:7px 14px;font-size:13px;color:#B0357A;font-weight:700}
+.stat.v{background:var(--accent-soft);color:var(--ink)}
+
+.filters{margin-top:14px}
+.search{position:relative;flex:1 1 260px;min-width:220px;max-width:420px}
+.search input{width:100%;border:2px solid var(--accent-soft);background:#fff;border-radius:999px;padding:11px 18px 11px 44px;outline:none;transition:border-color .2s,box-shadow .2s;font-weight:600}
+.search input::placeholder{color:var(--ink-faint)}
+.search input:focus{border-color:var(--accent-2);box-shadow:0 0 0 5px rgba(192,132,252,.2)}
+.search::before{content:"🔍";position:absolute;left:16px;top:50%;transform:translateY(-52%);font-size:15px;opacity:.7}
+.sel{appearance:none;-webkit-appearance:none;border:2px solid var(--accent-soft);background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23A855F7' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 14px center;border-radius:999px;padding:10px 36px 10px 16px;font-weight:700;font-size:14px;max-width:210px;outline:none;transition:border-color .2s,transform .25s var(--spring)}
+.sel:hover{transform:translateY(-1px);border-color:var(--accent-2)}
+.seg{display:inline-flex;background:var(--accent-faint);border:2px solid var(--accent-soft);border-radius:999px;padding:3px;gap:2px}
+.seg button{border:0;background:transparent;border-radius:999px;padding:7px 14px;font-weight:700;font-size:13px;color:var(--ink-soft);transition:background .2s,color .2s,transform .25s var(--spring)}
+.seg button[aria-pressed="true"]{background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#fff;box-shadow:0 4px 12px -4px rgba(168,85,247,.7)}
+.seg button:active{transform:scale(.94)}
+.link-btn{border:0;background:none;color:var(--accent);font-weight:700;font-size:13px;text-decoration:underline;text-underline-offset:3px;padding:6px 8px}
+
+/* ---------- grid ---------- */
+main{padding:28px 28px 60px;max-width:1800px;margin:0 auto}
+.meta{display:flex;justify-content:space-between;align-items:center;margin:0 6px 16px;color:var(--ink-soft);font-size:14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(var(--min),1fr));gap:var(--gap);transition:gap .35s ease}
+.card{
+  position:relative;background:var(--card);border-radius:28px;padding:10px;border:2px solid transparent;
+  box-shadow:var(--shadow);cursor:pointer;outline:none;
+  transition:transform .35s var(--spring),box-shadow .25s,padding .35s ease,background .35s ease,border-radius .35s ease,border-color .2s;
+  animation:pop .5s var(--spring) both;
+}
+.card:hover,.card:focus-visible{transform:translateY(-8px) rotate(-.6deg);box-shadow:var(--shadow-lg);border-color:var(--accent-soft)}
+.card:active{transform:scale(.97)}
+@keyframes pop{from{opacity:0;transform:translateY(14px) scale(.94)}to{opacity:1;transform:none}}
+.cover{position:relative;aspect-ratio:1/1;border-radius:20px;overflow:hidden;background:var(--accent-faint);transition:border-radius .35s ease}
+.cover img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .5s ease}
+.card:hover .cover img{transform:scale(1.05)}
+.ph{width:100%;height:100%;display:grid;place-items:center;text-align:center;padding:12px;color:#fff;font-family:var(--font-display);font-size:13px;line-height:1.3}
+.ph b{display:block;font-size:44px;font-weight:600;margin-bottom:4px;opacity:.95}
+.ov{position:absolute;transition:opacity .3s ease,transform .3s var(--spring)}
+.ov.tl{top:8px;left:8px;display:flex;gap:6px;flex-wrap:wrap}
+.chip{background:rgba(255,255,255,.92);color:var(--ink);border-radius:999px;padding:4px 9px;font-size:11px;font-weight:700;box-shadow:0 2px 8px -2px rgba(126,34,206,.4)}
+.chip.en{background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#fff}
+.ov.heart{top:8px;right:8px;width:34px;height:34px;border-radius:50%;border:0;background:rgba(255,255,255,.92);display:grid;place-items:center;font-size:17px;box-shadow:0 3px 10px -3px rgba(126,34,206,.5);transition:opacity .3s ease,transform .3s var(--spring)}
+.ov.heart:hover{transform:scale(1.18)}
+.ov.heart .h{filter:grayscale(1);opacity:.45;transition:filter .2s,opacity .2s}
+.ov.heart.on .h{filter:none;opacity:1}
+.cap{display:grid;grid-template-rows:1fr;opacity:1;transition:grid-template-rows .35s ease,opacity .3s ease}
+.cap-in{min-height:0;overflow:hidden;padding:12px 6px 4px}
+.cap h3{margin:0;font-size:14px;line-height:1.3;font-weight:700;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.cap .va{margin:6px 0 0;font-size:12.5px;color:var(--accent);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cap .lb{margin:3px 0 0;font-size:11.5px;color:var(--ink-faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stars-sm{font-size:12px;color:#F5B1D6;letter-spacing:1px;margin-top:4px;min-height:14px}
+
+/* Toggle Labels: pure jacket grid */
+.labels-off{--min:150px;--gap:12px}
+.labels-off .card{padding:0;background:transparent;box-shadow:0 6px 16px -8px rgba(126,34,206,.45);border-radius:22px}
+.labels-off .cover{border-radius:22px}
+.labels-off .cap{grid-template-rows:0fr;opacity:0}
+.labels-off .ov{opacity:0;pointer-events:none;transform:scale(.7)}
+
+.empty{grid-column:1/-1;text-align:center;padding:70px 20px;background:rgba(255,255,255,.7);border-radius:40px;border:3px dashed var(--accent-soft)}
+.empty .big{font-size:48px}
+.empty p{margin:8px 0 0;color:var(--ink-soft)}
+
+/* ---------- modal ---------- */
+.backdrop{position:fixed;inset:0;z-index:50;background:rgba(88,28,135,.38);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:grid;place-items:center;padding:24px;opacity:0;visibility:hidden;transition:opacity .25s,visibility .25s}
+.backdrop.open{opacity:1;visibility:visible}
+.sheet{position:relative;width:min(980px,100%);max-height:calc(100vh - 48px);background:linear-gradient(180deg,#fff,var(--bg-2));border-radius:40px;box-shadow:var(--shadow-lg);border:3px solid #fff;display:grid;grid-template-columns:340px 1fr;overflow:hidden;transform:translateY(24px) scale(.92);transition:transform .45s var(--spring)}
+.backdrop.open .sheet{transform:none}
+.close{position:absolute;top:16px;right:16px;z-index:2;width:42px;height:42px;border-radius:50%;border:0;background:var(--accent-soft);color:var(--ink);font-size:20px;line-height:1;transition:transform .3s var(--spring),background .2s}
+.close:hover{transform:rotate(90deg) scale(1.1);background:var(--accent);color:#fff}
+.side{padding:28px 0 28px 28px;background:linear-gradient(180deg,var(--accent-faint),transparent)}
+.side .big-cover{aspect-ratio:1/1;border-radius:28px;overflow:hidden;box-shadow:var(--shadow);background:var(--accent-faint)}
+.side .big-cover img{width:100%;height:100%;object-fit:cover;display:block}
+.side .big-cover .ph b{font-size:80px}
+.panel{margin:20px 28px 0 0;background:#fff;border:2px solid var(--accent-soft);border-radius:24px;padding:16px}
+.panel h4{margin:0 0 10px;font-family:var(--font-display);font-size:15px;font-weight:500}
+.field{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:10px 0;font-size:13px}
+.field label{color:var(--ink-soft)}
+.switch{width:46px;height:26px;border-radius:999px;border:0;background:var(--accent-soft);position:relative;transition:background .25s}
+.switch::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 2px 5px rgba(0,0,0,.2);transition:transform .35s var(--spring)}
+.switch[aria-checked="true"]{background:var(--accent)}
+.switch[aria-checked="true"]::after{transform:translateX(20px)}
+.stars{display:flex;gap:2px}
+.stars button{border:0;background:none;font-size:22px;padding:0 1px;color:var(--accent-soft);transition:transform .25s var(--spring),color .15s}
+.stars button.on{color:#F472B6}
+.stars button:hover{transform:scale(1.25)}
+.panel textarea{width:100%;min-height:70px;resize:vertical;border:2px solid var(--accent-soft);border-radius:16px;padding:10px 12px;outline:none;font-weight:500;font-size:13px;background:var(--bg-2)}
+.panel textarea:focus{border-color:var(--accent-2)}
+.panel .sel{max-width:150px;padding:7px 30px 7px 12px;font-size:12.5px}
+.body{padding:32px 34px 32px 28px;overflow:auto;max-height:calc(100vh - 48px)}
+.body h2{margin:0 44px 4px 0;font-family:var(--font-display);font-weight:600;font-size:26px;line-height:1.2}
+.body .alt{color:var(--ink-faint);font-size:15px;margin:0 0 14px;font-weight:600}
+.tagrow{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}
+.tag{background:var(--accent-soft);color:var(--ink);border-radius:999px;padding:6px 12px;font-size:12.5px;font-weight:700}
+.tag.pink{background:var(--pink-soft);color:#B0357A}
+.tag.en{background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#fff}
+.info{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-bottom:22px}
+.info div{background:#fff;border:2px solid var(--accent-faint);border-radius:18px;padding:10px 14px}
+.info dt{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-faint);margin:0 0 3px}
+.info dd{margin:0;font-size:14px;font-weight:700;word-break:break-word}
+.sec{margin:0 0 22px}
+.sec h3{margin:0 0 10px;font-family:var(--font-display);font-size:17px;font-weight:500;display:flex;align-items:center;gap:8px}
+.sec h3::before{content:"";width:10px;height:10px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--pink))}
+.sec p{margin:0;line-height:1.7;font-weight:500;font-size:14.5px;color:#6B21A8}
+.tracks{list-style:none;margin:0;padding:0;counter-reset:t;display:grid;gap:6px}
+.tracks li{counter-increment:t;display:flex;align-items:center;gap:12px;background:#fff;border:2px solid var(--accent-faint);border-radius:999px;padding:8px 16px 8px 10px;font-weight:600;font-size:14px;transition:transform .25s var(--spring),border-color .2s}
+.tracks li:hover{transform:translateX(4px);border-color:var(--accent-soft)}
+.tracks li::before{content:counter(t);flex:none;width:26px;height:26px;border-radius:50%;background:var(--accent-soft);display:grid;place-items:center;font-size:12px;font-weight:700}
+.tracks .tt{flex:1;min-width:0}
+.tracks .dur{color:var(--ink-faint);font-size:12.5px;font-variant-numeric:tabular-nums}
+.muted{color:var(--ink-faint);font-weight:600;font-size:14px}
+.bonus{margin:0;padding-left:20px;line-height:1.8;font-size:14px;font-weight:600}
+.src{display:inline-flex;margin-top:4px;color:var(--accent);font-weight:700;text-decoration:none;border-bottom:2px solid var(--accent-soft)}
+.src:hover{border-color:var(--accent)}
+
+/* toast + footer */
+.toast{position:fixed;left:50%;bottom:28px;transform:translate(-50%,30px);background:var(--ink);color:#fff;padding:12px 22px;border-radius:999px;font-weight:700;font-size:14px;opacity:0;pointer-events:none;transition:opacity .25s,transform .4s var(--spring);z-index:80;box-shadow:var(--shadow-lg)}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+footer{text-align:center;color:var(--ink-faint);font-size:12px;padding:0 20px 40px;font-weight:600}
+
+@media (max-width:860px){
+  .sheet{grid-template-columns:1fr;overflow:auto}
+  .side{padding:24px 24px 0}.panel{margin:16px 0 0}
+  .body{max-height:none;overflow:visible;padding:24px}
+  .top{padding:12px 16px}main{padding:20px 14px 50px}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ---------- add / edit + online lookup ---------- */
+[hidden]{display:none!important}
+.ph{background:var(--accent-faint);color:var(--ink-faint)}
+.ph b{font-size:44px;margin-bottom:6px}
+.sec p{white-space:pre-line}
+.pill.sm{padding:7px 13px;font-size:12.5px}
+.btnrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.in{width:100%;border:2px solid var(--accent-soft);background:#fff;border-radius:16px;padding:9px 13px;outline:none;font-weight:600;font-size:14px;transition:border-color .2s,box-shadow .2s}
+textarea.in{resize:vertical;font-weight:500;line-height:1.5}
+.in:focus{border-color:var(--accent-2);box-shadow:0 0 0 4px rgba(192,132,252,.2)}
+#editor{z-index:60}
+.sheet.ed{grid-template-columns:320px 1fr}
+.lookup{background:linear-gradient(135deg,var(--accent-faint),var(--pink-soft));border-radius:28px;padding:16px;margin:0 0 22px;box-shadow:inset 0 0 0 2px var(--accent-soft)}
+.lookup h3{margin:0 0 10px;font-family:var(--font-display);font-size:16px;font-weight:500}
+.lrow{display:flex;gap:10px}
+.lrow .in{border-radius:999px;padding:11px 18px}
+.lstatus{margin:10px 4px 0;font-size:13.5px;font-weight:700;color:var(--ink-soft);min-height:18px;line-height:1.5}
+.lstatus.ok{color:#15803d}.lstatus.err{color:#BE185D}
+.spin{display:inline-block;width:12px;height:12px;border:2.5px solid var(--accent-soft);border-top-color:var(--accent);border-radius:50%;animation:sp .7s linear infinite;vertical-align:-2px;margin-right:6px}
+@keyframes sp{to{transform:rotate(360deg)}}
+.results{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:8px;max-height:260px;overflow:auto}
+.results button{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:#fff;border:2px solid var(--accent-soft);border-radius:20px;padding:8px 12px;font-weight:700;font-size:13.5px;transition:transform .25s var(--spring),border-color .2s}
+.results button:hover{transform:translateX(4px);border-color:var(--accent-2)}
+.results img,.results .nothumb{width:44px;height:44px;border-radius:12px;object-fit:cover;background:var(--accent-soft);flex:none}
+details.more{margin-top:12px;font-size:13px}
+details.more summary{cursor:pointer;color:var(--accent);font-weight:700}
+details.more label{display:block;margin:10px 0 4px;color:var(--ink-soft);font-weight:700}
+details.more p{margin:8px 0 0;color:var(--ink-faint);font-weight:600;line-height:1.5}
+.fgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px 14px}
+.fgrid .wide{grid-column:1/-1}
+.fgrid label,.panel label.lbl{display:block;font-size:11.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-faint);margin:0 0 4px 6px}
+.actions{display:flex;gap:10px;justify-content:flex-end;margin-top:22px;position:sticky;bottom:-32px;padding:14px 0 6px;background:linear-gradient(180deg,rgba(250,245,255,0),var(--bg-2) 40%)}
+.actions .danger{margin-right:auto;color:#BE185D;border-color:#FBCFE8}
+.check{display:flex;align-items:center;gap:8px;font-weight:700;font-size:14px;padding-top:6px}
+.check input{width:18px;height:18px;accent-color:var(--accent)}
+@media (max-width:860px){.sheet.ed{grid-template-columns:1fr}}
+.cap .va{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.pill:disabled{opacity:.5;cursor:default;transform:none!important;box-shadow:none!important}
+#importer{z-index:60}
+.sheet.im{grid-template-columns:1fr;width:min(1040px,100%)}
+.sheet.im .body{padding:32px 34px}
+.imbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 12px}
+.imbar .check{padding-top:0}
+.imgrid{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}
+.imitem label{display:flex;align-items:center;gap:10px;background:#fff;border:2px solid var(--accent-faint);border-radius:20px;padding:8px 12px;cursor:pointer;font-weight:700;font-size:13px;transition:border-color .2s,transform .25s var(--spring)}
+.imitem label:hover{border-color:var(--accent-2);transform:translateY(-2px)}
+.imitem input{width:18px;height:18px;accent-color:var(--accent);flex:none}
+.imitem img,.imitem .nothumb{width:54px;height:54px;border-radius:14px;object-fit:cover;background:var(--accent-soft);flex:none}
+.imitem .t{flex:1;min-width:0;line-height:1.35}
+.badge{background:var(--pink-soft);color:#B0357A;border-radius:999px;padding:3px 9px;font-size:11px;font-weight:700;flex:none}
+.prog{height:10px;border-radius:999px;background:var(--accent-soft);overflow:hidden;margin:14px 0 0}
+.prog>div{height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--pink));border-radius:999px;transition:width .3s ease}
+.imlog{white-space:pre-wrap;font-size:12px;color:var(--ink-faint);margin-top:10px;font-weight:600}
+
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="row">
+    <div class="brand">
+      <div class="logo">♡</div>
+      <div><h1>Otome CD Shelf</h1><small>my little drama CD collection</small></div>
+    </div>
+    <div class="stats">
+      <span class="stat v" id="statTotal">0 CDs</span>
+      <span class="stat" id="statOwned">0 owned</span>
+    </div>
+    <button class="pill primary" id="toggleLabels" aria-pressed="true" title="Show or hide titles and overlays on the cards">
+      <span class="knob"></span><span>Toggle Labels</span>
+    </button>
+    <button class="pill primary" id="btnAdd" title="Add a CD, with optional online lookup">＋ Add CD</button>
+    <button class="pill" id="btnImportSrc" title="Import CDs from rukojiDB, HIBIKIFORUM, DLsite Girls or SKiT Dolce">⇩ Import CDs</button>
+    <button class="pill" id="btnExport" title="Download your whole collection as a JSON backup file">⬇ Backup</button>
+    <button class="pill" id="btnImport" title="Restore a JSON backup file">⬆ Restore</button>
+    <input type="file" id="fileImport" accept="application/json,.json" hidden>
+  </div>
+  <div class="row filters">
+    <div class="search"><input id="q" type="search" placeholder="Search titles, cast, series, labels…" autocomplete="off"></div>
+    <select class="sel" id="fLabel" aria-label="Label"></select>
+    <select class="sel" id="fVA" aria-label="Voice actor"></select>
+    <select class="sel" id="fSeries" aria-label="Series"></select>
+    <div class="seg" id="fStatus" role="group" aria-label="Collection status">
+      <button data-v="all" aria-pressed="true">All</button>
+      <button data-v="owned" aria-pressed="false">Owned</button>
+    </div>
+    <select class="sel" id="fSort" aria-label="Sort">
+      <option value="new">Newest release</option>
+      <option value="old">Oldest release</option>
+      <option value="az">Title A–Z</option>
+      <option value="rate">Highest rated</option>
+    </select>
+    <button class="link-btn" id="fReset">Reset</button>
+  </div>
+</header>
+
+<main>
+  <div class="meta"><span id="count"></span><span>Click a jacket for details ♡</span></div>
+  <section class="grid" id="grid" aria-live="polite"></section>
+</main>
+<footer>Sample entries &amp; jacket images from <a href="https://rukoji.com/" style="color:inherit">rukojiDB</a> — all artwork belongs to its respective labels &amp; artists. Your notes and ratings live only in this browser.</footer>
+
+<div class="backdrop" id="modal" aria-hidden="true">
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="mTitle">
+    <button class="close" id="mClose" aria-label="Close">✕</button>
+    <aside class="side">
+      <div class="big-cover" id="mCover"></div>
+      <div class="panel" id="mPanel"></div>
+    </aside>
+    <div class="body" id="mBody"></div>
+  </div>
+</div>
+<div class="backdrop" id="editor" aria-hidden="true">
+  <div class="sheet ed" role="dialog" aria-modal="true" aria-labelledby="eHead">
+    <button class="close" id="eClose" aria-label="Close">✕</button>
+    <aside class="side">
+      <div class="big-cover" id="eCover"></div>
+      <div class="panel">
+        <h4>Cover</h4>
+        <label class="lbl" for="fCover">Image address</label>
+        <input class="in" id="fCover" placeholder="https://…" autocomplete="off">
+        <div class="btnrow">
+          <button type="button" class="pill sm" id="eUpload">Upload image</button>
+          <button type="button" class="pill sm" id="eClearCover">Clear</button>
+        </div>
+        <input type="file" id="eFile" accept="image/*" hidden>
+      </div>
+    </aside>
+    <div class="body">
+      <h2 id="eHead">Add a CD</h2>
+      <p class="alt">Find it online, or fill it in by hand.</p>
+
+      <section class="lookup" aria-label="Find metadata online">
+        <h3>Find metadata online</h3>
+        <div class="lrow" style="flex-wrap:wrap">
+          <select class="sel" id="lkSrc" aria-label="Source">
+            <option value="all">All sources</option><option value="rukoji">rukojiDB</option>
+            <option value="hibiki">HIBIKIFORUM</option><option value="dlsite">DLsite Girls</option>
+            <option value="skit">SKiT Dolce</option><option value="teame">TEAM Entertainment</option>
+          </select>
+          <input class="in" id="lkInput" style="flex:1 1 220px;width:auto" placeholder="Paste a page link, or type a title to search…" autocomplete="off">
+          <button type="button" class="pill primary" id="lkGo">Look up</button>
+        </div>
+        <label class="check"><input type="checkbox" id="lkFill"> Only fill empty fields (use this to combine sources)</label>
+        <div class="lstatus" id="lkStatus" role="status"></div>
+        <ul class="results" id="lkResults"></ul>
+        <details class="more" id="lkMore">
+          <summary>Lookup blocked? Settings &amp; manual fallback</summary>
+          <p>A page opened from your disk can't read other websites directly, so lookups go through a free public CORS proxy (it can see which titles and addresses you look up). If it's down or blocked, paste the page's source here instead.</p>
+          <label for="lkHtml">Page source (open the page, press Ctrl+U, copy everything)</label>
+          <textarea class="in" id="lkHtml" rows="3" placeholder="&lt;!DOCTYPE html&gt;…"></textarea>
+          <div class="btnrow"><button type="button" class="pill sm" id="lkParse">Use pasted source</button></div>
+          <label for="lkProxies">CORS proxies, one per line ({url} = where the page address goes)</label>
+          <textarea class="in" id="lkProxies" rows="3"></textarea>
+          <label for="lkApi">HIBIKIFORUM api.php address</label>
+          <input class="in" id="lkApi" placeholder="http://hibikiforum.net/api.php">
+          <div class="btnrow"><button type="button" class="pill sm" id="lkSave">Save settings</button><button type="button" class="pill sm" id="lkReset">Reset to defaults</button></div>
+        </details>
+      </section>
+
+      <form id="eForm">
+        <div class="fgrid">
+          <div class="wide"><label for="fTitle">Title</label><input class="in" id="fTitle" required></div>
+          <div class="wide"><label for="fAlt">Original / Japanese title</label><input class="in" id="fAlt"></div>
+          <div><label for="fRelease">Release date</label><input class="in" id="fRelease" type="date"></div>
+          <div><label for="fRelNote">Release note</label><input class="in" id="fRelNote" placeholder="e.g. DL ver. Oct 24, 2026"></div>
+          <div><label for="fLabel">Label</label><input class="in" id="fLabel"></div>
+          <div><label for="fSeries">Series (日本語)</label><input class="in" id="fSeries"></div>
+          <div><label for="fSeriesRo">Series (romaji)</label><input class="in" id="fSeriesRo"></div>
+          <div class="wide"><label for="fCast">Voice cast — one per line: Romaji / 日本語</label><textarea class="in" id="fCast" rows="3" placeholder="Furukawa Makoto / 古川慎"></textarea></div>
+          <div><label for="fScenario">Scenario (comma-separated)</label><input class="in" id="fScenario"></div>
+          <div><label for="fIllust">Illustration</label><input class="in" id="fIllust"></div>
+          <div><label for="fCategory">Category</label><input class="in" id="fCategory"></div>
+          <div><label for="fPN">Catalog no.</label><input class="in" id="fPN"></div>
+          <div><label for="fJAN">JAN</label><input class="in" id="fJAN"></div>
+          <div><label for="fUrl">Source page</label><input class="in" id="fUrl" placeholder="https://…"></div>
+          <div class="wide"><label for="fSynopsis">Synopsis</label><textarea class="in" id="fSynopsis" rows="4"></textarea></div>
+          <div class="wide"><label for="fTracks">Tracklist (one per line; add " | 4:02" for a duration)</label><textarea class="in" id="fTracks" rows="5"></textarea></div>
+          <div class="wide"><label for="fBonuses">Bonuses (one per line)</label><textarea class="in" id="fBonuses" rows="3"></textarea></div>
+        </div>
+        <div class="actions">
+          <button type="button" class="pill danger" id="eDelete" hidden>Delete CD</button>
+          <button type="button" class="pill" id="eCancel">Cancel</button>
+          <button type="submit" class="pill primary">Save CD</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<div class="backdrop" id="importer" aria-hidden="true">
+  <div class="sheet im" role="dialog" aria-modal="true" aria-labelledby="imHead">
+    <button class="close" id="imClose" aria-label="Close">✕</button>
+    <div class="body">
+      <h2 id="imHead">Import CDs from online sources</h2>
+      <p class="alt">Fetch a whole list, tick the ones you want, and add them to your shelf in one go.</p>
+      <section class="lookup">
+        <div class="lrow" style="flex-wrap:wrap">
+          <select class="sel" id="imSrc" aria-label="Source">
+            <option value="rukoji">rukojiDB</option><option value="hibiki">HIBIKIFORUM</option>
+            <option value="dlsite">DLsite Girls</option><option value="skit">SKiT Dolce</option>
+          </select>
+          <input class="in" id="imQuery" style="flex:1 1 280px;width:auto" autocomplete="off">
+          <select class="sel" id="imPages" aria-label="Pages to fetch">
+            <option value="1">1 page</option><option value="2">2 pages</option><option value="3">3 pages</option><option value="5">5 pages</option><option value="10">10 pages</option>
+          </select>
+          <button type="button" class="pill primary" id="imFetch">Fetch list</button>
+        </div>
+        <label class="check" id="imStockRow" hidden><input type="checkbox" id="imStock"> Only show items in stock (在庫ありに絞り込み)</label>
+        <div class="lstatus" id="imStatus" role="status"></div>
+        <details class="more" id="imMore">
+          <summary>Notes &amp; proxy settings</summary>
+          <p>SKiT Dolce lists are fetched with the in-stock filter turned off (so sold-out CDs are included) unless you tick the box above. Lists come through a free public CORS proxy, which can see what you look up; if it is down, edit the proxy list here. Full details for each CD are fetched one by one, so big imports take a while.</p>
+          <label for="imProxies">CORS proxies, one per line ({url} = where the page address goes)</label>
+          <textarea class="in" id="imProxies" rows="3"></textarea>
+          <div class="btnrow"><button type="button" class="pill sm" id="imSaveProx">Save proxies</button></div>
+        </details>
+      </section>
+      <div class="imbar" id="imBar" hidden>
+        <button type="button" class="pill sm" id="imAll">Select all</button>
+        <button type="button" class="pill sm" id="imNone">Select none</button>
+        <label class="check"><input type="checkbox" id="imHideShelf"> Hide ones already on my shelf</label>
+        <button type="button" class="pill primary" id="imGo" style="margin-left:auto" disabled>Import selected</button>
+      </div>
+      <ul class="imgrid" id="imList"></ul>
+      <div class="prog" id="imProg" hidden><div></div></div>
+      <div class="imlog" id="imLog"></div>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+/* =====================================================================
+   1. SEED DATA  (sample entries from rukoji.com — replace/extend freely)
+   ===================================================================== */
+const P = 'https://pics.rukoji.com/posts/';
+const SEED = [
+  { id:'tenbuiya1', title:'Tenbushuu ni Iyasare CD Vol.1 ~Shugoshin Ashura Ou Hen~', altTitle:'天部衆に癒されCD 第壱巻 ～守護神 阿修羅王編～',
+    release:'2012-12-19', label:'aura', series:'Tenbushuu ni Iyasare', cast:['Kimura Ryouhei'], scenario:['Minefuji Wo'], illustrator:'Teita',
+    category:'Situation CD [SFW]', cover:P+'tenbuiya1.webp', pn:'GSJG-0001', jan:'4582402110014', synopsis:'',
+    tracks:[['阿修羅王、登場'],['執事になろう'],['君が疲れている理由'],['そのまま受け入れて'],['甘い香りでリラックス'],['阿修羅王の話'],['おやすみ'],['春夜の詩'],['キャストコメント']],
+    bonuses:[], url:'https://rukoji.com/posts/tenbuiya1/' },
+  { id:'yorunooto4', title:'Yoru no Oto ~Fourth Night Hareyaka na Yoru~', altTitle:'ヨルノオト～第四夜 晴れやかな夜～',
+    release:'2026-08-23', releaseNote:'CD ver. (COMITIA157) · DL ver. Oct 24, 2026', label:'animal planet', series:'planetarium', cast:['Furukawa Makoto'], scenario:['卯木悠里'], illustrator:'Kazuaki',
+    category:'Situation CD [SFW]', cover:P+'yorunooto4v2.webp', synopsis:'You chose Seiji, your childhood friend and former middle-school boyfriend. Becoming a couple doesn\'t instantly change anything: the awkwardness of the old "something just felt off" breakup lingers. Behind his bright, joking front are regrets and feelings he never voiced. A second-chance romance told over quiet nights together.',
+    tracks:[['ふたりきり記念日','4:02'],['本音がこぼれる夜','7:45'],['本当の気持ち','9:13'],['言葉が交じりあう','8:40'],['確かめ合う','10:28'],['優しさにつつまれて','6:32'],['あなたの腕の中が私の居場所','2:26'],['可愛いカレと、晴れやかな朝','2:59'],['おやすみのキスを','2:22']],
+    bonuses:['CD ver.: Cast free talk','FANBOX / Ci-en supporters: ヨルノオトミニドラマ『３人でおやすみ』 (9:28)','Rendou (set with Third Night): ヨルノオトおまけドラマ ×2'], url:'https://rukoji.com/posts/yorunooto4/' },
+  { id:'yorunooto3', title:'Yoru no Oto ~Third Night Yasashii Yoru~', label:'animal planet', series:'planetarium', cast:['Midorikawa Hikaru'], scenario:['卯木悠里'], illustrator:'Kazuaki',
+    category:'Situation CD [SFW]', cover:P+'yorunooto3v2.webp', tracks:[], bonuses:[], url:'https://rukoji.com/posts/yorunooto3/' },
+  { id:'obeyme-birthday-mammon', title:'【Obey Me! ASMR Birthday Series】 case.Mammon ~Tail Lamp ga Kieta Nochi ni~', altTitle:'【Obey Me! ASMR Birthdayシリーズ】case.マモン ～テールランプが消えた後に～',
+    release:'2026-09-24', label:'NTT Solmare', series:'Obey Me! ASMR', cast:['Kobayashi Hirotaka'], scenario:['NTT Solmare'], category:'Situation CD [SFW]', cover:P+'obeyme-birthday-mammon.webp', synopsis:'You doze off in Mammon\'s room the night before your birthday and wake up swept away on a surprise drive date. When midnight strikes, the mood in the car shifts: the greedy demon wants you all to himself before the others claim you back.',
+    tracks:[['いいところ、の前に','4:12'],['遅れてる理由','4:09'],['一夜限りの','8:53'],['寝坊なふたり']], bonuses:[], url:'https://rukoji.com/posts/obeyme-birthday-mammon/' },
+  { id:'obeyme-birthday-raphael', title:'【Obey Me! ASMR Birthday Series】 case.Raphael ~Hisoyaka na Issen no Koekata~', label:'NTT Solmare', series:'Obey Me! ASMR', cast:[], category:'Situation CD [SFW]', cover:P+'obeyme-birthday-raphael.webp', tracks:[], bonuses:[], url:'https://rukoji.com/posts/obeyme-birthday-raphael/' },
+  { id:'linkiss1', title:'linJewelry Kiss Vol.1 Kougyoku Touya', altTitle:'linJewelry Kiss Vol.1 紅玉 透矢',
+    release:'2016-11-16', label:'Marine Entertainment', series:'linJewelry Kiss', cast:['Satou Takuya'], scenario:['Nekono Shiori','Hanai Kaori'], illustrator:'Kusabi Keri',
+    category:'Situation CD [SFW]', cover:P+'linkiss1.webp', synopsis:'You\'re an apprentice at linJewelry, a custom lingerie shop. Falling asleep there late one night, you feel someone kiss you. Was it a dream? Three men are still in the shop, and from that day on they all start fussing over you. Touya, the gruff, kind-hearted owner, is first in line.',
+    tracks:[['夢?それとも…?'],['指導'],['試着'],['商品テスト'],['秘密の想い']],
+    bonuses:['Animate Limited Edition: Sweet','Rendou (all 3 CDs): 試着戦争!?'], url:'https://rukoji.com/posts/linkiss1/' },
+  { id:'linkiss2', title:'linJewelry Kiss Vol.2 Hisui Sena', label:'Marine Entertainment', series:'linJewelry Kiss', cast:['Kakihara Tetsuya'], scenario:['Hanai Kaori','Nekono Shiori'], category:'Situation CD [SFW]', cover:P+'linkiss2.jpg', tracks:[], bonuses:[], url:'https://rukoji.com/posts/linkiss2/' },
+  { id:'linkiss3', title:'linJewelry Kiss Vol.3 Tsukinaga Haru', label:'Marine Entertainment', series:'linJewelry Kiss', cast:['Saitou Souma'], scenario:['Hanai Kaori','Nekono Shiori'], category:'Situation CD [SFW]', cover:P+'linkiss3.jpg', tracks:[], bonuses:[], url:'https://rukoji.com/posts/linkiss3/' },
+  { id:'dialovers16-vol12', title:'DIABOLIK LOVERS DAYLIGHT Vol.12 Tsukinami Shin', altTitle:'DIABOLIK LOVERS DAYLIGHT Vol.12 月浪シン',
+    release:'2022-02-23', releaseNote:'CD ver. · DL ver. Aug 27, 2025', label:'Rejet', series:'DIABOLIK LOVERS', cast:['Morikubo Shoutarou'], illustrator:'Satoi',
+    category:'Situation CD [SFW]', cover:P+'dialovers16-vol12.webp', jan:'4573593430272', synopsis:'',
+    tracks:[['焦燥'],['侵入者'],['討伐'],['喪失の予兆'],['強くあるために'],['エピローグ']],
+    bonuses:['SKiT Dolce: 理不尽レッスン♪（シン）','Animate Deluxe: 添い寝でおやすみ★ヴァンパイア（シン）','Stellaworth / 7net Deluxe: サディスティック★デート（シン）'], url:'https://rukoji.com/posts/dialovers16-vol12/' },
+  { id:'dialovers16-vol13', title:'DIABOLIK LOVERS DAYLIGHT Vol.13 Kino', label:'Rejet', series:'DIABOLIK LOVERS', cast:['Maeno Tomoaki'], illustrator:'Satoi', category:'Situation CD [SFW]', cover:P+'dialovers16-vol13.jpg', tracks:[], bonuses:[], url:'https://rukoji.com/posts/dialovers16-vol13/' },
+];
+/* user-owned fields every CD carries */
+const USER_DEFAULTS = { owned:false, sourceType:'', rating:0, notes:'', coverData:'', seriesRomaji:'' };
+const hydrate = cd => {
+  const o = Object.assign({}, USER_DEFAULTS, cd, {
+    cast:(cd.cast||[]).map(parsePerson).filter(p => p.en || p.ja), scenario:cd.scenario||[], bonuses:cd.bonuses||[],
+    tracks:(cd.tracks||[]).map(t => Array.isArray(t) ? {t:t[0], d:t[1]||''} : t)
+  });
+  delete o.enTL;
+  if(o.series && !hasCJK(o.series) && !o.seriesRomaji){ o.seriesRomaji = o.series; o.series = ''; }   // old data: Latin series → romaji slot
+  return o;
+};
+
+/* =====================================================================
+   2. STORAGE LAYER — everything touches data only through Store.
+      Swap the internals later (IndexedDB, a JSON file, a backend)
+      without touching the UI.
+   ===================================================================== */
+const Store = {
+  KEY:'otomeCdShelf.v1',
+  load(){
+    try{ const raw = localStorage.getItem(this.KEY); if(raw){ const d = JSON.parse(raw); if(d && Array.isArray(d.cds)) return d; } }catch(e){}
+    return null;
+  },
+  save(data){
+    try{ localStorage.setItem(this.KEY, JSON.stringify(data)); return true; }catch(e){ return false; }
+  },
+  exportBlob(data){ return new Blob([JSON.stringify({app:'otome-cd-shelf', version:1, exportedAt:new Date().toISOString(), cds:data.cds, settings:data.settings}, null, 2)], {type:'application/json'}); },
+  parseImport(text){
+    const d = JSON.parse(text);
+    const cds = Array.isArray(d) ? d : d.cds;
+    if(!Array.isArray(cds) || cds.some(c => !c || !c.id || !c.title)) throw new Error('Not a valid Otome CD Shelf backup');
+    return { cds: cds.map(hydrate), settings: d.settings };
+  }
+};
+
+const DB = (() => {
+  const loaded = Store.load();
+  const data = loaded ? { cds: loaded.cds.map(hydrate), settings: loaded.settings || {} }
+                      : { cds: SEED.map(hydrate), settings: {} };
+  let timer = null;
+  const persist = () => { clearTimeout(timer); timer = setTimeout(() => { if(!Store.save(data)) toast('Couldn\'t save in this browser — use Export to keep a backup'); }, 200); };
+  if(!loaded) Store.save(data);
+  return {
+    data,
+    get all(){ return data.cds; },
+    byId: id => data.cds.find(c => c.id === id),
+    update(id, patch){ const c = this.byId(id); if(c){ Object.assign(c, patch); persist(); } return c; },
+    setting(k, v){ if(v === undefined) return data.settings[k]; data.settings[k] = v; persist(); },
+    touch(){ persist(); },
+    add(cd){ data.cds.push(cd); persist(); return cd; },
+    remove(id){ data.cds = data.cds.filter(c => c.id !== id); persist(); },
+    replaceAll(cds, settings){ data.cds = cds; if(settings) data.settings = settings; persist(); }
+  };
+})();
+
+/* =====================================================================
+   3. HELPERS
+   ===================================================================== */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmtDate = d => d ? new Date(d + 'T00:00:00Z').toLocaleDateString('en-US', {year:'numeric', month:'short', day:'numeric', timeZone:'UTC'}) : '—';
+const uniq = arr => [...new Set(arr.filter(Boolean))].sort((a,b) => a.localeCompare(b, 'ja'));
+function toast(msg){ const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('show'), 3200); }
+function hue(str){ let h = 0; for(const ch of str) h = (h * 31 + ch.codePointAt(0)) % 360; return 265 + (h % 70); }
+function placeholder(title){
+  return `<div class="ph" role="img" aria-label="No cover for ${esc(title)}"><div><b>💿</b>No cover yet</div></div>`;
+}
+function coverHTML(cd){
+  const src = cd.coverData || cd.cover;
+  if(!src) return placeholder(cd.title);
+  return `<img src="${esc(src)}" alt="${esc(cd.title)}" loading="lazy" referrerpolicy="no-referrer" data-id="${esc(cd.id)}" data-src="${esc(cd.cover || '')}" data-title="${esc(cd.title)}">`;
+}
+/* If a jacket won't load (hotlink protection, blocked site…), try to download it through the lookup
+   route, shrink it, and keep a local copy. Only if that fails too do we show the plain placeholder. */
+document.addEventListener('error', async e => {
+  const img = e.target;
+  if(!(img && img.tagName === 'IMG' && img.dataset.title !== undefined)) return;
+  if(img.dataset.rescued){ img.outerHTML = placeholder(img.dataset.title); return; }
+  img.dataset.rescued = '1';
+  try{
+    const data = await Covers.fetchData(img.dataset.src);
+    if(img.dataset.id) DB.update(img.dataset.id, {coverData:data});
+    else if(img.id === 'eCoverImg') ED.coverData = data;
+    img.src = data;
+  }catch(err){ img.outerHTML = placeholder(img.dataset.title); }
+}, true);
+
+/* =====================================================================
+   4. FILTER STATE + GRID
+   ===================================================================== */
+const F = { q:'', label:'', va:'', series:'', status:'all', sort:'new' };
+
+function fillSelect(el, allText, opts){      // opts: strings, or [value, label] pairs
+  const cur = el.value, pairs = opts.map(o => Array.isArray(o) ? o : [o, o]);
+  el.innerHTML = `<option value="">${allText}</option>` + pairs.map(([v, l]) => `<option value="${esc(v)}">${esc(l)}</option>`).join('');
+  el.value = pairs.some(([v]) => v === cur) ? cur : '';
+}
+function buildFilters(){
+  const all = DB.all;
+  fillSelect($('#fLabel'),  'All labels',  uniq(all.map(c => c.label)));
+  const people = new Map(); all.forEach(c => c.cast.forEach(p => { const k = Names.pid(p); if(!k) return; const old = people.get(k); if(!old || (!old.ja && p.ja) || (!old.en && p.en)) people.set(k, {en:p.en || (old && old.en) || '', ja:p.ja || (old && old.ja) || ''}); }));
+  fillSelect($('#fVA'), 'All voice actors', [...people].sort((a, b) => (a[1].en || a[1].ja).localeCompare(b[1].en || b[1].ja, 'ja')).map(([k, p]) => [k, p.en && p.ja ? `${p.en} / ${p.ja}` : (p.en || p.ja)]));
+  fillSelect($('#fSeries'), 'All series',  uniq(all.map(seriesName)));
+  F.label = $('#fLabel').value; F.va = $('#fVA').value; F.series = $('#fSeries').value;
+}
+function visible(){
+  const q = F.q.trim().toLowerCase();
+  let list = DB.all.filter(c => {
+    if(F.label && c.label !== F.label) return false;
+    if(F.va && !c.cast.some(p => Names.pid(p) === F.va)) return false;
+    if(F.series && seriesName(c) !== F.series) return false;
+    if(F.status === 'owned' && !c.owned) return false;
+    if(q){
+      const hay = [c.title, c.altTitle, c.label, c.series, c.seriesRomaji, c.pn, c.jan, c.notes, ...c.cast.flatMap(p => [p.en, p.ja]), ...c.scenario].join(' ').toLowerCase();
+      if(!hay.includes(q)) return false;
+    }
+    return true;
+  });
+  const byDate = (a, b, dir) => {
+    if(!a.release && !b.release) return 0; if(!a.release) return 1; if(!b.release) return -1;
+    return dir * a.release.localeCompare(b.release);
+  };
+  const sorters = {
+    new:  (a, b) => byDate(a, b, -1),
+    old:  (a, b) => byDate(a, b, 1),
+    az:   (a, b) => a.title.localeCompare(b.title),
+    rate: (a, b) => b.rating - a.rating || a.title.localeCompare(b.title)
+  };
+  return list.sort(sorters[F.sort]);
+}
+function render(){
+  const list = visible(), grid = $('#grid');
+  grid.innerHTML = list.length ? list.map((c, i) => `
+    <article class="card" tabindex="0" data-id="${esc(c.id)}" style="animation-delay:${Math.min(i, 24) * 25}ms" aria-label="${esc(c.title)}">
+      <div class="cover">
+        ${coverHTML(c)}
+        <div class="ov tl">${c.sourceType ? `<span class="chip">${esc(c.sourceType)}</span>` : ''}</div>
+        <button class="ov heart ${c.owned ? 'on' : ''}" data-heart="${esc(c.id)}" aria-label="${c.owned ? 'Owned — click to unmark' : 'Mark as owned'}" aria-pressed="${c.owned}"><span class="h">💜</span></button>
+      </div>
+      <div class="cap"><div class="cap-in">
+        <h3>${esc(c.title)}</h3>
+        <p class="va">${esc(castLabel(c) || 'Cast unknown')}</p>
+        <p class="lb">${esc([c.label, c.release ? c.release.slice(0, 4) : ''].filter(Boolean).join(' · '))}</p>
+        <div class="stars-sm">${c.rating ? '♥'.repeat(c.rating) : ''}</div>
+      </div></div>
+    </article>`).join('')
+    : `<div class="empty"><div class="big">🫧</div><strong>No CDs match those filters</strong><p>Try clearing a filter or two.</p></div>`;
+  const owned = DB.all.filter(c => c.owned).length;
+  $('#count').textContent = `Showing ${list.length} of ${DB.all.length} CDs`;
+  $('#statTotal').textContent = `${DB.all.length} CD${DB.all.length === 1 ? '' : 's'}`;
+  $('#statOwned').textContent = `${owned} owned`;
+}
+
+/* =====================================================================
+   5. DETAIL MODAL
+   ===================================================================== */
+let openId = null, lastFocus = null;
+function openModal(id){
+  const c = DB.byId(id); if(!c) return;
+  openId = id; lastFocus = document.activeElement;
+  $('#mCover').innerHTML = coverHTML(c);
+  const info = [
+    ['Release', fmtDate(c.release) + (c.releaseNote ? ` — ${c.releaseNote}` : '')],
+    ['Label', c.label], ['Series', seriesName(c)],
+    ['Voice cast', c.cast.map(p => p.en && p.ja ? `${p.en} (${p.ja})` : (p.en || p.ja)).join(', ')], ['Scenario', c.scenario.join(', ')], ['Illustration', c.illustrator],
+    ['Category', c.category], ['Catalog no.', c.pn], ['JAN', c.jan]
+  ].filter(([, v]) => v && v !== '—' || false);
+  $('#mBody').innerHTML = `
+    <h2 id="mTitle">${esc(c.title)}</h2>
+    ${c.altTitle ? `<p class="alt">${esc(c.altTitle)}</p>` : '<p class="alt"></p>'}
+    <div class="tagrow">
+      ${seriesName(c) ? `<span class="tag">${esc(seriesName(c))}</span>` : ''}
+      ${c.label ? `<span class="tag pink">${esc(c.label)}</span>` : ''}
+    </div>
+    <dl class="info">${info.map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('')}</dl>
+    <section class="sec"><h3>Synopsis</h3>${c.synopsis ? `<p>${esc(c.synopsis)}</p>` : '<p class="muted">No synopsis saved yet.</p>'}</section>
+    <section class="sec"><h3>Tracklist</h3>
+      ${c.tracks.length ? `<ol class="tracks">${c.tracks.map(t => `<li><span class="tt">${esc(t.t)}</span><span class="dur">${esc(t.d)}</span></li>`).join('')}</ol>` : '<p class="muted">No tracklist saved yet.</p>'}
+    </section>
+    ${c.bonuses.length ? `<section class="sec"><h3>Bonuses</h3><ul class="bonus">${c.bonuses.map(b => `<li>${esc(b)}</li>`).join('')}</ul></section>` : ''}
+    ${c.url ? `<a class="src" href="${esc(c.url)}" target="_blank" rel="noopener noreferrer">View on rukojiDB ↗</a>` : ''}`;
+  renderPanel(c);
+  const m = $('#modal'); m.classList.add('open'); m.setAttribute('aria-hidden', 'false');
+  document.body.style.overflow = 'hidden';
+  setTimeout(() => $('#mClose').focus(), 50);
+}
+function renderPanel(c){
+  $('#mPanel').innerHTML = `
+    <h4>My collection</h4>
+    <div class="field"><label>Physically owned</label><button class="switch" id="pOwned" role="switch" aria-checked="${c.owned}" aria-label="Physically owned"></button></div>
+    <div class="field"><label for="pSrc">Source</label>
+      <select class="sel" id="pSrc">${['', 'CD RIP', 'WEB RIP'].map(v => `<option value="${v}" ${c.sourceType === v ? 'selected' : ''}>${v || 'Not set'}</option>`).join('')}</select></div>
+    <div class="field"><label>Rating</label><div class="stars" id="pStars">${[1,2,3,4,5].map(n => `<button class="${n <= c.rating ? 'on' : ''}" data-n="${n}" aria-label="${n} of 5">♥</button>`).join('')}</div></div>
+    <textarea id="pNotes" placeholder="Notes, impressions, where the files live…" aria-label="Notes">${esc(c.notes)}</textarea>
+    <div class="btnrow"><button class="pill sm" id="pEdit">✎ Edit</button><button class="pill sm" id="pRefresh" title="Re-fetch details and cover online">↻ Refresh online</button></div>`;
+  $('#pEdit').onclick = () => { closeModal(); openEditor({id:c.id, returnTo:c.id}); };
+  $('#pRefresh').onclick = () => { closeModal(); openEditor({id:c.id, returnTo:c.id, auto:true}); };
+  $('#pOwned').onclick = () => { const v = !DB.byId(c.id).owned; DB.update(c.id, {owned:v}); renderPanel(DB.byId(c.id)); render(); };
+  $('#pSrc').onchange = e => { DB.update(c.id, {sourceType:e.target.value}); render(); };
+  $('#pStars').onclick = e => { const b = e.target.closest('button'); if(!b) return; const n = +b.dataset.n; DB.update(c.id, {rating: DB.byId(c.id).rating === n ? 0 : n}); renderPanel(DB.byId(c.id)); render(); };
+  $('#pNotes').oninput = e => DB.update(c.id, {notes:e.target.value});
+}
+function closeModal(){
+  const m = $('#modal'); m.classList.remove('open'); m.setAttribute('aria-hidden', 'true');
+  document.body.style.overflow = ''; openId = null;
+  if(lastFocus && lastFocus.focus) lastFocus.focus();
+}
+
+/* =====================================================================
+   6. WIRING
+   ===================================================================== */
+function applyLabels(on){
+  $('#grid').classList.toggle('labels-off', !on);
+  $('#toggleLabels').setAttribute('aria-pressed', String(on));
+}
+$('#toggleLabels').onclick = () => { const on = $('#toggleLabels').getAttribute('aria-pressed') !== 'true'; applyLabels(on); DB.setting('labels', on); };
+
+$('#grid').addEventListener('click', e => {
+  const heart = e.target.closest('[data-heart]');
+  if(heart){ e.stopPropagation(); const c = DB.byId(heart.dataset.heart); DB.update(c.id, {owned:!c.owned}); render(); return; }
+  const card = e.target.closest('.card'); if(card) openModal(card.dataset.id);
+});
+$('#grid').addEventListener('keydown', e => {
+  if((e.key === 'Enter' || e.key === ' ') && e.target.classList.contains('card')){ e.preventDefault(); openModal(e.target.dataset.id); }
+});
+$('#modal').addEventListener('click', e => { if(e.target.id === 'modal') closeModal(); });
+$('#mClose').onclick = closeModal;
+document.addEventListener('keydown', e => {
+  if(e.key !== 'Escape') return;
+  if($('#editor').classList.contains('open')) closeEditor(true); else if(openId) closeModal();
+});
+
+$('#q').oninput = e => { F.q = e.target.value; render(); };
+$('#fLabel').onchange = e => { F.label = e.target.value; render(); };
+$('#fVA').onchange = e => { F.va = e.target.value; render(); };
+$('#fSeries').onchange = e => { F.series = e.target.value; render(); };
+$('#fSort').onchange = e => { F.sort = e.target.value; DB.setting('sort', F.sort); render(); };
+$('#fStatus').onclick = e => {
+  const b = e.target.closest('button'); if(!b) return; F.status = b.dataset.v;
+  document.querySelectorAll('#fStatus button').forEach(x => x.setAttribute('aria-pressed', String(x === b))); render();
+};
+$('#fReset').onclick = () => {
+  Object.assign(F, {q:'', label:'', va:'', series:'', status:'all'});
+  $('#q').value = ''; ['#fLabel','#fVA','#fSeries'].forEach(s => $(s).value = '');
+  document.querySelectorAll('#fStatus button').forEach(x => x.setAttribute('aria-pressed', String(x.dataset.v === 'all')));
+  render();
+};
+
+$('#btnExport').onclick = () => {
+  const a = document.createElement('a'); a.href = URL.createObjectURL(Store.exportBlob(DB.data));
+  a.download = `otome-cd-shelf-${new Date().toISOString().slice(0, 10)}.json`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  toast('Backup downloaded ♡');
+};
+$('#btnImport').onclick = () => $('#fileImport').click();
+$('#fileImport').onchange = async e => {
+  const f = e.target.files[0]; e.target.value = ''; if(!f) return;
+  try{
+    const { cds, settings } = Store.parseImport(await f.text());
+    if(!confirm(`Replace your current collection with ${cds.length} CDs from this file?`)) return;
+    DB.replaceAll(cds, settings); buildFilters(); render(); toast(`Imported ${cds.length} CDs ♡`);
+  }catch(err){ toast('Import failed: ' + err.message); }
+};
+
+/* =====================================================================
+   7. NAMES — voice actors and series, romaji ↔ 日本語
+   ===================================================================== */
+/* function declarations on purpose: hydrate() runs before the rest of this block is evaluated */
+function hasCJK(s){ return /[\u3040-\u30ff\u3400-\u9fff\uff66-\uff9f]/.test(s || ''); }
+function parsePerson(x){
+  if(x && typeof x === 'object') return {en:String(x.en || '').trim(), ja:String(x.ja || '').replace(/[\s\u3000]+/g, '')};
+  const parts = String(x || '').split(/\s*[\/／|]\s*|\s*[（(）)]\s*/).map(p => p.trim()).filter(Boolean);
+  const ja = parts.find(hasCJK) || '', en = parts.find(p => !hasCJK(p)) || '';
+  return {en, ja:ja.replace(/[\s\u3000]+/g, '')};
+}
+const personLabel = p => p.en && p.ja ? `${p.en} · ${p.ja}` : (p.en || p.ja || '');
+const castLabel = c => (c.cast || []).map(personLabel).join(', ');
+const seriesName = c => c.series || c.seriesRomaji || '';
+const castToText = list => (list || []).map(p => p.en && p.ja ? `${p.en} / ${p.ja}` : (p.en || p.ja)).join('\n');
+const parseCast = s => String(s || '').split(/[\n,;、]/).map(x => x.trim()).filter(Boolean).map(parsePerson).filter(p => p.en || p.ja);
+
+const NAME_SEED = {
+  va:[['Kimura Ryouhei','木村良平'],['Furukawa Makoto','古川慎'],['Midorikawa Hikaru','緑川光'],['Kobayashi Hirotaka','古林裕貴'],
+      ['Satou Takuya','佐藤拓也'],['Kakihara Tetsuya','柿原徹也'],['Saitou Souma','斉藤壮馬'],['Morikubo Shoutarou','森久保祥太郎'],
+      ['Maeno Tomoaki','前野智昭'],['Miki Shinichirou','三木眞一郎'],['Nakata Jouji','中田譲治'],['Toriumi Kousuke','鳥海浩輔']],
+  series:[['Tenbushuu ni Iyasare','天部衆に癒されCD'],['DIABOLIK LOVERS','DIABOLIK LOVERS'],['Obey Me!ASMR','Obey Me! ASMR'],['linJewelry Kiss','linJewelry Kiss']]
+};
+/* Built-in pairs + pairs learned whenever you save a CD that has both spellings. */
+const Names = {
+  key: s => String(s || '').toLowerCase().replace(/[\s\u3000.・]+/g, ''),
+  flat: s => String(s || '').replace(/[\s\u3000]+/g, ''),
+  pairs(kind){ return [...(DB.setting(kind + 'Pairs') || []), ...NAME_SEED[kind]]; },
+  toJa(kind, en){ const k = this.key(en); const p = k && this.pairs(kind).find(p => this.key(p[0]) === k); return p ? p[1] : ''; },
+  toEn(kind, ja){ const j = this.flat(ja); const p = j && this.pairs(kind).find(p => this.flat(p[1]) === j); return p ? p[0] : ''; },
+  learn(kind, en, ja){
+    if(!en || !ja) return; const k = this.key(en);
+    DB.setting(kind + 'Pairs', [[en, ja], ...(DB.setting(kind + 'Pairs') || []).filter(p => this.key(p[0]) !== k)]);
+  },
+  pid: p => Names.key(p.en) || Names.key(p.ja),
+  fillPerson(p){ if(!p.ja && p.en) p.ja = this.toJa('va', p.en); if(!p.en && p.ja) p.en = this.toEn('va', p.ja); return p; },
+  fillCD(c){
+    (c.cast || []).forEach(p => this.fillPerson(p));
+    if(!c.series && c.seriesRomaji) c.series = this.toJa('series', c.seriesRomaji);
+    if(!c.seriesRomaji && c.series) c.seriesRomaji = this.toEn('series', c.series);
+    return c;
+  },
+  learnFrom(c){ (c.cast || []).forEach(p => this.learn('va', p.en, p.ja)); this.learn('series', c.seriesRomaji, c.series); }
+};
+/* Normalises metadata from any source: cast → {en, ja}; series → Japanese / romaji slots. */
+function normMeta(m){
+  const o = {...m};
+  o.cast = (m.cast || []).map(parsePerson).filter(p => p.en || p.ja);
+  if(m.series && !m.seriesRomaji){ if(hasCJK(m.series)){ o.series = m.series; o.seriesRomaji = ''; } else { o.series = ''; o.seriesRomaji = m.series; } }
+  return Names.fillCD(o);
+}
+/* "CV.古川慎", "CV：三木 眞一郎（…" → ['古川慎', '三木眞一郎'] */
+function cvNames(text){
+  const out = [];
+  for(const m of String(text || '').matchAll(/CV\s*[.．:：]?\s*([^\s）)、,，/／・「」『』]+)(?:[\s\u3000]+([\u3040-\u30ff\u3400-\u9fff]{1,3})(?![\u3040-\u30ff\u3400-\u9fff]))?/g)){
+    let n = m[1]; if(m[2] && [...n].length <= 3) n += m[2];
+    n = n.replace(/[\s\u3000]+/g, ''); if(hasCJK(n) && !out.includes(n)) out.push(n);
+  }
+  return out;
+}
+
+/* =====================================================================
+   8. ONLINE SOURCES — network helper, covers, site adapters
+   ===================================================================== */
+/* A page opened from disk can't read other sites directly (CORS), so every request tries a direct fetch
+   first and then falls back to free public CORS proxies. Both are editable in the Add CD dialog. */
+const DEFAULT_PROXIES = ['https://corsproxy.io/?url={url}', 'https://api.allorigins.win/raw?url={url}'];
+const hostOf = u => { try{ return new URL(u).host; }catch(e){ return 'proxy'; } };
+const absUrl = (u, base) => { try{ return new URL(u, base).href; }catch(e){ return u || ''; } };
+const Net = {
+  proxies(){ const p = DB.setting('proxies'); return Array.isArray(p) && p.length ? p : DEFAULT_PROXIES; },
+  routes(url){
+    const via = this.proxies().map(p => ({ via:hostOf(p.replace('{url}', 'x')), u: p.includes('{url}') ? p.replace('{url}', encodeURIComponent(url)) : p + encodeURIComponent(url) }));
+    return [{via:'direct', u:url}, ...via];
+  },
+  decode(buf, ctype){
+    let enc = ((ctype || '').match(/charset=([\w-]+)/i) || [])[1];
+    if(!enc){ const head = new TextDecoder('latin1').decode(buf.slice(0, 3000)); enc = (head.match(/charset=["']?([\w-]+)/i) || [])[1]; }
+    try{ return new TextDecoder(enc || 'utf-8').decode(buf); }catch(e){ return new TextDecoder('utf-8').decode(buf); }
+  },
+  async get(url, kind, check){
+    let last;
+    for(const r of this.routes(url)){
+      const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 20000);
+      try{
+        const res = await fetch(r.u, {signal:ctl.signal, credentials:'omit', referrerPolicy:'no-referrer'});
+        if(!res.ok) throw new Error('HTTP ' + res.status);
+        if(kind === 'blob'){ const b = await res.blob(); if(b.size < 200) throw new Error('empty image'); return b; }
+        const text = this.decode(await res.arrayBuffer(), res.headers.get('content-type'));
+        if(check && !check(text)) throw new Error('unexpected page (blocked or changed?)');
+        return {text, via:r.via};
+      }catch(e){ last = e; }
+      finally{ clearTimeout(timer); }
+    }
+    throw last || new Error('Lookup failed');
+  },
+  text(url, check){ return this.get(url, 'text', check); },
+  blob(url){ return this.get(url, 'blob'); }
+};
+
+const Covers = {
+  q:[], active:0,
+  run(fn){ return new Promise((res, rej) => { this.q.push({fn, res, rej}); this.pump(); }); },
+  pump(){ while(this.active < 3 && this.q.length){ const j = this.q.shift(); this.active++; j.fn().then(j.res, j.rej).finally(() => { this.active--; this.pump(); }); } },
+  async toData(blob, max = 420){
+    const bmp = await createImageBitmap(blob);
+    const s = Math.min(1, max / Math.max(bmp.width, bmp.height));
+    const c = document.createElement('canvas'); c.width = Math.max(1, Math.round(bmp.width * s)); c.height = Math.max(1, Math.round(bmp.height * s));
+    c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
+    return c.toDataURL('image/jpeg', .82);
+  },
+  fetchData(url){ if(!url) return Promise.reject(new Error('no cover address')); return this.run(async () => this.toData(await Net.blob(url))); }
+};
+
+/* ---- parsing helpers ---- */
+const MON = {jan:1,feb:2,mar:3,apr:4,may:5,jun:6,jul:7,aug:8,sep:9,oct:10,nov:11,dec:12};
+const pad2 = n => String(n).padStart(2, '0');
+function parseDate(s){
+  s = String(s || '');
+  let m = s.match(/(\d{4})\s*[-\/.年]\s*(\d{1,2})\s*[-\/.月]\s*(\d{1,2})/);
+  if(m) return `${m[1]}-${pad2(m[2])}-${pad2(m[3])}`;
+  m = s.match(/([A-Za-z]{3,9})\.?\s+(\d{1,2})(?:st|nd|rd|th)?,?\s+(\d{4})/);
+  if(m && MON[m[1].slice(0, 3).toLowerCase()]) return `${m[3]}-${pad2(MON[m[1].slice(0, 3).toLowerCase()])}-${pad2(m[2])}`;
+  m = s.match(/(\d{1,2})\s+([A-Za-z]{3,9})\.?,?\s+(\d{4})/);
+  if(m && MON[m[2].slice(0, 3).toLowerCase()]) return `${m[3]}-${pad2(MON[m[2].slice(0, 3).toLowerCase()])}-${pad2(m[1])}`;
+  return '';
+}
+const BLOCK = new Set(['P','DIV','LI','UL','OL','H1','H2','H3','H4','H5','H6','DT','DD','DL','TR','TD','TH','BR','SECTION','ARTICLE','TABLE','HR','FIGURE','FIGCAPTION','BLOCKQUOTE','PRE']);
+/* Flattens a page to a list of text lines. With mark=true, heading lines get a \u0001 prefix. */
+function lineList(doc, mark){
+  doc.querySelectorAll('script,style,noscript,template').forEach(n => n.remove());
+  const out = []; let cur = '', head = false;
+  const flush = () => { const s = cur.replace(/[\s\u00a0]+/g, ' ').trim(); if(s) out.push((head && mark ? '\u0001' : '') + s); cur = ''; head = false; };
+  (function walk(n){
+    for(const c of n.childNodes){
+      if(c.nodeType === 3) cur += c.nodeValue;
+      else if(c.nodeType === 1){
+        const b = BLOCK.has(c.tagName);
+        if(b){ flush(); if(/^H[1-6]$/.test(c.tagName)) head = true; }
+        walk(c);
+        if(b) flush();
+      }
+    }
+  })(doc.body);
+  flush();
+  return out;
+}
+const DUR = /^[#\d]*:\d{2}$/;
+const isDash = x => /^[–—\-‐]+$/.test(x);
+function parseTrackLines(lines){
+  const tr = [];
+  for(const l0 of lines){
+    if(isDash(l0)) continue;
+    if(DUR.test(l0) && tr.length){ tr[tr.length - 1].d = l0.includes('#') ? '' : l0; continue; }
+    let t = l0.replace(/^\d+[.)．]\s*/, ''), d = '';
+    const m = t.match(/^(.*\S)\s+[(（]?(\d{1,2}:\d{2})[)）]?$/);
+    if(m){ t = m[1]; d = m[2]; }
+    tr.push({t, d});
+  }
+  return tr;
+}
+const tracksToText = t => (t || []).map(x => x.d ? `${x.t} | ${x.d}` : x.t).join('\n');
+const textToTracks = s => s.split('\n').map(l => l.trim()).filter(Boolean).map(l => { const m = l.match(/^(.*?)\s*\|\s*([#\d]*:\d{2})\s*$/); return m ? {t:m[1], d:m[2].includes('#') ? '' : m[2]} : {t:l, d:''}; });
+const splitList = s => s.split(/[,;\n]/).map(x => x.trim()).filter(Boolean);
+const slugify = s => String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60);
+const metaContent = (doc, n) => (doc.querySelector(`meta[property="${n}"],meta[name="${n}"]`) || {}).content || '';
+const htmlDoc = h => new DOMParser().parseFromString(h, 'text/html');
+const clip = (box) => box.textContent.replace(/\s+/g, ' ').trim();
+/* climb from a node to the largest ancestor that still holds only one of `sel` — i.e. one list "card" */
+function cardOf(node, sel, stop){
+  let box = node;
+  while(box.parentElement && box.parentElement !== stop && box.parentElement.querySelectorAll(sel).length === 1) box = box.parentElement;
+  return box;
+}
+
+/* ---- rukojiDB ---- */
+const Rukoji = {
+  id:'rukoji', name:'rukojiDB',
+  match: u => /(^|\/\/|\.)rukoji\.com\//i.test(u),
+  check: t => /rukoji/i.test(t),
+  async search(term){ return (await this.list(term, 1)).slice(0, 12); },
+  async list(q, pages = 1, o = {}, prog){
+    const base = /^https?:/i.test(q) ? q : 'https://rukoji.com/?s=' + encodeURIComponent(q);
+    const out = new Map(); let param = null;
+    for(let p = 1; p <= pages; p++){
+      const url = p === 1 ? base : this.pageUrl(base, p, param);
+      const {text} = await Net.text(url, this.check);
+      if(p === 1){ const m = text.match(/query-(\d+)-page=/); if(m) param = 'query-' + m[1] + '-page'; }
+      const before = out.size;
+      this.parseListing(text).forEach(f => { if(!out.has(f.url)) out.set(f.url, f); });
+      if(prog) prog(p);
+      if(out.size === before) break;
+    }
+    return [...out.values()];
+  },
+  pageUrl(base, p, param){
+    const u = new URL(base);
+    if(param){ u.searchParams.set(param, p); return u.href; }
+    u.pathname = u.pathname.replace(/\/page\/\d+\/?$/, '').replace(/\/?$/, '/') + 'page/' + p + '/';
+    return u.href;
+  },
+  parseListing(html){
+    const doc = htmlDoc(html), out = [], H = 'h1,h2,h3,h4';
+    doc.querySelectorAll(H.split(',').map(h => h + ' a[href*="/posts/"]').join(',')).forEach(a => {
+      const href = absUrl(a.getAttribute('href'), 'https://rukoji.com/');
+      if(!/rukoji\.com\/posts\/[^/?#]+\/?$/i.test(href) || /\/posts\/released-/i.test(href)) return;
+      const box = cardOf(a.closest(H), H, doc.body), im = box.querySelector('img');
+      const parts = clip(box).split(/\b(Label|Series|VA|Scenario|Illust):\s*/), t = {VA:[], Scenario:[]};
+      for(let i = 1; i < parts.length; i += 2){ const v = (parts[i + 1] || '').trim(); if(!v) continue; if(parts[i] === 'VA') t.VA.push(v); else if(parts[i] === 'Scenario') t.Scenario.push(v); else t[parts[i]] = v; }
+      const title = a.textContent.replace(/\s+/g, ' ').trim(), cover = im ? absUrl(im.getAttribute('src') || '', href) : '';
+      out.push({src:this.name, url:href, title, thumb:cover, meta:{
+        title, cover, url:href, id:(href.match(/\/posts\/([^/?#]+)/) || [])[1], label:t.Label || '', seriesRomaji:t.Series || '',
+        cast:t.VA.map(en => ({en})), scenario:t.Scenario, illustrator:t.Illust || '', source:this.name }});
+    });
+    return out;
+  },
+  async fromUrl(url){ const {text, via} = await Net.text(url, this.check); const r = this.parseHTML(text, url); if(r.meta) r.meta._via = via; return r; },
+  parseHTML(html, url){ return {meta:this.parse(html, url)}; },
+  parse(html, url){
+    const doc = htmlDoc(html);
+    const out = {url:url || '', source:this.name};
+    out.title = (metaContent(doc, 'og:title') || (doc.querySelector('h1') || {}).textContent || '').replace(/\s*\|\s*rukojiDB\s*$/i, '').trim();
+    let cover = metaContent(doc, 'og:image') || metaContent(doc, 'twitter:image');
+    if(!cover || /\/assets\//.test(cover)){ const im = [...doc.querySelectorAll('img')].find(i => /\/posts\//.test(i.getAttribute('src') || '')); if(im) cover = im.getAttribute('src'); }
+    out.cover = cover ? absUrl(cover, url || 'https://rukoji.com/') : '';
+    const slug = ((url || '').match(/\/posts\/([^/?#]+)/) || [])[1]; if(slug) out.id = slug;
+
+    const L = lineList(doc), start = L.findIndex(l => /^CD Info$/i.test(l));
+    if(start < 0) throw new Error("couldn't find the CD details on that page");
+    const HEAD = /^(Series|Cast|Tracklist|Bonuses|Fan translation|External links|Comments|Story|Character introduction)\s*:?$/i;
+    const END = /^(Entry added|Last update|Login|Latest Entries|Indexes)\s*:?$/i;
+    const TAGROW = /^(Label|Series|VA|Scenario|Illust)\s*:|^※/;
+    const sec = {info:[]}; let cur = 'info';
+    for(const l of L.slice(start + 1)){
+      if(END.test(l)) break;
+      const h = l.match(HEAD);
+      if(h){ cur = h[1].toLowerCase(); sec[cur] = sec[cur] || []; continue; }
+      if(cur !== 'info' && TAGROW.test(l)) continue;
+      sec[cur].push(l);
+    }
+    const clean = a => (a || []).filter(x => !isDash(x));
+    const info = {}; let k = null;
+    for(const l of sec.info){
+      const m = l.match(/^(Release|Alt name|Label|Scenario|Illustration|Category)\s*:\s*(.*)$/i);
+      if(m){ k = m[1].toLowerCase(); info[k] = info[k] || []; if(m[2]) info[k].push(m[2]); }
+      else if(k) info[k].push(l);
+    }
+    const rel = clean(info.release).join(' ');
+    out.release = parseDate(rel);
+    const dm = rel.match(/[A-Za-z]{3,9}\.?\s+\d{1,2},?\s+\d{4}/);
+    out.releaseNote = dm && rel.trim() !== dm[0] ? rel.replace(dm[0], '').replace(/\s+/g, ' ').trim() : '';
+    out.altTitle = clean(info['alt name']).join(' ');
+    out.label = clean(info.label).join(', ');
+    out.scenario = clean(info.scenario);
+    out.illustrator = clean(info.illustration).join(', ');
+    out.category = clean(info.category).join(' ');
+    out.seriesRomaji = clean(sec.series)[0] || '';
+    /* romaji cast from the Cast list; Japanese spellings come from the "CV.…" lines in the character intro,
+       paired by position when the counts match */
+    const en = clean(sec.cast), ja = cvNames(clean(sec['character introduction']).join('\n'));
+    out.cast = en.map((n, i) => ({en:n, ja: ja.length === en.length ? ja[i] : ''}));
+    out.tracks = parseTrackLines(clean(sec.tracklist));
+    const bl = []; for(const l of clean(sec.bonuses)){ if(DUR.test(l) && bl.length) bl[bl.length - 1] += ` (${l})`; else bl.push(l); }
+    out.bonuses = bl;
+    out.synopsis = clean(sec.story).filter(l => !/^No English translation/i.test(l)).join('\n');
+    const all = L.join('\n');
+    out.pn = (all.match(/P\/N:\s*([^\s]+)/i) || [])[1] || '';
+    out.jan = (all.match(/JAN:\s*(\d{8,14})/i) || [])[1] || '';
+    return out;
+  }
+};
+
+/* ---- generic "label: value" page reader (HIBIKIFORUM, DLsite, SKiT Dolce, TEAM-E product pages) ---- */
+const Generic = {
+  KEYS:[
+    ['release',  /^(release(d)?( date)?|発売日|発売予定日|発売|販売日|配信開始日|リリース日?)$/i],
+    ['cast',     /^(cast|voice actors?|voice cast|cv|キャスト|出演者?|声優)$/i],
+    ['label',    /^(label|brand|publisher|company|レーベル|ブランド名?|サークル名|メーカー名?|発売元)$/i],
+    ['series',   /^(series|シリーズ名?)$/i],
+    ['altTitle', /^(original title|japanese title|alt(ernate)? (name|title)|原題|日本語タイトル)$/i],
+    ['scenario', /^(scenario|script|writer|シナリオ|脚本)$/i],
+    ['illustrator', /^(illust(ration|rator)?|イラスト)$/i],
+    ['pn',       /^(catalog(ue)?( number| no\.?)?|cat\.? ?no\.?|product (no|number)|商品コード|品番|型番|p\/n)$/i],
+    ['jan',      /^jan( code)?$/i],
+    ['synopsis', /^(synopsis|story|summary|description|plot|あらすじ|ストーリー|概要|作品内容|商品説明|商品詳細)$/i],
+    ['tracks',   /^(track ?list|tracks?|contents|収録内容|トラックリスト|トラック)$/i],
+    ['bonuses',  /^(bonus(es)?|特典|購入特典)$/i],
+    ['category', /^(type|category|format|種別|作品形式)$/i]
+  ],
+  keyOf(s){ const t = s.trim(); return (this.KEYS.find(([, re]) => re.test(t)) || [])[0]; },
+  cover(doc, url){
+    const og = metaContent(doc, 'og:image'); if(og) return absUrl(og, url);
+    const im = [...doc.querySelectorAll('img')].find(i => { const s = i.getAttribute('src') || ''; return /\.(jpe?g|png|webp)(\?|$)/i.test(s) && !/logo|icon|banner|sprite|badge|button|arrow/i.test(s); });
+    return im ? absUrl(im.getAttribute('src'), url) : '';
+  },
+  parse(doc, url, o = {}){
+    const L = lineList(doc, true), f = {}; let cur = null;
+    for(const raw of L){
+      const head = raw[0] === '\u0001', l = head ? raw.slice(1) : raw;
+      const kv = l.match(/^([^:：]{1,32})\s*[:：]\s*(.*)$/);
+      let k = kv && this.keyOf(kv[1]);
+      if(k){ cur = k; f[k] = f[k] || []; if(kv[2]) f[k].push(kv[2]); continue; }
+      k = this.keyOf(l);
+      if(k){ cur = k; f[k] = f[k] || []; continue; }
+      if(head){ cur = null; continue; }
+      if(cur) f[cur].push(l);
+    }
+    const list = (k, n) => (f[k] || []).filter(x => !isDash(x)).slice(0, n);
+    const one = k => list(k, 1)[0] || '';
+    const names = a => {
+      const cv = cvNames(a.join(' ')); if(cv.length) return cv;
+      return a.flatMap(x => x.split(/\s*[,、;／]\s*|\s+\/\s+/)).map(x => x.trim()).filter(Boolean);
+    };
+    const m = {
+      title: o.title || (metaContent(doc, 'og:title') || (doc.querySelector('h1') || {}).textContent || doc.title || '').split(/[|｜]/)[0].trim(),
+      altTitle: one('altTitle'), release: parseDate((f.release || []).join(' ')), releaseNote: '',
+      label: one('label') || o.label || '', series: one('series') || o.series || '',
+      cast: names(list('cast', 12)), scenario: names(list('scenario', 6)), illustrator: one('illustrator'),
+      pn: one('pn') || o.pn || '', jan: (one('jan').match(/\d{8,14}/) || [''])[0], category: one('category'),
+      synopsis: list('synopsis', 20).join('\n'), tracks: parseTrackLines(list('tracks', 80)), bonuses: list('bonuses', 20),
+      cover: o.cover || this.cover(doc, url), url: url || '', source: o.source || '', id: o.id || ''
+    };
+    if(!m.synopsis){ const d = metaContent(doc, 'og:description') || metaContent(doc, 'description'); if(d.length > 30) m.synopsis = d; }
+    if(!m.cast.length) m.cast = cvNames(m.title + '\n' + m.synopsis);
+    return m;
+  }
+};
+
+/* ---- HIBIKIFORUM (MediaWiki). Written against MediaWiki's standard API; the site's own page layout is
+   unverified, so unusual pages may need the fields adjusted by hand in the editor. ---- */
+const Hibiki = {
+  id:'hibiki', name:'HIBIKIFORUM', root:'http://hibikiforum.net/',
+  match: u => /hibikiforum\.net/i.test(u),
+  api(){ return DB.setting('hibikiApi') || this.root + 'api.php'; },
+  async call(params){
+    const qs = new URLSearchParams({format:'json', origin:'*', ...params});
+    const {text} = await Net.text(this.api() + '?' + qs, t => t.trim().startsWith('{'));
+    const j = JSON.parse(text);
+    if(j.error) throw new Error(j.error.info || 'wiki error');
+    return j;
+  },
+  pageUrl: t => 'http://hibikiforum.net/index.php?title=' + encodeURIComponent(String(t).replace(/ /g, '_')),
+  titleFromUrl(u){ try{ const x = new URL(u); return x.searchParams.get('title') || decodeURIComponent(x.pathname.replace(/^\/(wiki\/|index\.php\/)?/, '')); }catch(e){ return u; } },
+  async search(term){ return (await this.list(term, 1)).slice(0, 12); },
+  /* keyword → wiki search; "Category:Name" (or a link to a category page) → every page in that category */
+  async list(q, pages = 1, o = {}, prog){
+    const qq = /^https?:/i.test(q) ? this.titleFromUrl(q) : q, isCat = /^Category:/i.test(qq), out = new Map();
+    let cont = {};
+    for(let p = 1; p <= pages; p++){
+      const j = await this.call(isCat
+        ? {action:'query', list:'categorymembers', cmtitle:qq, cmlimit:'50', cmtype:'page', ...cont}
+        : {action:'query', list:'search', srsearch:qq, srlimit:'50', srnamespace:'0', ...cont});
+      ((j.query && (isCat ? j.query.categorymembers : j.query.search)) || []).forEach(r => out.set(r.title, {src:this.name, title:r.title, url:this.pageUrl(r.title), thumb:''}));
+      if(prog) prog(p);
+      if(!j.continue) break; cont = j.continue;
+    }
+    return [...out.values()];
+  },
+  async fromUrl(url){
+    const j = await this.call({action:'parse', page:this.titleFromUrl(url), prop:'text|displaytitle', redirects:'1', disableeditsection:'1'});
+    const title = j.parse.title;
+    return {meta: this.parseBody(j.parse.text['*'], this.pageUrl(title), title)};
+  },
+  parseHTML(html, url){ return {meta: this.parseBody(html, url, '')}; },
+  parseBody(html, url, title){
+    const doc = htmlDoc(/<body/i.test(html) ? html : `<body>${html}</body>`);
+    const content = doc.querySelector('#mw-content-text'); if(content) doc.body.innerHTML = content.innerHTML;
+    const im = [...doc.querySelectorAll('img')].find(i => /\/images\//.test(i.getAttribute('src') || '') && !/\/resources\//.test(i.getAttribute('src')));
+    let cover = im ? absUrl(im.getAttribute('src'), this.root) : '';
+    cover = cover.replace(/\/thumb\/(.+?)\/\d+px-[^/]+$/, '/$1');   // thumbnail → original file
+    return Generic.parse(doc, url, {title, cover, source:this.name, id:'hibiki-' + slugify(title || url)});
+  }
+};
+
+/* ---- DLsite Girls. Work pages are read with the generic reader (販売日 / 声優 / ブランド名 / シリーズ名 rows).
+   Layout unverified from here; adult-gated works may not load without your browser's age check. ---- */
+const DLsite = {
+  id:'dlsite', name:'DLsite Girls',
+  match: u => /dlsite\.com/i.test(u),
+  check: t => /dlsite/i.test(t),
+  code: u => (String(u).match(/product_id\/([A-Z]{2}\d{5,})/i) || [])[1] || '',
+  workUrl: c => `https://www.dlsite.com/girls/work/=/product_id/${c}.html`,
+  listUrl(q, p){
+    if(/^https?:/i.test(q)){
+      const [path, qs] = q.split('?');
+      return path.replace(/\/page\/\d+\/?$/, '').replace(/\/$/, '') + (p > 1 ? '/page/' + p : '') + (qs ? '?' + qs : '');
+    }
+    return `https://www.dlsite.com/girls/fsr/=/language/jp/sex_category%5B0%5D/female/keyword/${encodeURIComponent(q)}/per_page/50` + (p > 1 ? '/page/' + p : '');
+  },
+  parseItems(html, base){
+    const doc = htmlDoc(html), seen = new Map();
+    doc.querySelectorAll('a[href*="product_id"]').forEach(a => {
+      const c = this.code(a.getAttribute('href')); if(!c) return;
+      const id = 'dlsite-' + c.toLowerCase(), url = this.workUrl(c);
+      const e = seen.get(c) || {src:this.name, id, url, title:'', thumb:'', meta:{pn:c, id, url, source:this.name}};
+      const t = (a.getAttribute('title') || a.textContent).replace(/\s+/g, ' ').trim(); if(t.length > e.title.length) e.title = t;
+      const im = a.querySelector('img'); if(im && !e.thumb) e.thumb = absUrl(im.getAttribute('data-src') || im.getAttribute('src') || '', base);
+      e.meta.title = e.title; e.meta.cover = e.thumb; seen.set(c, e);
+    });
+    return [...seen.values()].filter(e => e.title);
+  },
+  async search(term){ return (await this.list(term, 1)).slice(0, 12); },
+  async list(q, pages = 1, o = {}, prog){
+    if(this.code(q)){ return [{src:this.name, id:'dlsite-' + this.code(q).toLowerCase(), url:this.workUrl(this.code(q)), title:this.code(q), thumb:'', meta:null}]; }
+    const out = new Map();
+    for(let p = 1; p <= pages; p++){
+      const url = this.listUrl(q, p), {text} = await Net.text(url, this.check);
+      let found = this.parseItems(text, url);
+      if(!found.length){      // newer DLsite search pages load their results through an ajax endpoint
+        try{
+          const j = JSON.parse((await Net.text(url.replace('/fsr/=', '/fsr/ajax/='), t => t.trim().startsWith('{'))).text);
+          found = this.parseItems(j.search_result || '', url);
+        }catch(e){ /* keep empty */ }
+      }
+      const before = out.size; found.forEach(f => { if(!out.has(f.url)) out.set(f.url, f); });
+      if(prog) prog(p);
+      if(out.size === before) break;
+    }
+    return [...out.values()];
+  },
+  async fromUrl(url){ const {text, via} = await Net.text(url, this.check); const r = this.parseHTML(text, url); r.meta._via = via; return r; },
+  parseHTML(html, url){
+    const doc = htmlDoc(html), code = this.code(url), nameEl = doc.querySelector('#work_name');
+    return {meta: Generic.parse(doc, url, {title:nameEl ? nameEl.textContent.replace(/\s+/g, ' ').trim() : '', source:this.name, pn:code, id:code ? 'dlsite-' + code.toLowerCase() : ''})};
+  }
+};
+
+/* ---- SKiT Dolce (skitdolce.jp). Listing URLs look like /category/A001/ ; the in-stock filter is the
+   keyword_condition=ITEM.ZAIKO_TOTAL parameter, which we leave OUT unless you tick "only in stock". ---- */
+const Skit = {
+  id:'skit', name:'SKiT Dolce',
+  defaultList:'https://skitdolce.jp/category/A001/',
+  match: u => /skitdolce\.jp/i.test(u),
+  check: t => /skit|スキット/i.test(t),
+  code: u => (String(u).match(/\/(?:category\/A\d+|item)\/([A-Za-z0-9_\-]+)\.html/) || [])[1] || '',
+  listUrl(q, p, inStock){
+    const u = new URL(/^https?:/i.test(q) ? q : this.defaultList);
+    if(!/^https?:/i.test(q)) u.searchParams.set('keyword', q);
+    if(inStock) u.searchParams.set('keyword_condition', 'ITEM.ZAIKO_TOTAL'); else u.searchParams.delete('keyword_condition');
+    if(p > 1){ u.searchParams.set('SEARCH_MAX_ROW_LIST', '50'); u.searchParams.set('item_list_mode', '2'); u.searchParams.set('sort_order', '1'); u.searchParams.set('request', 'page'); u.searchParams.set('next_page', String(p)); }
+    return u.href;
+  },
+  parseItems(html, base){
+    const doc = htmlDoc(html), seen = new Map();
+    doc.querySelectorAll('a[href]').forEach(a => {
+      const c = this.code(a.getAttribute('href')); if(!c || /^index$/i.test(c)) return;
+      const url = absUrl(a.getAttribute('href'), base), id = 'skit-' + c.toLowerCase();
+      const e = seen.get(c) || {src:this.name, id, url, title:'', thumb:'', price:'', meta:null};
+      const t = a.textContent.replace(/\s+/g, ' ').trim(); if(t.length > e.title.length && !/カート|買い物/.test(t)) e.title = t;
+      const im = a.querySelector('img'); if(im && !e.thumb) e.thumb = absUrl(im.getAttribute('data-src') || im.getAttribute('src') || '', base);
+      if(!e.price){ const box = cardOf(a, 'a[href*=".html"]', doc.body), pm = clip(box).match(/([\d,]+)円/); if(pm) e.price = pm[1] + '円'; }
+      seen.set(c, e);
+    });
+    return [...seen.values()].filter(e => e.title).map(e => {
+      const lm = e.thumb.match(/client_info\/([^/]+)\/itemimage/), c = this.code(e.url);
+      e.meta = {title:e.title, cover:e.thumb, url:e.url, id:e.id, pn:c, label: lm ? lm[1].charAt(0) + lm[1].slice(1).toLowerCase() : '', cast:cvNames(e.title), source:this.name};
+      return e;
+    });
+  },
+  async search(term){ return (await this.list(term, 1, {inStock:false})).slice(0, 12); },
+  async list(q, pages = 1, o = {}, prog){
+    const out = new Map();
+    for(let p = 1; p <= pages; p++){
+      const url = this.listUrl(q, p, !!o.inStock), {text} = await Net.text(url, this.check);
+      const before = out.size; this.parseItems(text, url).forEach(f => { if(!out.has(f.url)) out.set(f.url, f); });
+      if(prog) prog(p);
+      if(out.size === before) break;
+    }
+    return [...out.values()];
+  },
+  async fromUrl(url){ const {text, via} = await Net.text(url, this.check); const r = this.parseHTML(text, url); r.meta._via = via; return r; },
+  parseHTML(html, url){
+    const c = this.code(url);
+    return {meta: Generic.parse(htmlDoc(html), url, {source:this.name, pn:c, id:c ? 'skit-' + c.toLowerCase() : ''})};
+  }
+};
+
+/* ---- TEAM Entertainment (team-e.co.jp). Title index → series page → individual CDs. ---- */
+const TeamE = {
+  id:'teame', name:'TEAM Entertainment', base:'https://www.team-e.co.jp/', index:null,
+  match: u => /team-e\.co\.jp/i.test(u),
+  check: t => /team-?e|TEAM Entertainment|チームエンタ/i.test(t),
+  isSeries: u => /team-e\.co\.jp\/titlelist\/[^/?#]+\/?$/i.test(u),
+  async loadIndex(){
+    if(this.index) return this.index;
+    const {text} = await Net.text(this.base + 'titlelist/', this.check);
+    const doc = htmlDoc(text), seen = new Map();
+    doc.querySelectorAll('a[href]').forEach(a => {
+      let u; try{ u = new URL(a.getAttribute('href'), this.base + 'titlelist/'); }catch(e){ return; }
+      if(!/team-e\.co\.jp$/i.test(u.hostname) || !/^\/titlelist\/[^/]+\/?$/.test(u.pathname)) return;
+      const t = a.textContent.replace(/\s+/g, ' ').trim(); if(!t || t.length > 80) return;
+      const key = u.pathname.replace(/\/$/, ''); if(!seen.has(key)) seen.set(key, {url:this.base.replace(/\/$/, '') + key + '/', title:t});
+    });
+    return this.index = [...seen.values()];
+  },
+  async search(term){
+    const norm = s => s.normalize('NFKC').toLowerCase().replace(/\s+/g, '');
+    const q = norm(term);
+    return (await this.loadIndex()).filter(s => norm(s.title).includes(q)).slice(0, 15)
+      .map(s => ({src:this.name, title:s.title + '  ·  series', url:s.url, series:true}));
+  },
+  async fromUrl(url){ const {text} = await Net.text(url, this.check); return this.parseHTML(text, url); },
+  parseHTML(html, url){
+    if(this.isSeries(url) || htmlDoc(html).querySelectorAll('h3 a[href]').length > 1){
+      const results = this.parseSeries(html, url);
+      if(results.length) return {results};
+    }
+    return {meta: Generic.parse(htmlDoc(html), url, {source:this.name, label:'TEAM Entertainment', id:'team-e-' + slugify(((url || '').match(/\/([^/?#]+)\/?$/) || [])[1] || '')})};
+  },
+  parseSeries(html, url){
+    const doc = htmlDoc(html);
+    const seriesName = (metaContent(doc, 'og:title') || doc.title || '').split(/[|｜]/)[0].trim();
+    const out = [];
+    doc.querySelectorAll('h3').forEach(h3 => {
+      const a = h3.querySelector('a[href]'); if(!a) return;
+      const box = cardOf(h3, 'h3', doc.body), text = clip(box);
+      const img = box.querySelector('img[src*="uploads"]') || box.querySelector('img');
+      const purl = absUrl(a.getAttribute('href'), url);
+      let cast = cvNames(text);
+      if(!cast.length){
+        const h4 = [...box.querySelectorAll('h4')].map(h => clip(h)).find(t => /ARTIST/i.test(t));
+        if(h4) cast = [h4.replace(/ARTIST/i, '').trim()].filter(Boolean);
+      }
+      const slug = (purl.match(/\/([^/?#]+)\/?$/) || [])[1] || '';
+      const para = [...box.querySelectorAll('p')].map(p => clip(p)).filter(p => p && !/CV\s*[:：]/.test(p) && !/^ARTIST/i.test(p)).join('\n');
+      const title = clip(h3), cover = img ? absUrl(img.getAttribute('src'), url) : '';
+      out.push({src:this.name, title, thumb:cover, meta:{
+        title, release:parseDate(text), label:'TEAM Entertainment', series:seriesName, cast,
+        pn:/^[a-z]{3,6}-?\d{3,6}$/i.test(slug) ? slug.toUpperCase() : '', synopsis:para, cover, url:purl, source:this.name, id:'team-e-' + slugify(slug)
+      }});
+    });
+    return out;
+  }
+};
+const SOURCES = [Rukoji, Hibiki, DLsite, Skit, TeamE];
+const IMPORT_SOURCES = [Rukoji, Hibiki, DLsite, Skit];
+
+/* ---- turning metadata into shelf entries ---- */
+const nu = u => String(u || '').replace(/\/+$/, '').replace(/^http:/, 'https:');
+const pnKey = p => String(p || '').toLowerCase().replace(/[\s_\-]+/g, '');   // REC_994 and REC-994 are the same CD
+function findExisting(m){
+  return DB.all.find(c => (m.url && c.url && nu(c.url) === nu(m.url)) || (m.id && c.id === m.id) || (m.pn && c.pn && pnKey(c.pn) === pnKey(m.pn)));
+}
+function cdFields(m){
+  return {title:m.title || '', altTitle:m.altTitle || '', release:m.release || '', releaseNote:m.releaseNote || '', label:m.label || '',
+    series:m.series || '', seriesRomaji:m.seriesRomaji || '', cast:m.cast || [], scenario:m.scenario || [], illustrator:m.illustrator || '',
+    category:m.category || '', pn:m.pn || '', jan:m.jan || '', synopsis:m.synopsis || '', tracks:m.tracks || [], bonuses:m.bonuses || [],
+    cover:m.cover || '', url:m.url || ''};
+}
+const isEmpty = v => v === undefined || v === null || v === '' || (Array.isArray(v) && !v.length);
+/* adds a new CD, or fills only the blank fields of one you already have (never touches ratings/notes/owned) */
+function addOrMerge(m0){
+  const m = normMeta(m0), f = cdFields(m), ex = findExisting(m);
+  if(ex){
+    const patch = {}; for(const k in f) if(isEmpty(ex[k]) && !isEmpty(f[k])) patch[k] = f[k];
+    if(patch.cover) patch.coverData = '';
+    DB.update(ex.id, patch); Names.fillCD(DB.byId(ex.id)); DB.touch();
+    return 'updated';
+  }
+  let id = m.id || 'cd-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
+  while(DB.byId(id)) id += '-x';
+  DB.add(hydrate({id, ...f}));
+  return 'added';
+}
+const mergeMeta = (base, detail) => { const o = {...(base || {})}; for(const k in detail) if(!isEmpty(detail[k])) o[k] = detail[k]; return o; };
+
+/* =====================================================================
+   9. ADD / EDIT DIALOG
+   ===================================================================== */
+const ED = { id:null, slug:'', returnTo:null, coverData:'' };
+const el = id => document.getElementById(id);
+let LK = [];   // current lookup results
+const setStatus = (html, cls) => { const s = el('lkStatus'); s.className = 'lstatus ' + (cls || ''); s.innerHTML = html; };
+const spin = '<span class="spin"></span>';
+const failMsg = e => `Couldn't read that site (${esc(e.message)}). A page opened from disk can't read other websites directly, so lookups go through a free CORS proxy, which may be down or blocked. Try again, or open “Lookup blocked?” below to paste the page source.`;
+
+function setForm(c){
+  const v = (id, x) => { el(id).value = x || ''; };
+  v('fTitle', c.title); v('fAlt', c.altTitle); v('fRelease', c.release); v('fRelNote', c.releaseNote);
+  v('fLabel', c.label); v('fSeries', c.series); v('fSeriesRo', c.seriesRomaji); v('fCast', castToText(c.cast)); v('fScenario', (c.scenario || []).join(', '));
+  v('fIllust', c.illustrator); v('fCategory', c.category); v('fPN', c.pn); v('fJAN', c.jan); v('fUrl', c.url);
+  v('fSynopsis', c.synopsis); v('fTracks', tracksToText(c.tracks)); v('fBonuses', (c.bonuses || []).join('\n')); v('fCover', c.cover);
+}
+function applyMeta(m0){
+  const m = normMeta(m0), fill = el('lkFill').checked;
+  const put = (id, val) => { if(isEmpty(val) || String(val).trim() === '') return; if(fill && el(id).value.trim()) return; el(id).value = val; };
+  put('fTitle', m.title); put('fAlt', m.altTitle); put('fRelease', m.release); put('fRelNote', m.releaseNote);
+  put('fLabel', m.label); put('fSeries', m.series); put('fSeriesRo', m.seriesRomaji); put('fIllust', m.illustrator); put('fCategory', m.category);
+  put('fPN', m.pn); put('fJAN', m.jan); put('fSynopsis', m.synopsis); put('fUrl', m.url);
+  if(m.cast.length) put('fCast', castToText(m.cast));
+  if(m.scenario && m.scenario.length) put('fScenario', m.scenario.join(', '));
+  if(m.tracks && m.tracks.length) put('fTracks', tracksToText(m.tracks));
+  if(m.bonuses && m.bonuses.length) put('fBonuses', m.bonuses.join('\n'));
+  if(m.cover && !(fill && (el('fCover').value.trim() || ED.coverData))){ el('fCover').value = m.cover; ED.coverData = ''; }
+  if(m.id && !ED.id && !(fill && ED.slug)) ED.slug = m.id;
+  paintCover();
+}
+function paintCover(){
+  const url = el('fCover').value.trim(), src = ED.coverData || url, t = el('fTitle').value || 'New CD';
+  el('eCover').innerHTML = src
+    ? `<img id="eCoverImg" src="${esc(src)}" data-src="${esc(url)}" data-title="${esc(t)}" alt="Cover preview" referrerpolicy="no-referrer">`
+    : placeholder(t);
+}
+const thumbHTML = r => r.thumb ? `<img src="${esc(r.thumb)}" alt="" referrerpolicy="no-referrer" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'nothumb'}))">` : '<span class="nothumb"></span>';
+const subLine = r => [r.src, r.meta && r.meta.release, r.meta && r.meta.cast && r.meta.cast.length ? castLabel({cast:r.meta.cast.map(parsePerson)}) : '', r.price].filter(Boolean).map(esc).join(' · ');
+function showResults(list, msg){
+  LK = list;
+  el('lkResults').innerHTML = list.map((r, i) => `<li><button type="button" data-i="${i}">${thumbHTML(r)}
+      <span style="flex:1;min-width:0">${esc(r.title)}<br><small class="muted">${subLine(r)}</small></span></button></li>`).join('');
+  if(msg) setStatus(msg);
+}
+async function openSource(src, url){
+  const r = await src.fromUrl(url);
+  if(r.meta){ applyMeta(r.meta); setStatus(`Filled in from ${esc(src.name)}${r.meta._via ? ' (via ' + esc(r.meta._via) + ')' : ''}. Check the details and cover, then Save.`, 'ok'); el('lkResults').innerHTML = ''; }
+  else showResults(r.results, `${r.results.length} CD${r.results.length === 1 ? '' : 's'} in this series. Pick one:`);
+}
+async function runLookup(){
+  const q = el('lkInput').value.trim(); if(!q) return;
+  el('lkGo').disabled = true; el('lkResults').innerHTML = ''; setStatus(spin + 'Looking it up…');
+  try{
+    if(/^(https?:\/\/|www\.)/i.test(q) || /\.(com|net|jp)\//i.test(q)){
+      const url = /^https?:/i.test(q) ? q : (/hibikiforum/i.test(q) ? 'http://' : 'https://') + q;
+      const src = SOURCES.find(s => s.match(url));
+      if(!src) throw new Error('that address isn’t one I can read yet (rukoji.com, hibikiforum.net, dlsite.com, skitdolce.jp, team-e.co.jp)');
+      await openSource(src, url);
+    }else{
+      const sel = el('lkSrc').value, picks = SOURCES.filter(s => sel === 'all' || s.id === sel);
+      const settled = await Promise.allSettled(picks.map(s => s.search(q)));
+      const all = [], errs = [];
+      settled.forEach((r, i) => r.status === 'fulfilled' ? all.push(...r.value) : errs.push(`${picks[i].name}: ${r.reason && r.reason.message}`));
+      if(all.length) showResults(all, `${all.length} match${all.length === 1 ? '' : 'es'}. Pick one:` + (errs.length ? ` <span class="muted">(couldn’t reach: ${esc(errs.join('; '))})</span>` : ''));
+      else if(errs.length === picks.length){ setStatus(failMsg(new Error(errs.join('; '))), 'err'); el('lkMore').open = true; }
+      else setStatus('No matches. Try the Japanese title, or paste a page link.', 'err');
+    }
+  }catch(e){ setStatus(failMsg(e), 'err'); el('lkMore').open = true; }
+  finally{ el('lkGo').disabled = false; }
+}
+async function pickResult(i){
+  const r = LK[i]; if(!r) return;
+  if(r.meta && r.src === TeamE.name){ applyMeta(r.meta); setStatus(`Filled in from ${esc(r.src)}. Check the details and cover, then Save.`, 'ok'); return; }
+  const src = SOURCES.find(s => s.name === r.src);
+  setStatus(spin + 'Loading…');
+  try{
+    const res = await src.fromUrl(r.url);
+    if(res.meta){ applyMeta(mergeMeta(r.meta, res.meta)); setStatus(`Filled in from ${esc(src.name)}. Check the details and cover, then Save.`, 'ok'); el('lkResults').innerHTML = ''; }
+    else showResults(res.results, `${res.results.length} CDs in this series. Pick one:`);
+  }catch(e){
+    if(r.meta){ applyMeta(r.meta); setStatus('Couldn’t load the full page, so I filled in what the list showed.', 'err'); }
+    else{ setStatus(failMsg(e), 'err'); el('lkMore').open = true; }
+  }
+}
+function openEditor(opts = {}){
+  ED.id = opts.id || null; ED.slug = ''; ED.returnTo = opts.returnTo || null;
+  const c = ED.id ? DB.byId(ED.id) : null;
+  el('eHead').textContent = c ? 'Edit CD' : 'Add a CD';
+  el('eDelete').hidden = !c;
+  setForm(c || {});
+  ED.coverData = c ? (c.coverData || '') : '';
+  el('lkInput').value = c && c.url ? c.url : '';
+  el('lkResults').innerHTML = ''; setStatus('');
+  el('lkProxies').value = Net.proxies().join('\n'); el('lkApi').value = DB.setting('hibikiApi') || '';
+  paintCover();
+  const m = el('editor'); m.classList.add('open'); m.setAttribute('aria-hidden', 'false'); document.body.style.overflow = 'hidden';
+  setTimeout(() => (c ? el('fTitle') : el('lkInput')).focus(), 60);
+  if(opts.auto){ if(c && c.url) runLookup(); else setStatus('This CD has no source page saved yet — search by title or paste a link above.'); }
+}
+function closeEditor(restore){
+  const m = el('editor'); m.classList.remove('open'); m.setAttribute('aria-hidden', 'true'); document.body.style.overflow = '';
+  const back = restore && ED.returnTo && DB.byId(ED.returnTo) ? ED.returnTo : null;
+  ED.returnTo = null; if(back) openModal(back);
+}
+el('btnAdd').onclick = () => openEditor();
+el('eClose').onclick = el('eCancel').onclick = () => closeEditor(true);
+el('lkGo').onclick = runLookup;
+el('lkInput').addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); runLookup(); } });
+el('lkResults').addEventListener('click', e => { const b = e.target.closest('button[data-i]'); if(b) pickResult(+b.dataset.i); });
+el('lkParse').onclick = () => {
+  const html = el('lkHtml').value.trim(); if(!html) return;
+  const url = el('lkInput').value.trim().startsWith('http') ? el('lkInput').value.trim() : el('fUrl').value.trim();
+  try{
+    const src = SOURCES.find(s => s.match(url)) || (/CD Info/.test(html) ? Rukoji : (/mw-content-text|mediawiki/i.test(html) ? Hibiki : (/dlsite/i.test(html) ? DLsite : TeamE)));
+    const r = src.parseHTML(html, url);
+    if(r.meta){ applyMeta(r.meta); setStatus('Filled in from the pasted page. Check the details, then Save.', 'ok'); }
+    else showResults(r.results, 'Pick one:');
+  }catch(e){ setStatus('Couldn’t read that source: ' + esc(e.message), 'err'); }
+};
+el('lkSave').onclick = () => {
+  const p = el('lkProxies').value.split('\n').map(x => x.trim()).filter(Boolean);
+  DB.setting('proxies', p.length ? p : DEFAULT_PROXIES); DB.setting('hibikiApi', el('lkApi').value.trim() || '');
+  toast('Lookup settings saved ♡');
+};
+el('lkReset').onclick = () => { DB.setting('proxies', DEFAULT_PROXIES); DB.setting('hibikiApi', ''); el('lkProxies').value = DEFAULT_PROXIES.join('\n'); el('lkApi').value = ''; toast('Back to defaults'); };
+
+let coverTimer;
+el('fCover').oninput = () => { clearTimeout(coverTimer); coverTimer = setTimeout(() => { ED.coverData = ''; paintCover(); }, 400); };
+el('eUpload').onclick = () => el('eFile').click();
+el('eFile').onchange = async e => {
+  const f = e.target.files[0]; e.target.value = ''; if(!f) return;
+  try{ ED.coverData = await Covers.toData(f); el('fCover').value = ''; paintCover(); toast('Cover added ♡'); }
+  catch(err){ toast('Couldn’t read that image'); }
+};
+el('eClearCover').onclick = () => { el('fCover').value = ''; ED.coverData = ''; paintCover(); };
+
+el('eForm').onsubmit = ev => {
+  ev.preventDefault();
+  const title = el('fTitle').value.trim();
+  if(!title){ toast('Give it a title first ♡'); el('fTitle').focus(); return; }
+  const patch = {
+    title, altTitle:el('fAlt').value.trim(), release:el('fRelease').value, releaseNote:el('fRelNote').value.trim(),
+    label:el('fLabel').value.trim(), series:el('fSeries').value.trim(), seriesRomaji:el('fSeriesRo').value.trim(),
+    cast:parseCast(el('fCast').value), scenario:splitList(el('fScenario').value),
+    illustrator:el('fIllust').value.trim(), category:el('fCategory').value.trim(), pn:el('fPN').value.trim(), jan:el('fJAN').value.trim(),
+    url:el('fUrl').value.trim(), synopsis:el('fSynopsis').value.trim(), tracks:textToTracks(el('fTracks').value),
+    bonuses:el('fBonuses').value.split('\n').map(x => x.trim()).filter(Boolean),
+    cover:el('fCover').value.trim(), coverData:ED.coverData
+  };
+  Names.learnFrom(patch); Names.fillCD(patch);          // remember romaji ↔ 日本語 pairs for next time
+  let id = ED.id, msg = 'Saved ♡';
+  if(id) DB.update(id, patch);
+  else{
+    id = ED.slug || ('cd-' + Date.now().toString(36));
+    if(DB.byId(id)){ DB.update(id, patch); msg = 'That CD was already on your shelf, so I updated it ♡'; }
+    else DB.add(hydrate({id, ...patch}));
+  }
+  const back = ED.returnTo; closeEditor(false);
+  buildFilters(); render(); toast(msg);
+  if(back) openModal(back);
+};
+el('eDelete').onclick = () => {
+  const c = DB.byId(ED.id); if(!c || !confirm(`Delete “${c.title}” from your shelf? (Back up first if you want a copy.)`)) return;
+  DB.remove(c.id); ED.returnTo = null; closeEditor(false); buildFilters(); render(); toast('Deleted');
+};
+
+/* =====================================================================
+   10. IMPORT TOOL — bulk-import from rukojiDB, HIBIKIFORUM, DLsite Girls, SKiT Dolce
+   ===================================================================== */
+const IM_DEFAULTS = {
+  rukoji:{q:'https://rukoji.com/otome-sfw/', ph:'A rukoji.com list link (category, tag, VA, label…) or a keyword'},
+  hibiki:{q:'', ph:'A keyword, or Category:Some category name'},
+  dlsite:{q:'', ph:'A keyword (e.g. a title or voice actor), or a DLsite search/list link'},
+  skit:{q:'https://skitdolce.jp/category/A001/', ph:'A skitdolce.jp list link, or a keyword'}
+};
+const IM = { items:[], busy:false, lastDefault:'' };
+const imSrc = () => IMPORT_SOURCES.find(s => s.id === el('imSrc').value);
+const imStatus = (html, cls) => { const s = el('imStatus'); s.className = 'lstatus ' + (cls || ''); s.innerHTML = html; };
+function imSync(){
+  const id = el('imSrc').value, d = IM_DEFAULTS[id], q = el('imQuery');
+  if(!q.value.trim() || q.value === IM.lastDefault) q.value = d.q;
+  IM.lastDefault = d.q; q.placeholder = d.ph;
+  el('imStockRow').hidden = id !== 'skit';
+}
+function imOnShelf(it){ return !!findExisting({url:it.url, id:it.id, pn:it.meta && it.meta.pn}); }
+function imRenderList(){
+  const hide = el('imHideShelf').checked;
+  el('imList').innerHTML = IM.items.map((it, i) => {
+    const on = imOnShelf(it); if(hide && on) return '';
+    return `<li class="imitem"><label>
+      <input type="checkbox" data-i="${i}" ${on ? '' : 'checked'}>${thumbHTML(it)}
+      <span class="t">${esc(it.title)}<br><small class="muted">${subLine(it)}</small></span>${on ? '<span class="badge">on shelf</span>' : ''}</label></li>`;
+  }).join('');
+  imCount();
+}
+function imPicked(){ return [...document.querySelectorAll('#imList input[type=checkbox]:checked')].map(c => IM.items[+c.dataset.i]); }
+function imCount(){ const n = imPicked().length; el('imGo').textContent = n ? `Import ${n} selected` : 'Import selected'; el('imGo').disabled = !n || IM.busy; el('imBar').hidden = !IM.items.length; }
+async function imFetch(){
+  const src = imSrc(), q = el('imQuery').value.trim() || IM_DEFAULTS[src.id].q, pages = +el('imPages').value;
+  if(!q){ imStatus('Type a keyword or paste a list link first.', 'err'); return; }
+  el('imFetch').disabled = true; el('imList').innerHTML = ''; el('imLog').textContent = ''; IM.items = [];
+  imStatus(spin + 'Fetching the list…');
+  try{
+    IM.items = await src.list(q, pages, {inStock:el('imStock').checked}, n => imStatus(spin + `Fetched page ${n} of up to ${pages}…`));
+    if(!IM.items.length) imStatus('Nothing found. Check the link or keyword — or try another source.', 'err');
+    else{ imStatus(`${IM.items.length} CD${IM.items.length === 1 ? '' : 's'} found. Untick any you don’t want, then import.`, 'ok'); imRenderList(); }
+  }catch(e){ imStatus(failMsg(e), 'err'); el('imMore').open = true; }
+  finally{ el('imFetch').disabled = false; imCount(); }
+}
+async function imRun(){
+  const picked = imPicked(), src = imSrc(); if(!picked.length || IM.busy) return;
+  IM.busy = true; imCount(); el('imFetch').disabled = true;
+  const bar = el('imProg'), fill = bar.firstElementChild; bar.hidden = false; fill.style.width = '0%';
+  const tally = {added:0, updated:0, partial:0, failed:0}; let done = 0, next = 0; const errs = [];
+  const worker = async () => {
+    while(next < picked.length){
+      const it = picked[next++];
+      try{
+        let meta = it.meta, got = false;
+        try{ const r = await src.fromUrl(it.url); if(r.meta){ meta = mergeMeta(it.meta, r.meta); got = true; } }catch(e){ errs.push(`${it.title}: ${e.message}`); }
+        if(!meta || !meta.title){ tally.failed++; }
+        else{ if(!got) tally.partial++; tally[addOrMerge(meta)]++; }
+      }catch(e){ tally.failed++; errs.push(`${it.title}: ${e.message}`); }
+      done++; fill.style.width = Math.round(done / picked.length * 100) + '%';
+      imStatus(spin + `Importing ${done} of ${picked.length}…`);
+    }
+  };
+  await Promise.all([worker(), worker(), worker()]);
+  IM.busy = false; el('imFetch').disabled = false;
+  buildFilters(); render(); imRenderList();
+  imStatus(`Done: ${tally.added} added, ${tally.updated} updated${tally.partial ? `, ${tally.partial} with list details only (full page didn’t load)` : ''}${tally.failed ? `, ${tally.failed} failed` : ''}.`, tally.failed ? 'err' : 'ok');
+  el('imLog').textContent = errs.slice(0, 8).join('\n');
+  toast(`Imported ${tally.added + tally.updated} CD${tally.added + tally.updated === 1 ? '' : 's'} ♡`);
+}
+function openImporter(){
+  const m = el('importer'); m.classList.add('open'); m.setAttribute('aria-hidden', 'false'); document.body.style.overflow = 'hidden';
+  imSync(); el('imProxies').value = Net.proxies().join('\n'); setTimeout(() => el('imQuery').focus(), 60);
+}
+function closeImporter(){ const m = el('importer'); m.classList.remove('open'); m.setAttribute('aria-hidden', 'true'); document.body.style.overflow = ''; }
+el('btnImportSrc').onclick = openImporter;
+el('imClose').onclick = closeImporter;
+el('imSrc').onchange = imSync;
+el('imFetch').onclick = imFetch;
+el('imQuery').addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); imFetch(); } });
+el('imGo').onclick = imRun;
+el('imList').addEventListener('change', imCount);
+el('imHideShelf').onchange = imRenderList;
+el('imAll').onclick = () => { document.querySelectorAll('#imList input[type=checkbox]').forEach(c => c.checked = true); imCount(); };
+el('imNone').onclick = () => { document.querySelectorAll('#imList input[type=checkbox]').forEach(c => c.checked = false); imCount(); };
+el('imSaveProx').onclick = () => { const p = el('imProxies').value.split('\n').map(x => x.trim()).filter(Boolean); DB.setting('proxies', p.length ? p : DEFAULT_PROXIES); toast('Proxy list saved ♡'); };
+
+/* ---------- boot ---------- */
+(function init(){
+  const labelsOn = DB.setting('labels') !== false;
+  applyLabels(labelsOn);
+  F.sort = DB.setting('sort') || 'new'; $('#fSort').value = F.sort;
+  DB.all.forEach(c => Names.fillCD(c)); DB.touch();
+  buildFilters(); render();
+})();
+</script>
+</body>
+</html>

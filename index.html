@@ -9,7 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500&family=Quicksand:wght@400;500&family=Noto+Sans+JP:wght@400;500&display=swap" rel="stylesheet">
 <script>
 /* apply the saved theme before first paint (no flash) */
-try{ var t = localStorage.getItem('otomeCdTheme'); if(t) document.documentElement.setAttribute('data-theme', t); }catch(e){}
+try{ var _th = localStorage.getItem('otomeCdTheme'); if(_th) document.documentElement.setAttribute('data-theme', _th); }catch(e){}
 </script>
 <style>
 :root{
@@ -257,6 +257,10 @@ details.more p{margin:8px 0 0;color:var(--ink-faint);font-weight:400;line-height
 .swatch[data-t="ocean"]{background:linear-gradient(135deg,#2F86E0 50%,#24BFB0 50%)}
 .swatch[data-t="midnight"]{background:linear-gradient(135deg,#130F1E 50%,#A855F7 50%)}
 .swatch[data-t="sepia"]{background:linear-gradient(135deg,#A67C5B 50%,#F0E4D3 50%)}
+.langs{display:flex;align-items:center;gap:2px;padding:4px 6px;border-radius:999px;background:rgba(var(--surface-rgb),.75);box-shadow:inset 0 0 0 2px var(--accent-soft)}
+.langs button{border:0;background:transparent;border-radius:999px;padding:5px 11px;font-size:13px;color:var(--ink-soft);transition:background .2s,color .2s}
+.langs button[aria-pressed="true"]{background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#fff}
+.langs .dot{color:var(--ink-faint)}
 </style>
 </head>
 <body>
@@ -266,6 +270,9 @@ details.more p{margin:8px 0 0;color:var(--ink-faint);font-weight:400;line-height
     <div class="brand">
       <div class="logo">♡</div>
       <div><h1>Otome CD Shelf</h1><small>my little drama CD collection</small></div>
+    </div>
+    <div class="langs" role="group" aria-label="Language">
+      <button data-l="en" aria-pressed="true" title="English">EN</button><span class="dot">・</span><button data-l="ja" aria-pressed="false" title="日本語">日本</button>
     </div>
     <div class="themes" role="group" aria-label="Colour theme">
       <span class="tlabel">Theme</span>
@@ -415,6 +422,35 @@ details.more p{margin:8px 0 0;color:var(--ink-faint);font-weight:400;line-height
 
 <script>
 /* =====================================================================
+   0. LANGUAGE (EN / 日本) — English text is the key; Japanese lives in one table
+   ===================================================================== */
+const I18N_JA = {"my little drama CD collection": "わたしのドラマCDコレクション", "Theme": "テーマ", "Colour theme": "カラーテーマ", "Language": "言語", "Lavender": "ラベンダー", "Lavender theme": "ラベンダーテーマ", "Ocean (blue & sea-green)": "オーシャン（青×碧）", "Ocean theme": "オーシャンテーマ", "Midnight (dark mode)": "ミッドナイト（ダークモード）", "Midnight dark theme": "ミッドナイト（ダーク）テーマ", "Sepia (taupe)": "セピア（トープ）", "Sepia theme": "セピアテーマ", "Show or hide titles and overlays on the cards": "カード上のタイトルとオーバーレイを表示／非表示", "Toggle Labels": "ラベル切替", "＋ Add CD": "＋ CDを追加", "Add a CD by hand": "手入力でCDを追加", "⇩ Import CDs": "⇩ CDをインポート", "Import CDs from rukojiDB, HIBIKIFORUM, DLsite Girls or SKiT Dolce": "rukojiDB・HIBIKIFORUM・DLsite Girls・SKiT DolceからCDをインポート", "⬇ Backup": "⬇ バックアップ", "Download your whole collection as a JSON backup file": "コレクション全体をJSONバックアップとしてダウンロード", "⬆ Restore": "⬆ 復元", "Restore a JSON backup file": "JSONバックアップから復元", "Search titles, cast, series, labels…": "タイトル・声優・シリーズ・レーベルで検索…", "Label": "レーベル", "Voice actor": "声優", "Series": "シリーズ", "Collection status": "所持状況", "Sort": "並び替え", "All": "すべて", "Owned": "所持", "Newest release": "発売日が新しい順", "Oldest release": "発売日が古い順", "Title A–Z": "タイトル順（A–Z）", "Highest rated": "評価が高い順", "Reset": "リセット", "Click a jacket for details ♡": "ジャケットをクリックで詳細 ♡", "Sample entries & jacket images from": "サンプルのデータとジャケット画像の出典：", "— all artwork belongs to its respective labels & artists. Your notes and ratings live only in this browser.": "— すべての作品画像の権利は各レーベル・作家に帰属します。メモや評価はこのブラウザ内にのみ保存されます。", "Close": "閉じる", "Cover": "カバー", "Image address": "画像アドレス", "Upload image": "画像をアップロード", "Clear": "クリア", "Fill it in by hand. (Bulk metadata comes from the Import tool or your JSON files.)": "手入力で記入してください。（まとめてのメタデータはインポートツールやJSONファイルから取り込めます。）", "Title": "タイトル", "Original / Japanese title": "原題／日本語タイトル", "Release date": "発売日", "Release note": "発売メモ", "e.g. DL ver. Oct 24, 2026": "例：DL版 2026年10月24日", "Series (日本語)": "シリーズ（日本語）", "Series (romaji)": "シリーズ（ローマ字）", "Voice cast — one per line: Romaji / 日本語": "声優 — 1行に1人：ローマ字 / 日本語", "Scenario (comma-separated)": "シナリオ（カンマ区切り）", "Illustration": "イラスト", "Category": "カテゴリ", "Catalog no.": "品番", "Source page": "ソースページ", "Synopsis": "あらすじ", "Tracklist (one per line; add \" | 4:02\" for a duration)": "トラックリスト（1行に1曲。長さは「 | 4:02」のように追記）", "Bonuses (one per line)": "特典（1行に1つ）", "Delete CD": "CDを削除", "Cancel": "キャンセル", "Save CD": "CDを保存", "Import CDs from online sources": "オンラインソースからCDをインポート", "Fetch a whole list, tick the ones you want, and add them to your shelf in one go.": "リストをまとめて取得し、欲しいものにチェックを入れて、一度にシェルフへ追加できます。", "Source": "音源", "Pages to fetch": "取得ページ数", "1 page": "1ページ", "2 pages": "2ページ", "3 pages": "3ページ", "5 pages": "5ページ", "10 pages": "10ページ", "Fetch list": "リストを取得", "Only show items in stock (在庫ありに絞り込み)": "在庫ありのみ表示（在庫ありに絞り込み）", "Notes & proxy settings": "メモとプロキシ設定", "SKiT Dolce lists are fetched with the in-stock filter turned off (so sold-out CDs are included) unless you tick the box above. Lists come through a free public CORS proxy, which can see what you look up; if it is down, edit the proxy list here. Full details for each CD are fetched one by one, so big imports take a while.": "SKiT Dolceのリストは、上のチェックを入れない限り「在庫ありに絞り込み」をオフにして取得します（売り切れのCDも含まれます）。リストは無料の公開CORSプロキシ経由で取得されるため、検索内容がプロキシから見えます。プロキシが落ちている場合は、ここでプロキシ一覧を編集してください。各CDの詳細は1件ずつ取得するため、大量のインポートには時間がかかります。", "CORS proxies, one per line ({url} = where the page address goes)": "CORSプロキシ（1行に1つ。{url} の部分にページのアドレスが入ります）", "Save proxies": "プロキシを保存", "Select all": "すべて選択", "Select none": "選択解除", "Hide ones already on my shelf": "シェルフにあるものを隠す", "All labels": "すべてのレーベル", "All voice actors": "すべての声優", "All series": "すべてのシリーズ", "Cast unknown": "声優不明", "Owned — click to unmark": "所持中 — クリックで解除", "Mark as owned": "所持にする", "No CDs match those filters": "条件に合うCDがありません", "Try clearing a filter or two.": "絞り込みを一つ二つ外してみてください。", "Showing {a} of {b} CDs": "{b}枚中{a}枚を表示", "{n} CD": "{n}枚", "{n} CDs": "{n}枚", "{n} owned": "所持 {n}枚", "Release": "発売日", "Voice cast": "声優", "Scenario": "シナリオ", "Bonuses": "特典", "Tracklist": "トラックリスト", "No synopsis saved yet.": "あらすじはまだ保存されていません。", "No tracklist saved yet.": "トラックリストはまだ保存されていません。", "View on rukojiDB ↗": "rukojiDBで見る ↗", "My collection": "マイコレクション", "Physically owned": "現物を所持", "Not set": "未設定", "Rating": "評価", "{n} of 5": "5段階中{n}", "Notes, impressions, where the files live…": "メモ・感想・ファイルの保存場所など…", "Notes": "メモ", "✎ Edit": "✎ 編集", "Backup downloaded ♡": "バックアップをダウンロードしました ♡", "Replace your current collection with {n} CDs from this file?": "現在のコレクションを、このファイルの{n}枚に置き換えますか？", "Imported {n} CDs ♡": "{n}枚をインポートしました ♡", "Import failed: ": "インポートに失敗しました：", "Couldn't save in this browser — use Export to keep a backup": "このブラウザに保存できませんでした — バックアップで控えを取ってください", "Cover added ♡": "カバーを追加しました ♡", "Couldn’t read that image": "その画像を読み込めませんでした", "Give it a title first ♡": "先にタイトルを入力してください ♡", "Saved ♡": "保存しました ♡", "That CD was already on your shelf, so I updated it ♡": "すでにシェルフにあるCDだったので、更新しました ♡", "Delete “{title}” from your shelf? (Back up first if you want a copy.)": "「{title}」をシェルフから削除しますか？（控えが必要なら先にバックアップを。）", "Deleted": "削除しました", "New CD": "新しいCD", "Edit CD": "CDを編集", "Add a CD": "CDを追加", "A rukoji.com list link (category, tag, VA, label…) or a keyword": "rukoji.comのリストリンク（カテゴリ・タグ・声優・レーベルなど）またはキーワード", "A keyword, or Category:Some category name": "キーワード、または Category:カテゴリ名", "A keyword (e.g. a title or voice actor), or a DLsite search/list link": "キーワード（タイトルや声優名など）、またはDLsiteの検索／リストリンク", "A skitdolce.jp list link, or a keyword": "skitdolce.jpのリストリンク、またはキーワード", "Import {n} selected": "選択した{n}件をインポート", "Import selected": "選択したものをインポート", "Type a keyword or paste a list link first.": "先にキーワードを入力するか、リストのリンクを貼り付けてください。", "Fetching the list…": "リストを取得中…", "Fetched page {n} of up to {p}…": "{n}ページ目を取得しました（最大{p}ページ）…", "Nothing found. Check the link or keyword — or try another source.": "見つかりませんでした。リンクやキーワードを確認するか、別のソースを試してください。", "{n} CD found. Untick any you don’t want, then import.": "{n}件見つかりました。不要なものはチェックを外して、インポートしてください。", "{n} CDs found. Untick any you don’t want, then import.": "{n}件見つかりました。不要なものはチェックを外して、インポートしてください。", "Importing {d} of {n}…": "インポート中… {d} / {n}", "Done: {a} added, {u} updated": "完了：{a}件追加、{u}件更新", ", {n} with list details only (full page didn’t load)": "、{n}件はリストの情報のみ（詳細ページを読み込めず）", ", {n} failed": "、{n}件失敗", "Imported {n} CD ♡": "{n}件をインポートしました ♡", "Imported {n} CDs ♡ ": "{n}件をインポートしました ♡", "Proxy list saved ♡": "プロキシ一覧を保存しました ♡", "on shelf": "登録済み", "Couldn't read that site ({m}). A page opened from disk can't read other websites directly, so lists go through a free CORS proxy, which may be down or blocked. Try again, or edit the proxy list under “Notes & proxy settings”.": "サイトを読み込めませんでした（{m}）。ディスクから開いたページは他のサイトを直接読めないため、リストは無料のCORSプロキシ経由で取得されます。プロキシが停止・ブロックされている可能性があります。もう一度試すか、「メモとプロキシ設定」でプロキシ一覧を編集してください。", "brand": "乙女CDシェルフ"};
+let LANG = 'en'; try{ LANG = localStorage.getItem('otomeCdLang') === 'ja' ? 'ja' : 'en'; }catch(e){}
+const i18n = (k, v) => { let o = (LANG === 'ja' && I18N_JA[k]) || k; if(v) o = o.replace(/\{(\w+)\}/g, (m, n) => v[n] != null ? v[n] : m); return o; };
+const NOT_STATIC = '#grid,#mBody,#mPanel,#imList,#toast,#count,#statTotal,#statOwned,#eHead,#imStatus,#imGo,#fLabel,#fVA,#fSeries,script,style';
+const NOT_ATTR = '#grid,#mBody,#mPanel,#imList';
+function applyStaticLang(){
+  const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT), nodes = [];
+  while(w.nextNode()) nodes.push(w.currentNode);
+  nodes.forEach(n => {
+    if(!n.parentElement || n.parentElement.closest(NOT_STATIC)) return;
+    if(n.__en === undefined){
+      const tx = n.nodeValue.trim();
+      n.__en = tx && I18N_JA[tx] ? tx : null; n.__pre = n.nodeValue.match(/^\s*/)[0]; n.__post = n.nodeValue.match(/\s*$/)[0];
+    }
+    if(n.__en) n.nodeValue = n.__pre + i18n(n.__en) + n.__post;
+  });
+  document.querySelectorAll('[title],[placeholder],[aria-label]').forEach(e => {
+    if(e.closest(NOT_ATTR)) return;
+    if(!e.__attrs){ e.__attrs = {}; ['title', 'placeholder', 'aria-label'].forEach(a => { const v = e.getAttribute(a); if(v && I18N_JA[v]) e.__attrs[a] = v; }); }
+    for(const a in e.__attrs) e.setAttribute(a, i18n(e.__attrs[a]));
+  });
+  const h = document.querySelector('.brand h1'); if(h) h.textContent = LANG === 'ja' ? I18N_JA['brand'] : 'Otome CD Shelf';
+  document.documentElement.lang = LANG;
+  document.title = LANG === 'ja' ? I18N_JA['brand'] : 'Otome CD Shelf';
+}
+
+/* =====================================================================
    1. SEED DATA  (sample entries from rukoji.com — replace/extend freely)
    ===================================================================== */
 const P = 'https://pics.rukoji.com/posts/';
@@ -489,7 +525,7 @@ const DB = (() => {
   const data = loaded ? { cds: loaded.cds.map(hydrate), settings: loaded.settings || {} }
                       : { cds: SEED.map(hydrate), settings: {} };
   let timer = null;
-  const persist = () => { clearTimeout(timer); timer = setTimeout(() => { if(!Store.save(data)) toast('Couldn\'t save in this browser — use Export to keep a backup'); }, 200); };
+  const persist = () => { clearTimeout(timer); timer = setTimeout(() => { if(!Store.save(data)) toast(i18n('Couldn\'t save in this browser — use Export to keep a backup')); }, 200); };
   if(!loaded) Store.save(data);
   return {
     data,
@@ -509,12 +545,12 @@ const DB = (() => {
    ===================================================================== */
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const fmtDate = d => d ? new Date(d + 'T00:00:00Z').toLocaleDateString('en-US', {year:'numeric', month:'short', day:'numeric', timeZone:'UTC'}) : '—';
+const fmtDate = d => d ? new Date(d + 'T00:00:00Z').toLocaleDateString(LANG === 'ja' ? 'ja-JP' : 'en-US', {year:'numeric', month:LANG === 'ja' ? 'long' : 'short', day:'numeric', timeZone:'UTC'}) : '—';
 const uniq = arr => [...new Set(arr.filter(Boolean))].sort((a,b) => a.localeCompare(b, 'ja'));
 function toast(msg){ const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('show'), 3200); }
 function hue(str){ let h = 0; for(const ch of str) h = (h * 31 + ch.codePointAt(0)) % 360; return 265 + (h % 70); }
 function placeholder(title){
-  return `<div class="ph" role="img" aria-label="No cover for ${esc(title)}"><div><b>💿</b>No cover yet</div></div>`;
+  return `<div class="ph" role="img" aria-label="${esc(i18n('No cover for {t}', {t:title}))}"><div><b>💿</b>${i18n('No cover yet')}</div></div>`;
 }
 function coverHTML(cd){
   const src = cd.coverData || cd.cover;
@@ -548,10 +584,10 @@ function fillSelect(el, allText, opts){      // opts: strings, or [value, label]
 }
 function buildFilters(){
   const all = DB.all;
-  fillSelect($('#fLabel'),  'All labels',  uniq(all.map(c => c.label)));
+  fillSelect($('#fLabel'),  i18n('All labels'),  uniq(all.map(c => c.label)));
   const people = new Map(); all.forEach(c => c.cast.forEach(p => { const k = Names.pid(p); if(!k) return; const old = people.get(k); if(!old || (!old.ja && p.ja) || (!old.en && p.en)) people.set(k, {en:p.en || (old && old.en) || '', ja:p.ja || (old && old.ja) || ''}); }));
-  fillSelect($('#fVA'), 'All voice actors', [...people].sort((a, b) => (a[1].en || a[1].ja).localeCompare(b[1].en || b[1].ja, 'ja')).map(([k, p]) => [k, p.en && p.ja ? `${p.en} / ${p.ja}` : (p.en || p.ja)]));
-  fillSelect($('#fSeries'), 'All series',  uniq(all.map(seriesName)));
+  fillSelect($('#fVA'), i18n('All voice actors'), [...people].sort((a, b) => (a[1].en || a[1].ja).localeCompare(b[1].en || b[1].ja, 'ja')).map(([k, p]) => [k, p.en && p.ja ? `${p.en} / ${p.ja}` : (p.en || p.ja)]));
+  fillSelect($('#fSeries'), i18n('All series'),  uniq(all.map(seriesName)));
   F.label = $('#fLabel').value; F.va = $('#fVA').value; F.series = $('#fSeries').value;
 }
 function visible(){
@@ -586,20 +622,20 @@ function render(){
       <div class="cover">
         ${coverHTML(c)}
         <div class="ov tl">${c.sourceType ? `<span class="chip">${esc(c.sourceType)}</span>` : ''}</div>
-        <button class="ov heart ${c.owned ? 'on' : ''}" data-heart="${esc(c.id)}" aria-label="${c.owned ? 'Owned — click to unmark' : 'Mark as owned'}" aria-pressed="${c.owned}"><span class="h">💜</span></button>
+        <button class="ov heart ${c.owned ? 'on' : ''}" data-heart="${esc(c.id)}" aria-label="${i18n(c.owned ? 'Owned — click to unmark' : 'Mark as owned')}" aria-pressed="${c.owned}"><span class="h">💜</span></button>
       </div>
       <div class="cap"><div class="cap-in">
         <h3>${esc(c.title)}</h3>
-        <p class="va">${esc(castLabel(c) || 'Cast unknown')}</p>
+        <p class="va">${esc(castLabel(c) || i18n('Cast unknown'))}</p>
         <p class="lb">${esc([c.label, c.release ? c.release.slice(0, 4) : ''].filter(Boolean).join(' · '))}</p>
         <div class="stars-sm">${c.rating ? '♥'.repeat(c.rating) : ''}</div>
       </div></div>
     </article>`).join('')
-    : `<div class="empty"><div class="big">🫧</div><strong>No CDs match those filters</strong><p>Try clearing a filter or two.</p></div>`;
+    : `<div class="empty"><div class="big">🫧</div><strong>${i18n('No CDs match those filters')}</strong><p>${i18n('Try clearing a filter or two.')}</p></div>`;
   const owned = DB.all.filter(c => c.owned).length;
-  $('#count').textContent = `Showing ${list.length} of ${DB.all.length} CDs`;
-  $('#statTotal').textContent = `${DB.all.length} CD${DB.all.length === 1 ? '' : 's'}`;
-  $('#statOwned').textContent = `${owned} owned`;
+  $('#count').textContent = i18n('Showing {a} of {b} CDs', {a:list.length, b:DB.all.length});
+  $('#statTotal').textContent = i18n(DB.all.length === 1 ? '{n} CD' : '{n} CDs', {n:DB.all.length});
+  $('#statOwned').textContent = i18n('{n} owned', {n:owned});
 }
 
 /* =====================================================================
@@ -611,10 +647,10 @@ function openModal(id){
   openId = id; lastFocus = document.activeElement;
   $('#mCover').innerHTML = coverHTML(c);
   const info = [
-    ['Release', fmtDate(c.release) + (c.releaseNote ? ` — ${c.releaseNote}` : '')],
-    ['Label', c.label], ['Series', seriesName(c)],
-    ['Voice cast', c.cast.map(p => p.en && p.ja ? `${p.en} (${p.ja})` : (p.en || p.ja)).join(', ')], ['Scenario', c.scenario.join(', ')], ['Illustration', c.illustrator],
-    ['Category', c.category], ['Catalog no.', c.pn], ['JAN', c.jan]
+    [i18n('Release'), fmtDate(c.release) + (c.releaseNote ? ` — ${c.releaseNote}` : '')],
+    [i18n('Label'), c.label], [i18n('Series'), seriesName(c)],
+    [i18n('Voice cast'), c.cast.map(p => p.en && p.ja ? `${p.en} (${p.ja})` : (p.en || p.ja)).join(', ')], [i18n('Scenario'), c.scenario.join(', ')], [i18n('Illustration'), c.illustrator],
+    [i18n('Category'), c.category], [i18n('Catalog no.'), c.pn], ['JAN', c.jan]
   ].filter(([, v]) => v && v !== '—' || false);
   $('#mBody').innerHTML = `
     <h2 id="mTitle">${esc(c.title)}</h2>
@@ -624,12 +660,12 @@ function openModal(id){
       ${c.label ? `<span class="tag pink">${esc(c.label)}</span>` : ''}
     </div>
     <dl class="info">${info.map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('')}</dl>
-    <section class="sec"><h3>Synopsis</h3>${c.synopsis ? `<p>${esc(c.synopsis)}</p>` : '<p class="muted">No synopsis saved yet.</p>'}</section>
-    <section class="sec"><h3>Tracklist</h3>
-      ${c.tracks.length ? `<ol class="tracks">${c.tracks.map(t => `<li><span class="tt">${esc(t.t)}</span><span class="dur">${esc(t.d)}</span></li>`).join('')}</ol>` : '<p class="muted">No tracklist saved yet.</p>'}
+    <section class="sec"><h3>${i18n('Synopsis')}</h3>${c.synopsis ? `<p>${esc(c.synopsis)}</p>` : `<p class="muted">${i18n('No synopsis saved yet.')}</p>`}</section>
+    <section class="sec"><h3>${i18n('Tracklist')}</h3>
+      ${c.tracks.length ? `<ol class="tracks">${c.tracks.map(t => `<li><span class="tt">${esc(t.t)}</span><span class="dur">${esc(t.d)}</span></li>`).join('')}</ol>` : `<p class="muted">${i18n('No tracklist saved yet.')}</p>`}
     </section>
-    ${c.bonuses.length ? `<section class="sec"><h3>Bonuses</h3><ul class="bonus">${c.bonuses.map(b => `<li>${esc(b)}</li>`).join('')}</ul></section>` : ''}
-    ${c.url ? `<a class="src" href="${esc(c.url)}" target="_blank" rel="noopener noreferrer">View on rukojiDB ↗</a>` : ''}`;
+    ${c.bonuses.length ? `<section class="sec"><h3>${i18n('Bonuses')}</h3><ul class="bonus">${c.bonuses.map(b => `<li>${esc(b)}</li>`).join('')}</ul></section>` : ''}
+    ${c.url ? `<a class="src" href="${esc(c.url)}" target="_blank" rel="noopener noreferrer">${i18n('View on rukojiDB ↗')}</a>` : ''}`;
   renderPanel(c);
   const m = $('#modal'); m.classList.add('open'); m.setAttribute('aria-hidden', 'false');
   document.body.style.overflow = 'hidden';
@@ -637,13 +673,13 @@ function openModal(id){
 }
 function renderPanel(c){
   $('#mPanel').innerHTML = `
-    <h4>My collection</h4>
-    <div class="field"><label>Physically owned</label><button class="switch" id="pOwned" role="switch" aria-checked="${c.owned}" aria-label="Physically owned"></button></div>
-    <div class="field"><label for="pSrc">Source</label>
-      <select class="sel" id="pSrc">${['', 'CD RIP', 'WEB RIP'].map(v => `<option value="${v}" ${c.sourceType === v ? 'selected' : ''}>${v || 'Not set'}</option>`).join('')}</select></div>
-    <div class="field"><label>Rating</label><div class="stars" id="pStars">${[1,2,3,4,5].map(n => `<button class="${n <= c.rating ? 'on' : ''}" data-n="${n}" aria-label="${n} of 5">♥</button>`).join('')}</div></div>
-    <textarea id="pNotes" placeholder="Notes, impressions, where the files live…" aria-label="Notes">${esc(c.notes)}</textarea>
-    <div class="btnrow"><button class="pill sm" id="pEdit">✎ Edit</button></div>`;
+    <h4>${i18n('My collection')}</h4>
+    <div class="field"><label>${i18n('Physically owned')}</label><button class="switch" id="pOwned" role="switch" aria-checked="${c.owned}" aria-label="${i18n('Physically owned')}"></button></div>
+    <div class="field"><label for="pSrc">${i18n('Source')}</label>
+      <select class="sel" id="pSrc">${['', 'CD RIP', 'WEB RIP'].map(v => `<option value="${v}" ${c.sourceType === v ? 'selected' : ''}>${v || i18n('Not set')}</option>`).join('')}</select></div>
+    <div class="field"><label>${i18n('Rating')}</label><div class="stars" id="pStars">${[1,2,3,4,5].map(n => `<button class="${n <= c.rating ? 'on' : ''}" data-n="${n}" aria-label="${i18n('{n} of 5', {n})}">♥</button>`).join('')}</div></div>
+    <textarea id="pNotes" placeholder="${i18n('Notes, impressions, where the files live…')}" aria-label="${i18n('Notes')}">${esc(c.notes)}</textarea>
+    <div class="btnrow"><button class="pill sm" id="pEdit">${i18n('✎ Edit')}</button></div>`;
   $('#pEdit').onclick = () => { closeModal(); openEditor({id:c.id, returnTo:c.id}); };
   $('#pOwned').onclick = () => { const v = !DB.byId(c.id).owned; DB.update(c.id, {owned:v}); renderPanel(DB.byId(c.id)); render(); };
   $('#pSrc').onchange = e => { DB.update(c.id, {sourceType:e.target.value}); render(); };
@@ -699,16 +735,16 @@ $('#fReset').onclick = () => {
 $('#btnExport').onclick = () => {
   const a = document.createElement('a'); a.href = URL.createObjectURL(Store.exportBlob(DB.data));
   a.download = `otome-cd-shelf-${new Date().toISOString().slice(0, 10)}.json`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-  toast('Backup downloaded ♡');
+  toast(i18n('Backup downloaded ♡'));
 };
 $('#btnImport').onclick = () => $('#fileImport').click();
 $('#fileImport').onchange = async e => {
   const f = e.target.files[0]; e.target.value = ''; if(!f) return;
   try{
     const { cds, settings } = Store.parseImport(await f.text());
-    if(!confirm(`Replace your current collection with ${cds.length} CDs from this file?`)) return;
-    DB.replaceAll(cds, settings); buildFilters(); render(); toast(`Imported ${cds.length} CDs ♡`);
-  }catch(err){ toast('Import failed: ' + err.message); }
+    if(!confirm(i18n('Replace your current collection with {n} CDs from this file?', {n:cds.length}))) return;
+    DB.replaceAll(cds, settings); buildFilters(); render(); toast(i18n('Imported {n} CDs ♡', {n:cds.length}));
+  }catch(err){ toast(i18n('Import failed: ') + err.message); }
 };
 
 /* =====================================================================
@@ -1285,7 +1321,7 @@ const mergeMeta = (base, detail) => { const o = {...(base || {})}; for(const k i
 const ED = { id:null, slug:'', returnTo:null, coverData:'' };
 const el = id => document.getElementById(id);
 const spin = '<span class="spin"></span>';
-const failMsg = e => `Couldn't read that site (${esc(e.message)}). A page opened from disk can't read other websites directly, so lists go through a free CORS proxy, which may be down or blocked. Try again, or edit the proxy list under “Notes & proxy settings”.`;
+const failMsg = e => i18n("Couldn't read that site ({m}). A page opened from disk can't read other websites directly, so lists go through a free CORS proxy, which may be down or blocked. Try again, or edit the proxy list under “Notes & proxy settings”.", {m:esc(e.message)});
 
 function setForm(c){
   const v = (id, x) => { el(id).value = x || ''; };
@@ -1295,7 +1331,7 @@ function setForm(c){
   v('fSynopsis', c.synopsis); v('fTracks', tracksToText(c.tracks)); v('fBonuses', (c.bonuses || []).join('\n')); v('fCover', c.cover);
 }
 function paintCover(){
-  const url = el('fCover').value.trim(), src = ED.coverData || url, t = el('fTitle').value || 'New CD';
+  const url = el('fCover').value.trim(), src = ED.coverData || url, t = el('fTitle').value || i18n('New CD');
   el('eCover').innerHTML = src
     ? `<img id="eCoverImg" src="${esc(src)}" data-src="${esc(url)}" data-title="${esc(t)}" alt="Cover preview" referrerpolicy="no-referrer">`
     : placeholder(t);
@@ -1303,7 +1339,7 @@ function paintCover(){
 function openEditor(opts = {}){
   ED.id = opts.id || null; ED.slug = ''; ED.returnTo = opts.returnTo || null;
   const c = ED.id ? DB.byId(ED.id) : null;
-  el('eHead').textContent = c ? 'Edit CD' : 'Add a CD';
+  el('eHead').textContent = i18n(c ? 'Edit CD' : 'Add a CD');
   el('eDelete').hidden = !c;
   setForm(c || {});
   ED.coverData = c ? (c.coverData || '') : '';
@@ -1323,15 +1359,15 @@ el('fCover').oninput = () => { clearTimeout(coverTimer); coverTimer = setTimeout
 el('eUpload').onclick = () => el('eFile').click();
 el('eFile').onchange = async e => {
   const f = e.target.files[0]; e.target.value = ''; if(!f) return;
-  try{ ED.coverData = await Covers.toData(f); el('fCover').value = ''; paintCover(); toast('Cover added ♡'); }
-  catch(err){ toast('Couldn’t read that image'); }
+  try{ ED.coverData = await Covers.toData(f); el('fCover').value = ''; paintCover(); toast(i18n('Cover added ♡')); }
+  catch(err){ toast(i18n('Couldn’t read that image')); }
 };
 el('eClearCover').onclick = () => { el('fCover').value = ''; ED.coverData = ''; paintCover(); };
 
 el('eForm').onsubmit = ev => {
   ev.preventDefault();
   const title = el('fTitle').value.trim();
-  if(!title){ toast('Give it a title first ♡'); el('fTitle').focus(); return; }
+  if(!title){ toast(i18n('Give it a title first ♡')); el('fTitle').focus(); return; }
   const patch = {
     title, altTitle:el('fAlt').value.trim(), release:el('fRelease').value, releaseNote:el('fRelNote').value.trim(),
     label:el('fLabel').value.trim(), series:el('fSeries').value.trim(), seriesRomaji:el('fSeriesRo').value.trim(),
@@ -1342,11 +1378,11 @@ el('eForm').onsubmit = ev => {
     cover:el('fCover').value.trim(), coverData:ED.coverData
   };
   Names.learnFrom(patch); Names.fillCD(patch);          // remember romaji ↔ 日本語 pairs for next time
-  let id = ED.id, msg = 'Saved ♡';
+  let id = ED.id, msg = i18n('Saved ♡');
   if(id) DB.update(id, patch);
   else{
     id = ED.slug || ('cd-' + Date.now().toString(36));
-    if(DB.byId(id)){ DB.update(id, patch); msg = 'That CD was already on your shelf, so I updated it ♡'; }
+    if(DB.byId(id)){ DB.update(id, patch); msg = i18n('That CD was already on your shelf, so I updated it ♡'); }
     else DB.add(hydrate({id, ...patch}));
   }
   const back = ED.returnTo; closeEditor(false);
@@ -1354,8 +1390,8 @@ el('eForm').onsubmit = ev => {
   if(back) openModal(back);
 };
 el('eDelete').onclick = () => {
-  const c = DB.byId(ED.id); if(!c || !confirm(`Delete “${c.title}” from your shelf? (Back up first if you want a copy.)`)) return;
-  DB.remove(c.id); ED.returnTo = null; closeEditor(false); buildFilters(); render(); toast('Deleted');
+  const c = DB.byId(ED.id); if(!c || !confirm(i18n('Delete “{title}” from your shelf? (Back up first if you want a copy.)', {title:c.title}))) return;
+  DB.remove(c.id); ED.returnTo = null; closeEditor(false); buildFilters(); render(); toast(i18n('Deleted'));
 };
 
 /* =====================================================================
@@ -1373,7 +1409,7 @@ const imStatus = (html, cls) => { const s = el('imStatus'); s.className = 'lstat
 function imSync(){
   const id = el('imSrc').value, d = IM_DEFAULTS[id], q = el('imQuery');
   if(!q.value.trim() || q.value === IM.lastDefault) q.value = d.q;
-  IM.lastDefault = d.q; q.placeholder = d.ph;
+  IM.lastDefault = d.q; q.placeholder = i18n(d.ph);
   el('imStockRow').hidden = id !== 'skit';
 }
 function imOnShelf(it){ return !!findExisting({url:it.url, id:it.id, pn:it.meta && it.meta.pn}); }
@@ -1383,21 +1419,21 @@ function imRenderList(){
     const on = imOnShelf(it); if(hide && on) return '';
     return `<li class="imitem"><label>
       <input type="checkbox" data-i="${i}" ${on ? '' : 'checked'}>${thumbHTML(it)}
-      <span class="t">${esc(it.title)}<br><small class="muted">${subLine(it)}</small></span>${on ? '<span class="badge">on shelf</span>' : ''}</label></li>`;
+      <span class="t">${esc(it.title)}<br><small class="muted">${subLine(it)}</small></span>${on ? `<span class="badge">${i18n('on shelf')}</span>` : ''}</label></li>`;
   }).join('');
   imCount();
 }
 function imPicked(){ return [...document.querySelectorAll('#imList input[type=checkbox]:checked')].map(c => IM.items[+c.dataset.i]); }
-function imCount(){ const n = imPicked().length; el('imGo').textContent = n ? `Import ${n} selected` : 'Import selected'; el('imGo').disabled = !n || IM.busy; el('imBar').hidden = !IM.items.length; }
+function imCount(){ const n = imPicked().length; el('imGo').textContent = n ? i18n('Import {n} selected', {n}) : i18n('Import selected'); el('imGo').disabled = !n || IM.busy; el('imBar').hidden = !IM.items.length; }
 async function imFetch(){
   const src = imSrc(), q = el('imQuery').value.trim() || IM_DEFAULTS[src.id].q, pages = +el('imPages').value;
-  if(!q){ imStatus('Type a keyword or paste a list link first.', 'err'); return; }
+  if(!q){ imStatus(i18n('Type a keyword or paste a list link first.'), 'err'); return; }
   el('imFetch').disabled = true; el('imList').innerHTML = ''; el('imLog').textContent = ''; IM.items = [];
-  imStatus(spin + 'Fetching the list…');
+  imStatus(spin + i18n('Fetching the list…'));
   try{
-    IM.items = await src.list(q, pages, {inStock:el('imStock').checked}, n => imStatus(spin + `Fetched page ${n} of up to ${pages}…`));
-    if(!IM.items.length) imStatus('Nothing found. Check the link or keyword — or try another source.', 'err');
-    else{ imStatus(`${IM.items.length} CD${IM.items.length === 1 ? '' : 's'} found. Untick any you don’t want, then import.`, 'ok'); imRenderList(); }
+    IM.items = await src.list(q, pages, {inStock:el('imStock').checked}, n => imStatus(spin + i18n('Fetched page {n} of up to {p}…', {n, p:pages})));
+    if(!IM.items.length) imStatus(i18n('Nothing found. Check the link or keyword — or try another source.'), 'err');
+    else{ imStatus(i18n(IM.items.length === 1 ? '{n} CD found. Untick any you don’t want, then import.' : '{n} CDs found. Untick any you don’t want, then import.', {n:IM.items.length}), 'ok'); imRenderList(); }
   }catch(e){ imStatus(failMsg(e), 'err'); el('imMore').open = true; }
   finally{ el('imFetch').disabled = false; imCount(); }
 }
@@ -1416,15 +1452,15 @@ async function imRun(){
         else{ if(!got) tally.partial++; tally[addOrMerge(meta)]++; }
       }catch(e){ tally.failed++; errs.push(`${it.title}: ${e.message}`); }
       done++; fill.style.width = Math.round(done / picked.length * 100) + '%';
-      imStatus(spin + `Importing ${done} of ${picked.length}…`);
+      imStatus(spin + i18n('Importing {d} of {n}…', {d:done, n:picked.length}));
     }
   };
   await Promise.all([worker(), worker(), worker()]);
   IM.busy = false; el('imFetch').disabled = false;
   buildFilters(); render(); imRenderList();
-  imStatus(`Done: ${tally.added} added, ${tally.updated} updated${tally.partial ? `, ${tally.partial} with list details only (full page didn’t load)` : ''}${tally.failed ? `, ${tally.failed} failed` : ''}.`, tally.failed ? 'err' : 'ok');
+  imStatus(i18n('Done: {a} added, {u} updated', {a:tally.added, u:tally.updated}) + (tally.partial ? i18n(', {n} with list details only (full page didn’t load)', {n:tally.partial}) : '') + (tally.failed ? i18n(', {n} failed', {n:tally.failed}) : '') + (LANG === 'ja' ? '。' : '.'), tally.failed ? 'err' : 'ok');
   el('imLog').textContent = errs.slice(0, 8).join('\n');
-  toast(`Imported ${tally.added + tally.updated} CD${tally.added + tally.updated === 1 ? '' : 's'} ♡`);
+  { const k = tally.added + tally.updated; toast(i18n(k === 1 ? 'Imported {n} CD ♡' : 'Imported {n} CDs ♡', {n:k})); }
 }
 function openImporter(){
   const m = el('importer'); m.classList.add('open'); m.setAttribute('aria-hidden', 'false'); document.body.style.overflow = 'hidden';
@@ -1441,7 +1477,7 @@ el('imList').addEventListener('change', imCount);
 el('imHideShelf').onchange = imRenderList;
 el('imAll').onclick = () => { document.querySelectorAll('#imList input[type=checkbox]').forEach(c => c.checked = true); imCount(); };
 el('imNone').onclick = () => { document.querySelectorAll('#imList input[type=checkbox]').forEach(c => c.checked = false); imCount(); };
-el('imSaveProx').onclick = () => { const p = el('imProxies').value.split('\n').map(x => x.trim()).filter(Boolean); DB.setting('proxies', p.length ? p : DEFAULT_PROXIES); toast('Proxy list saved ♡'); };
+el('imSaveProx').onclick = () => { const p = el('imProxies').value.split('\n').map(x => x.trim()).filter(Boolean); DB.setting('proxies', p.length ? p : DEFAULT_PROXIES); toast(i18n('Proxy list saved ♡')); };
 
 /* ---------- boot ---------- */
 (function init(){
@@ -1466,6 +1502,19 @@ el('imSaveProx').onclick = () => { const p = el('imProxies').value.split('\n').m
   let cur = 'lavender'; try{ cur = localStorage.getItem('otomeCdTheme') || cur; }catch(e){}
   setTheme(cur, false);
 })();
+
+/* ---------- language switcher (EN ・ 日本) ---------- */
+function setLang(l, save){
+  LANG = l === 'ja' ? 'ja' : 'en';
+  if(save){ try{ localStorage.setItem('otomeCdLang', LANG); }catch(e){} }
+  document.querySelectorAll('.langs button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.l === LANG)));
+  applyStaticLang(); buildFilters(); render();
+  if(openId) openModal(openId);
+  if(el('editor').classList.contains('open')) el('eHead').textContent = i18n(ED.id ? 'Edit CD' : 'Add a CD');
+  imSync(); imCount(); if(IM.items.length) imRenderList();
+}
+document.querySelectorAll('.langs button').forEach(b => b.addEventListener('click', () => setLang(b.dataset.l, true)));
+setLang(LANG, false);
 </script>
 </body>
 </html>

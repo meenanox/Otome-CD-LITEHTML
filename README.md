@@ -1,4 +1,4 @@
-# test-otome-cd-Ver1
+# Otome-CD-LITE
 
 A self-hosted, single-file Otome Drama CD collection tracker. No Python, no server, no build step:
 open `index.html` in a browser.

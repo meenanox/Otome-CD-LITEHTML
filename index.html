@@ -355,8 +355,8 @@ details.more p{margin:8px 0 0;color:var(--ink-faint);font-weight:400;line-height
           <div class="wide"><label for="fAlt">Original / Japanese title</label><input class="in" id="fAlt"></div>
           <div><label for="fRelease">Release date</label><input class="in" id="fRelease" type="date"></div>
           <div><label for="fRelNote">Release note</label><input class="in" id="fRelNote" placeholder="e.g. DL ver. Oct 24, 2026"></div>
-          <div><label for="fLabel">Label</label><input class="in" id="fLabel"></div>
-          <div><label for="fSeries">Series (日本語)</label><input class="in" id="fSeries"></div>
+          <div><label for="eLabel">Label</label><input class="in" id="eLabel"></div>
+          <div><label for="eSeries">Series (日本語)</label><input class="in" id="eSeries"></div>
           <div><label for="fSeriesRo">Series (romaji)</label><input class="in" id="fSeriesRo"></div>
           <div class="wide"><label for="fCast">Voice cast — one per line: Romaji / 日本語</label><textarea class="in" id="fCast" rows="3" placeholder="Furukawa Makoto / 古川慎"></textarea></div>
           <div><label for="fScenario">Scenario (comma-separated)</label><input class="in" id="fScenario"></div>
@@ -1326,7 +1326,7 @@ const failMsg = e => i18n("Couldn't read that site ({m}). A page opened from dis
 function setForm(c){
   const v = (id, x) => { el(id).value = x || ''; };
   v('fTitle', c.title); v('fAlt', c.altTitle); v('fRelease', c.release); v('fRelNote', c.releaseNote);
-  v('fLabel', c.label); v('fSeries', c.series); v('fSeriesRo', c.seriesRomaji); v('fCast', castToText(c.cast)); v('fScenario', (c.scenario || []).join(', '));
+  v('eLabel', c.label); v('eSeries', c.series); v('fSeriesRo', c.seriesRomaji); v('fCast', castToText(c.cast)); v('fScenario', (c.scenario || []).join(', '));
   v('fIllust', c.illustrator); v('fCategory', c.category); v('fPN', c.pn); v('fJAN', c.jan); v('fUrl', c.url);
   v('fSynopsis', c.synopsis); v('fTracks', tracksToText(c.tracks)); v('fBonuses', (c.bonuses || []).join('\n')); v('fCover', c.cover);
 }
@@ -1370,7 +1370,7 @@ el('eForm').onsubmit = ev => {
   if(!title){ toast(i18n('Give it a title first ♡')); el('fTitle').focus(); return; }
   const patch = {
     title, altTitle:el('fAlt').value.trim(), release:el('fRelease').value, releaseNote:el('fRelNote').value.trim(),
-    label:el('fLabel').value.trim(), series:el('fSeries').value.trim(), seriesRomaji:el('fSeriesRo').value.trim(),
+    label:el('eLabel').value.trim(), series:el('eSeries').value.trim(), seriesRomaji:el('fSeriesRo').value.trim(),
     cast:parseCast(el('fCast').value), scenario:splitList(el('fScenario').value),
     illustrator:el('fIllust').value.trim(), category:el('fCategory').value.trim(), pn:el('fPN').value.trim(), jan:el('fJAN').value.trim(),
     url:el('fUrl').value.trim(), synopsis:el('fSynopsis').value.trim(), tracks:textToTracks(el('fTracks').value),

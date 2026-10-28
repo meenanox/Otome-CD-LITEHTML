@@ -314,6 +314,25 @@ details.more p{margin:8px 0 0;color:var(--ink-faint);font-weight:400;line-height
 .dgroup li img,.dgroup li .nothumb{width:44px;height:44px;border-radius:12px;object-fit:cover;background:var(--accent-soft);flex:none}
 .dgroup li .t{flex:1;min-width:0;line-height:1.35}
 .dgroup .gain{margin:8px 0 0;font-size:12.5px;color:var(--ink-faint);font-weight:400}
+.scdrop{border:2px dashed var(--accent-2);border-radius:22px;padding:16px;text-align:center;color:var(--ink-soft);font-weight:400;font-size:14px;margin:12px 0 6px;transition:background .2s}
+.scdrop.over{background:var(--accent-soft)}
+.scsec{margin:0 0 14px}
+.scsec > h3{font-size:14px;margin:4px 4px 8px;display:flex;align-items:center;gap:8px;color:var(--ink-soft)}
+.scsec > p{margin:-4px 4px 8px;font-size:12.5px;color:var(--ink-faint);font-weight:400}
+.scrow{display:grid;grid-template-columns:24px 1fr;gap:10px;background:var(--surface);border:2px solid var(--accent-faint);border-radius:18px;padding:10px 14px;margin:0 0 8px;font-size:13.5px;font-weight:400}
+.scrow:has(> input:checked){border-color:var(--accent-2)}
+.scsites{display:flex;flex-wrap:wrap;gap:4px 16px;margin:2px 0 0 26px}
+.scsites .check{padding-top:2px;font-size:13px}
+.scrow.plain{grid-template-columns:1fr}
+.scrow .btnrow{margin-top:6px}
+.scrow > input{width:18px;height:18px;accent-color:var(--accent);margin:2px 0 0}
+.scrow .path{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px;color:var(--ink-faint);word-break:break-all;margin-top:2px}
+.scrow .facts{display:flex;flex-wrap:wrap;gap:5px;margin:6px 0 0}
+.scrow .facts span{background:var(--accent-soft);border-radius:999px;padding:2px 9px;font-size:11.5px}
+.scrow .facts span.warn{background:var(--pink-soft);color:var(--pink-ink)}
+.scrow .to{margin-top:6px;color:var(--ink-soft)}
+.scrow .in,.scrow .sel{margin-top:6px;width:100%;max-width:none}
+#scMode{max-width:none}
 @media (max-width:700px){.cmp .row{grid-template-columns:24px 1fr}.cmp .row .v{grid-column:2}.cmp .row.head{display:none}}
 
 
@@ -360,6 +379,7 @@ details.more p{margin:8px 0 0;color:var(--ink-faint);font-weight:400;line-height
     </button>
     <button class="pill primary" id="btnAdd" title="Add a CD by hand">＋ Add CD</button>
     <button class="pill" id="btnImportSrc" title="Import CDs from rukojiDB, HIBIKIFORUM, DLsite Girls or SKiT Dolce">⇩ Import CDs</button>
+    <button class="pill" id="btnScan" title="Read the folder names of your local drama CD folders and add or link them — files are never copied or uploaded">📁 Scan folders</button>
     <button class="pill" id="btnDupes" title="Find the same CD added twice (e.g. from different sites) and merge them into one">⧉ Merge duplicates</button>
     <button class="pill" id="btnExport" title="Download your whole collection as a JSON backup file">⬇ Backup</button>
     <button class="pill" id="btnImport" title="Restore a JSON backup file">⬆ Restore</button>
@@ -381,6 +401,7 @@ details.more p{margin:8px 0 0;color:var(--ink-faint);font-weight:400;line-height
     <div class="seg" id="fStatus" role="group" aria-label="Collection status">
       <button data-v="all" aria-pressed="true">All</button>
       <button data-v="owned" aria-pressed="false">Owned</button>
+      <button data-v="disk" aria-pressed="false" title="CDs linked to a folder by Scan folders">On disk</button>
     </div>
     <select class="sel" id="fSort" aria-label="Sort">
       <option value="new">Newest release</option>
@@ -517,7 +538,11 @@ details.more p{margin:8px 0 0;color:var(--ink-faint);font-weight:400;line-height
         <div class="lstatus" id="cmpStatus" role="status"></div>
         <ul class="results" id="cmpHits"></ul>
         <div class="lrow" style="margin-top:12px">
-          <input class="in" id="cmpLink" placeholder="Or paste a rukoji.com / DLsite link (or RJ code)" autocomplete="off">
+          <input class="in" id="cmpQuery" type="search" placeholder="Search by title on every site" aria-label="Search by title" autocomplete="off">
+          <button type="button" class="pill" id="cmpFind">Search</button>
+        </div>
+        <div class="lrow" style="margin-top:8px">
+          <input class="in" id="cmpLink" placeholder="Or paste a CD page link from any of the sites (or an RJ code)" autocomplete="off">
           <button type="button" class="pill" id="cmpLoad">Load</button>
         </div>
       </section>
@@ -562,6 +587,38 @@ details.more p{margin:8px 0 0;color:var(--ink-faint);font-weight:400;line-height
     </div>
   </div>
 </div>
+<div class="backdrop" id="scan" aria-hidden="true">
+  <div class="sheet im" role="dialog" aria-modal="true" aria-labelledby="scHead">
+    <button class="close" id="scClose" aria-label="Close">✕</button>
+    <div class="body">
+      <h2 id="scHead">Scan local folders</h2>
+      <p class="alt">Pick the folder where your drama CDs live. Only folder and file names (and sizes) are read — no files are opened, copied or uploaded, and nothing changes on your shelf until you press Apply.</p>
+      <section class="lookup">
+        <div class="lrow" style="flex-wrap:wrap">
+          <button type="button" class="pill primary" id="scPick">📁 Choose folder…</button>
+          <select class="sel" id="scMode" aria-label="Folder layout">
+            <option value="auto">Find CD folders automatically</option>
+            <option value="flat">Each subfolder is one CD</option>
+            <option value="series">Series folders → CD folders</option>
+          </select>
+        </div>
+        <input type="file" id="scInput" webkitdirectory directory multiple hidden>
+        <div class="scdrop" id="scDrop">…or drag a folder here</div>
+        <label class="check"><input type="checkbox" id="scOwned" checked> Mark CDs found on disk as Owned</label>
+        <label class="check"><input type="checkbox" id="scFill"> Fill in missing details (cover, cast, tracks, synopsis…) from these sites — slower</label>
+        <div class="scsites" id="scSites" role="group" aria-label="Sites to search"></div>
+        <div class="lstatus" id="scStatus" role="status"></div>
+      </section>
+      <div class="imbar" id="scBar" hidden>
+        <button type="button" class="pill sm" id="scAll">Select all</button>
+        <button type="button" class="pill sm" id="scNone">Select none</button>
+        <button type="button" class="pill primary" id="scGo" style="margin-left:auto" disabled>Apply</button>
+      </div>
+      <div id="scList"></div>
+      <div class="prog" id="scProg" hidden><div></div></div>
+    </div>
+  </div>
+</div>
 <div class="selbar" id="selBar" hidden role="toolbar" aria-label="Selected CDs">
   <span id="selCount"></span>
   <button class="pill sm" id="selAll">Select all shown</button>
@@ -589,11 +646,14 @@ details.more p{margin:8px 0 0;color:var(--ink-faint);font-weight:400;line-height
 const I18N_JA = {"All ratings": "全レーティング", "All ages (AA)": "全年齢 (全年)", "Boys Love (BL)": "ボーイズラブ (BL)", "Adult (R18)": "大人向け (R18)", "Not tagged": "未設定", "All ages": "全年齢", "Boys Love": "ボーイズラブ", "Adult (18+)": "大人向け (18禁)", "OK": "OK", "Restore": "復元", "Delete": "削除", "couldn’t read the file": "ファイルを読み込めませんでした", "this file isn’t valid JSON": "このファイルは正しいJSONではありません", "Drop a backup .json file to restore it": "バックアップの .json ファイルをドロップすると復元できます", "Not a valid Otome CD Shelf backup": "Otome CD Shelf のバックアップではありません", "☑ Select": "☑ 選択", "✓ Done": "✓ 完了", "Select several CDs to edit them together (or Ctrl/⌘-click and Shift-click jackets)": "複数のCDを選んでまとめて編集(Ctrl/⌘クリック・Shiftクリックでも選択できます)", "1 selected": "1枚選択中", "{n} selected": "{n}枚選択中", "Tap jackets to select": "ジャケットをタップして選択", "Select all shown": "表示中をすべて選択", "✎ Edit selected": "✎ まとめて編集", "🗑 Delete selected": "🗑 選択したCDを削除", "Clear selection": "選択を解除", "Selected CDs": "選択したCD", "Edit selected CDs": "選択したCDを編集", "Edit {n} CDs": "{n}枚のCDを編集", "Tick a field to change it on every selected CD. Unticked fields stay as they are; a ticked field left blank is cleared.": "チェックした項目だけが、選択したすべてのCDで書き換わります。チェックしない項目はそのまま。チェックして空欄にすると消去されます。", "Mixed — {n} different values": "バラバラ — {n}通りの値", "Change {f}": "{f}を変更", "Apply to selected": "選択したCDに適用", "Apply to 1 CD": "1枚に適用", "Apply to {n} CDs": "{n}枚に適用", "Tick at least one field to change ♡": "変更する項目を1つ以上チェックしてね ♡", "Updated 1 CD ♡": "1枚更新しました ♡", "Updated {n} CDs ♡": "{n}枚更新しました ♡", "Delete 1 CD from your shelf? (Back up first if you want a copy.)": "このCD 1枚を棚から削除しますか?(残したい場合は先にバックアップを)", "Delete {n} CDs from your shelf? (Back up first if you want a copy.)": "{n}枚のCDを棚から削除しますか?(残したい場合は先にバックアップを)", "Deleted 1 CD": "1枚削除しました", "Deleted {n} CDs": "{n}枚削除しました", "Yes": "はい", "No": "いいえ", "my little drama CD collection": "わたしのドラマCDコレクション", "Theme": "テーマ", "Colour theme": "カラーテーマ", "Language": "言語", "Lavender": "ラベンダー", "Lavender theme": "ラベンダーテーマ", "Ocean (blue & sea-green)": "オーシャン（青×碧）", "Ocean theme": "オーシャンテーマ", "Midnight (dark mode)": "ミッドナイト（ダークモード）", "Midnight dark theme": "ミッドナイト（ダーク）テーマ", "Sepia (taupe)": "セピア（トープ）", "Sepia theme": "セピアテーマ", "Show or hide titles and overlays on the cards": "カード上のタイトルとオーバーレイを表示／非表示", "Toggle Labels": "ラベル切替", "＋ Add CD": "＋ CDを追加", "Add a CD by hand": "手入力でCDを追加", "⇩ Import CDs": "⇩ CDをインポート", "Import CDs from rukojiDB, HIBIKIFORUM, DLsite Girls or SKiT Dolce": "rukojiDB・HIBIKIFORUM・DLsite Girls・SKiT DolceからCDをインポート", "⬇ Backup": "⬇ バックアップ", "Download your whole collection as a JSON backup file": "コレクション全体をJSONバックアップとしてダウンロード", "⬆ Restore": "⬆ 復元", "Restore a JSON backup file": "JSONバックアップから復元", "Search titles, cast, series, labels…": "タイトル・声優・シリーズ・レーベルで検索…", "Label": "レーベル", "Voice actor": "声優", "Series": "シリーズ", "Collection status": "所持状況", "Sort": "並び替え", "All": "すべて", "Owned": "所持", "Newest release": "発売日が新しい順", "Oldest release": "発売日が古い順", "Title A–Z": "タイトル順（A–Z）", "Highest rated": "評価が高い順", "Reset": "リセット", "Click a jacket for details ♡": "ジャケットをクリックで詳細 ♡", "Sample entries & jacket images from": "サンプルのデータとジャケット画像の出典：", "— all artwork belongs to its respective labels & artists. Your notes and ratings live only in this browser.": "— すべての作品画像の権利は各レーベル・作家に帰属します。メモや評価はこのブラウザ内にのみ保存されます。", "Close": "閉じる", "Cover": "カバー", "Image address": "画像アドレス", "Upload image": "画像をアップロード", "Clear": "クリア", "Fill it in by hand. (Bulk metadata comes from the Import tool or your JSON files.)": "手入力で記入してください。（まとめてのメタデータはインポートツールやJSONファイルから取り込めます。）", "Title": "タイトル", "Original / Japanese title": "原題／日本語タイトル", "Release date": "発売日", "Release note": "発売メモ", "e.g. DL ver. Oct 24, 2026": "例：DL版 2026年10月24日", "Series (日本語)": "シリーズ（日本語）", "Series (romaji)": "シリーズ（ローマ字）", "Voice cast — one per line: Romaji / 日本語": "声優 — 1行に1人：ローマ字 / 日本語", "Scenario (comma-separated)": "シナリオ（カンマ区切り）", "Illustration": "イラスト", "Category": "カテゴリ", "Catalog no.": "品番", "Source page": "ソースページ", "Synopsis": "あらすじ", "Tracklist (one per line; add \" | 4:02\" for a duration)": "トラックリスト（1行に1曲。長さは「 | 4:02」のように追記）", "Bonuses (one per line)": "特典（1行に1つ）", "Delete CD": "CDを削除", "Cancel": "キャンセル", "Save CD": "CDを保存", "Import CDs from online sources": "オンラインソースからCDをインポート", "Paste a link to one CD (rukoji.com or DLsite) to fill in its page automatically — or fetch a whole list, tick the ones you want, and add them in one go.": "CD1枚のリンク（rukoji.com または DLsite）を貼ると、その内容を自動入力します。リストをまとめて取得し、チェックしたものを一度に追加することもできます。", "Source": "音源", "Pages to fetch": "取得ページ数", "1 page": "1ページ", "2 pages": "2ページ", "3 pages": "3ページ", "5 pages": "5ページ", "10 pages": "10ページ", "Fetch list": "リストを取得", "Only show items in stock (在庫ありに絞り込み)": "在庫ありのみ表示（在庫ありに絞り込み）", "Notes & proxy settings": "メモとプロキシ設定", "SKiT Dolce lists are fetched with the in-stock filter turned off (so sold-out CDs are included) unless you tick the box above. Lists come through a free public CORS proxy, which can see what you look up; if it is down, edit the proxy list here. Full details for each CD are fetched one by one, so big imports take a while.": "SKiT Dolceのリストは、上のチェックを入れない限り「在庫ありに絞り込み」をオフにして取得します（売り切れのCDも含まれます）。リストは無料の公開CORSプロキシ経由で取得されるため、検索内容がプロキシから見えます。プロキシが落ちている場合は、ここでプロキシ一覧を編集してください。各CDの詳細は1件ずつ取得するため、大量のインポートには時間がかかります。", "CORS proxies, one per line ({url} = where the page address goes)": "CORSプロキシ（1行に1つ。{url} の部分にページのアドレスが入ります）", "Save proxies": "プロキシを保存", "Select all": "すべて選択", "Select none": "選択解除", "Hide ones already on my shelf": "シェルフにあるものを隠す", "All labels": "すべてのレーベル", "All voice actors": "すべての声優", "All series": "すべてのシリーズ", "Cast unknown": "声優不明", "Owned — click to unmark": "所持中 — クリックで解除", "Mark as owned": "所持にする", "No CDs match those filters": "条件に合うCDがありません", "Try clearing a filter or two.": "絞り込みを一つ二つ外してみてください。", "Showing {a} of {b} CDs": "{b}枚中{a}枚を表示", "{n} CD": "{n}枚", "{n} CDs": "{n}枚", "{n} owned": "所持 {n}枚", "Release": "発売日", "Voice cast": "声優", "Scenario": "シナリオ", "Bonuses": "特典", "Tracklist": "トラックリスト", "No synopsis saved yet.": "あらすじはまだ保存されていません。", "No tracklist saved yet.": "トラックリストはまだ保存されていません。", "View on rukojiDB ↗": "rukojiDBで見る ↗", "My collection": "マイコレクション", "Not set": "未設定", "Rating": "評価", "{n} of 5": "5段階中{n}", "Notes, impressions, where the files live…": "メモ・感想・ファイルの保存場所など…", "Notes": "メモ", "✎ Edit": "✎ 編集", "Backup downloaded ♡": "バックアップをダウンロードしました ♡", "Replace your current collection with {n} CDs from this file?": "現在のコレクションを、このファイルの{n}枚に置き換えますか？", "Imported {n} CDs ♡": "{n}枚をインポートしました ♡", "Import failed: ": "インポートに失敗しました：", "Couldn't save in this browser — use Export to keep a backup": "このブラウザに保存できませんでした — バックアップで控えを取ってください", "Cover added ♡": "カバーを追加しました ♡", "Couldn’t read that image": "その画像を読み込めませんでした", "Give it a title first ♡": "先にタイトルを入力してください ♡", "Saved ♡": "保存しました ♡", "That CD was already on your shelf, so I updated it ♡": "すでにシェルフにあるCDだったので、更新しました ♡", "Delete “{title}” from your shelf? (Back up first if you want a copy.)": "「{title}」をシェルフから削除しますか？（控えが必要なら先にバックアップを。）", "Deleted": "削除しました", "New CD": "新しいCD", "Edit CD": "CDを編集", "Add a CD": "CDを追加", "A rukoji.com CD link to fill in one CD, or a list link (tag, label, VA…) or keyword": "rukoji.comのCDリンクで1枚を自動入力、またはリストリンク（タグ・レーベル・声優など）やキーワード", "A keyword, or Category:Some category name": "キーワード、または Category:カテゴリ名", "A DLsite work link or RJ code to fill in one CD, or a keyword / search link": "DLsiteの作品リンクやRJ番号で1枚を自動入力、またはキーワード／検索リンク", "A skitdolce.jp list link, or a keyword": "skitdolce.jpのリストリンク、またはキーワード", "Import {n} selected": "選択した{n}件をインポート", "Import selected": "選択したものをインポート", "Type a keyword or paste a list link first.": "先にキーワードを入力するか、リストのリンクを貼り付けてください。", "Fetching the list…": "リストを取得中…", "Fetched page {n} of up to {p}…": "{n}ページ目を取得しました（最大{p}ページ）…", "Nothing found. Check the link or keyword — or try another source.": "見つかりませんでした。リンクやキーワードを確認するか、別のソースを試してください。", "{n} CD found. Untick any you don’t want, then import.": "{n}件見つかりました。不要なものはチェックを外して、インポートしてください。", "{n} CDs found. Untick any you don’t want, then import.": "{n}件見つかりました。不要なものはチェックを外して、インポートしてください。", "Importing {d} of {n}…": "インポート中… {d} / {n}", "Done: {a} added, {u} updated": "完了：{a}件追加、{u}件更新", ", {n} with list details only (full page didn’t load)": "、{n}件はリストの情報のみ（詳細ページを読み込めず）", ", {n} failed": "、{n}件失敗", "Imported {n} CD ♡": "{n}件をインポートしました ♡", "Imported {n} CDs ♡ ": "{n}件をインポートしました ♡", "Proxy list saved ♡": "プロキシ一覧を保存しました ♡", "on shelf": "登録済み", "Couldn't read that site ({m}). A page opened from disk can't read other websites directly, so lists go through a free CORS proxy, which may be down or blocked. Try again, or edit the proxy list under “Notes & proxy settings”.": "サイトを読み込めませんでした（{m}）。ディスクから開いたページは他のサイトを直接読めないため、リストは無料のCORSプロキシ経由で取得されます。プロキシが停止・ブロックされている可能性があります。もう一度試すか、「メモとプロキシ設定」でプロキシ一覧を編集してください。", "Reading that CD page…": "CDページを読み込んでいます…", "no CD details on that page": "このページにCD情報が見つかりません", "Already on your shelf — filled in {n} blank fields. Save to keep them.": "すでにシェルフにあります。空欄{n}件を入力しました。保存すると反映されます。", "Already on your shelf, and nothing new was found.": "すでにシェルフにあり、新しい情報はありませんでした。", "Filled in from {src} — check it over, then Save ♡": "{src}から入力しました。確認してから保存してね ♡", "🗑 Clear entire collection": "🗑 コレクションをすべて削除", "Delete every CD on your shelf": "シェルフのCDをすべて削除します", "Your shelf is already empty.": "シェルフはすでに空です。", "Clear your entire collection? This removes all {n} CDs from your shelf.": "コレクションをすべて削除しますか？シェルフの{n}枚のCDがすべて消えます。", "Are you sure? This can’t be undone — make a Backup first if you might want them back.": "本当によろしいですか？元に戻せません。必要ならまずバックアップを取ってください。", "Collection cleared — 0 CDs": "コレクションを削除しました（0枚）", "Compare metadata": "メタデータを比較", "⇄ Compare metadata": "⇄ メタデータを比較", "Look this CD up on rukoji.com and DLsite and pick what to fill in": "rukoji.comとDLsiteでこのCDを探し、入力する項目を選べます", "Or paste a rukoji.com / DLsite link (or RJ code)": "またはrukoji.com／DLsiteのリンク（RJ番号）を貼り付け", "Load": "読み込む", "Fill in selected": "選択した項目を入力", "Fill in {n} selected": "選択した{n}項目を入力", "Looking for this CD on rukojiDB and DLsite…": "rukojiDBとDLsiteでこのCDを探しています…", "No match found on rukojiDB or DLsite.": "rukojiDBにもDLsiteにも一致するものが見つかりませんでした。", "({n} lookups could not reach the site.)": "（{n}件のサイトに接続できませんでした）", "You can paste a link below.": "下にリンクを貼り付けることもできます。", "1 possible match found.": "候補が1件見つかりました。", "{n} possible matches — the closest is loaded; click another to compare with it.": "候補が{n}件見つかりました。いちばん近いものを読み込みました。ほかの候補をクリックすると比較できます。", "Reading {src}…": "{src}を読み込んでいます…", "Paste a rukoji.com CD link or a DLsite work link / RJ code.": "rukoji.comのCDリンク、またはDLsiteの作品リンク／RJ番号を貼り付けてください。", "Loaded from your link.": "リンクから読み込みました。", "(empty)": "（空欄）", "Field": "項目", "On your shelf": "シェルフの内容", "{n} fields already match. Tick what you want copied over, then press Fill in selected.": "{n}項目はすでに一致しています。反映したい項目にチェックを入れて「選択した項目を入力」を押してください。", "Everything this page has already matches your shelf ♡": "このページの情報はすべてシェルフと一致しています ♡", "Filled in 1 field ♡": "1項目を入力しました ♡", "Filled in {n} fields ♡": "{n}項目を入力しました ♡", "View on {site} ↗": "{site}で見る ↗", "⧉ Merge duplicates": "⧉ 重複をまとめる", "Merge duplicates": "重複をまとめる", "Find the same CD added twice (e.g. from different sites) and merge them into one": "同じCDが（別サイトなどから）二重に登録されていたら、1つにまとめます", "The same CD added more than once — matched by title (romaji or Japanese, ignoring “CV.” tags), catalog no., JAN or source page. Each group becomes one entry: the most complete one is kept, its blanks are filled from the others, and nothing is copied twice.": "二重に登録されたCDを、タイトル（ローマ字・日本語、「CV.」表記は無視）、品番、JAN、ソースページで見つけます。各グループは1件にまとめられ、いちばん情報の多いものを残して空欄をほかから埋めます。同じ内容は二重に入りません。", "Merge selected": "選択したものをまとめる", "Merge these {n} into one": "この{n}件を1つにまとめる", "added by hand": "手入力", "merged in, then removed": "統合後に削除", "kept": "残す", "Adds to the kept entry: {f}": "残すエントリーに追加：{f}", "The kept entry already has everything; the extra copy is just removed.": "残すエントリーにすべて揃っているので、重複分を削除するだけです。", "No duplicates found ♡": "重複は見つかりませんでした ♡", "Merge 1 group": "1グループをまとめる", "Merge {n} groups": "{n}グループをまとめる", "Merged — 1 duplicate removed ♡": "まとめました（重複1件を削除）♡", "Merged — {n} duplicates removed ♡": "まとめました（重複{n}件を削除）♡", "Group by": "グループ分け", "No grouping": "グループ分けなし", "Group by release year": "発売年でグループ分け", "Group by voice actor": "声優でグループ分け", "Group by series": "シリーズでグループ分け", "Group by publisher": "レーベル（発売元）でグループ分け", "Unknown year": "発売年不明", "No voice actor listed": "声優情報なし", "No series": "シリーズなし", "No publisher": "レーベル情報なし", "Chinese title (中文)": "中国語タイトル（中文）", "Series (中文)": "シリーズ（中国語）", "Synopsis (中文)": "あらすじ（中国語）", "Optional — shown when the 中文 toggle is on; leave blank to keep the romaji title": "任意 — 中文表示のときに使われます。空欄ならローマ字タイトルのまま", "brand": "乙女CDシェルフ"};
 /* 简体中文 — same English keys; CD data falls back to romaji when no 中文 fields are filled in */
 const I18N_ZH = {"All ratings": "全部分级", "All ages (AA)": "全年龄 (AA)", "Boys Love (BL)": "耽美 (BL)", "Adult (R18)": "成人 (R18)", "Not tagged": "未标记", "All ages": "全年龄", "Boys Love": "耽美 BL", "Adult (18+)": "成人向 (18+)", "OK": "确定", "Restore": "恢复", "Delete": "删除", "couldn’t read the file": "无法读取文件", "this file isn’t valid JSON": "此文件不是有效的JSON", "Drop a backup .json file to restore it": "拖入备份 .json 文件即可恢复", "Not a valid Otome CD Shelf backup": "不是有效的 Otome CD Shelf 备份", "☑ Select": "☑ 选择", "✓ Done": "✓ 完成", "Select several CDs to edit them together (or Ctrl/⌘-click and Shift-click jackets)": "选择多张CD一起编辑(也可以 Ctrl/⌘ 点击、Shift 点击封面)", "1 selected": "已选 1 张", "{n} selected": "已选 {n} 张", "Tap jackets to select": "点击封面进行选择", "Select all shown": "全选当前显示", "✎ Edit selected": "✎ 批量编辑", "🗑 Delete selected": "🗑 删除所选", "Clear selection": "取消选择", "Selected CDs": "所选CD", "Edit selected CDs": "编辑所选CD", "Edit {n} CDs": "编辑 {n} 张CD", "Tick a field to change it on every selected CD. Unticked fields stay as they are; a ticked field left blank is cleared.": "勾选的字段会应用到所有所选CD。未勾选的字段保持不变;勾选但留空则会清空。", "Mixed — {n} different values": "不一致 — 共 {n} 种值", "Change {f}": "修改{f}", "Apply to selected": "应用到所选", "Apply to 1 CD": "应用到 1 张", "Apply to {n} CDs": "应用到 {n} 张", "Tick at least one field to change ♡": "请至少勾选一个要修改的字段 ♡", "Updated 1 CD ♡": "已更新 1 张 ♡", "Updated {n} CDs ♡": "已更新 {n} 张 ♡", "Delete 1 CD from your shelf? (Back up first if you want a copy.)": "要从收藏中删除这 1 张CD吗?(如需保留请先备份)", "Delete {n} CDs from your shelf? (Back up first if you want a copy.)": "要从收藏中删除这 {n} 张CD吗?(如需保留请先备份)", "Deleted 1 CD": "已删除 1 张", "Deleted {n} CDs": "已删除 {n} 张", "Yes": "是", "No": "否", "my little drama CD collection": "我的小小广播剧CD收藏", "Theme": "主题", "Colour theme": "配色主题", "Language": "语言", "Lavender": "薰衣草", "Lavender theme": "薰衣草主题", "Ocean (blue & sea-green)": "海洋（蓝×碧绿）", "Ocean theme": "海洋主题", "Midnight (dark mode)": "午夜（深色模式）", "Midnight dark theme": "午夜（深色）主题", "Sepia (taupe)": "复古（灰褐）", "Sepia theme": "复古主题", "Show or hide titles and overlays on the cards": "显示／隐藏卡片上的标题和标记", "Toggle Labels": "切换标签", "＋ Add CD": "＋ 添加CD", "Add a CD by hand": "手动添加CD", "⇩ Import CDs": "⇩ 导入CD", "Import CDs from rukojiDB, HIBIKIFORUM, DLsite Girls or SKiT Dolce": "从 rukojiDB、HIBIKIFORUM、DLsite Girls 或 SKiT Dolce 导入CD", "⬇ Backup": "⬇ 备份", "Download your whole collection as a JSON backup file": "将整个收藏下载为JSON备份文件", "⬆ Restore": "⬆ 恢复", "Restore a JSON backup file": "从JSON备份文件恢复", "Search titles, cast, series, labels…": "搜索标题、声优、系列、厂牌…", "Label": "厂牌", "Voice actor": "声优", "Series": "系列", "Collection status": "收藏状态", "Sort": "排序", "All": "全部", "Owned": "已拥有", "Newest release": "发售日（新→旧）", "Oldest release": "发售日（旧→新）", "Title A–Z": "标题（A–Z）", "Highest rated": "评分最高", "Reset": "重置", "Click a jacket for details ♡": "点击封面查看详情 ♡", "Sample entries & jacket images from": "示例数据与封面图片来源：", "— all artwork belongs to its respective labels & artists. Your notes and ratings live only in this browser.": "— 所有作品图片的版权归各厂牌及画师所有。你的笔记和评分只保存在本浏览器中。", "Close": "关闭", "Cover": "封面", "Image address": "图片地址", "Upload image": "上传图片", "Clear": "清除", "Fill it in by hand. (Bulk metadata comes from the Import tool or your JSON files.)": "请手动填写。（批量元数据可通过导入工具或JSON文件获取。）", "Title": "标题", "Original / Japanese title": "原标题／日文标题", "Release date": "发售日", "Release note": "发售备注", "e.g. DL ver. Oct 24, 2026": "例：DL版 2026年10月24日", "Series (日本語)": "系列（日文）", "Series (romaji)": "系列（罗马音）", "Voice cast — one per line: Romaji / 日本語": "声优 — 每行一人：罗马音 / 日文", "Scenario (comma-separated)": "剧本（用逗号分隔）", "Illustration": "插画", "Category": "分类", "Catalog no.": "商品编号", "Source page": "来源页面", "Synopsis": "简介", "Tracklist (one per line; add \" | 4:02\" for a duration)": "曲目列表（每行一首；时长请追加“ | 4:02”）", "Bonuses (one per line)": "特典（每行一个）", "Delete CD": "删除CD", "Cancel": "取消", "Save CD": "保存CD", "Import CDs from online sources": "从在线来源导入CD", "Paste a link to one CD (rukoji.com or DLsite) to fill in its page automatically — or fetch a whole list, tick the ones you want, and add them in one go.": "粘贴单张CD的链接（rukoji.com 或 DLsite）即可自动填写 — 也可以获取整个列表，勾选想要的CD后一次性添加。", "Source": "来源", "Pages to fetch": "获取页数", "1 page": "1页", "2 pages": "2页", "3 pages": "3页", "5 pages": "5页", "10 pages": "10页", "Fetch list": "获取列表", "Only show items in stock (在庫ありに絞り込み)": "仅显示有货商品（在庫ありに絞り込み）", "Notes & proxy settings": "说明与代理设置", "SKiT Dolce lists are fetched with the in-stock filter turned off (so sold-out CDs are included) unless you tick the box above. Lists come through a free public CORS proxy, which can see what you look up; if it is down, edit the proxy list here. Full details for each CD are fetched one by one, so big imports take a while.": "除非勾选上方选项，否则获取 SKiT Dolce 列表时会关闭“仅限有货”筛选（包含已售罄的CD）。列表通过免费的公共CORS代理获取，代理可以看到你查询的内容；如果代理失效，请在此编辑代理列表。每张CD的详细信息会逐一获取，因此大量导入需要一些时间。", "CORS proxies, one per line ({url} = where the page address goes)": "CORS代理（每行一个；{url} 处会填入页面地址）", "Save proxies": "保存代理", "Select all": "全选", "Select none": "取消全选", "Hide ones already on my shelf": "隐藏已在书架上的CD", "All labels": "全部厂牌", "All voice actors": "全部声优", "All series": "全部系列", "Cast unknown": "声优未知", "Owned — click to unmark": "已拥有 — 点击取消", "Mark as owned": "标记为已拥有", "No CDs match those filters": "没有符合条件的CD", "Try clearing a filter or two.": "试着取消一两个筛选条件吧。", "Showing {a} of {b} CDs": "共{b}张，显示{a}张", "{n} CD": "{n}张", "{n} CDs": "{n}张", "{n} owned": "已拥有 {n}张", "Release": "发售日", "Voice cast": "声优", "Scenario": "剧本", "Bonuses": "特典", "Tracklist": "曲目列表", "No synopsis saved yet.": "尚未保存简介。", "No tracklist saved yet.": "尚未保存曲目列表。", "View on rukojiDB ↗": "在 rukojiDB 查看 ↗", "My collection": "我的收藏", "Not set": "未设置", "Rating": "评分", "{n} of 5": "{n} / 5", "Notes, impressions, where the files live…": "笔记、感想、文件存放位置…", "Notes": "笔记", "✎ Edit": "✎ 编辑", "Backup downloaded ♡": "备份已下载 ♡", "Replace your current collection with {n} CDs from this file?": "要用此文件中的{n}张CD替换当前收藏吗？", "Imported {n} CDs ♡": "已导入{n}张CD ♡", "Import failed: ": "导入失败：", "Couldn't save in this browser — use Export to keep a backup": "无法在此浏览器中保存 — 请使用备份功能保留副本", "Cover added ♡": "已添加封面 ♡", "Couldn’t read that image": "无法读取该图片", "Give it a title first ♡": "请先填写标题 ♡", "Saved ♡": "已保存 ♡", "That CD was already on your shelf, so I updated it ♡": "这张CD已在书架上，已为你更新 ♡", "Delete “{title}” from your shelf? (Back up first if you want a copy.)": "要从书架上删除“{title}”吗？（如需保留副本，请先备份。）", "Deleted": "已删除", "New CD": "新CD", "Edit CD": "编辑CD", "Add a CD": "添加CD", "A rukoji.com CD link to fill in one CD, or a list link (tag, label, VA…) or keyword": "rukoji.com 的CD链接（自动填写单张），或列表链接（标签、厂牌、声优…）或关键词", "A keyword, or Category:Some category name": "关键词，或 Category:分类名", "A DLsite work link or RJ code to fill in one CD, or a keyword / search link": "DLsite 作品链接或RJ编号（自动填写单张），或关键词／搜索链接", "A skitdolce.jp list link, or a keyword": "skitdolce.jp 的列表链接，或关键词", "Import {n} selected": "导入所选{n}项", "Import selected": "导入所选", "Type a keyword or paste a list link first.": "请先输入关键词或粘贴列表链接。", "Fetching the list…": "正在获取列表…", "Fetched page {n} of up to {p}…": "已获取第{n}页（最多{p}页）…", "Nothing found. Check the link or keyword — or try another source.": "未找到结果。请检查链接或关键词，或换一个来源试试。", "{n} CD found. Untick any you don’t want, then import.": "找到{n}项。取消勾选不需要的，然后导入。", "{n} CDs found. Untick any you don’t want, then import.": "找到{n}项。取消勾选不需要的，然后导入。", "Importing {d} of {n}…": "正在导入… {d} / {n}", "Done: {a} added, {u} updated": "完成：新增{a}项，更新{u}项", ", {n} with list details only (full page didn’t load)": "，{n}项仅有列表信息（详情页未能加载）", ", {n} failed": "，{n}项失败", "Imported {n} CD ♡": "已导入{n}项 ♡", "Imported {n} CDs ♡ ": "已导入{n}项 ♡", "Proxy list saved ♡": "代理列表已保存 ♡", "on shelf": "已在书架", "Couldn't read that site ({m}). A page opened from disk can't read other websites directly, so lists go through a free CORS proxy, which may be down or blocked. Try again, or edit the proxy list under “Notes & proxy settings”.": "无法读取该网站（{m}）。从本地打开的页面无法直接读取其他网站，因此列表会通过免费的CORS代理获取，代理可能已失效或被屏蔽。请重试，或在“说明与代理设置”中编辑代理列表。", "Reading that CD page…": "正在读取CD页面…", "no CD details on that page": "该页面没有CD信息", "Already on your shelf — filled in {n} blank fields. Save to keep them.": "已在书架上 — 已填写{n}个空白项。保存后生效。", "Already on your shelf, and nothing new was found.": "已在书架上，未发现新信息。", "Filled in from {src} — check it over, then Save ♡": "已从{src}填写 — 检查无误后请保存 ♡", "🗑 Clear entire collection": "🗑 清空全部收藏", "Delete every CD on your shelf": "删除书架上的所有CD", "Your shelf is already empty.": "书架已经是空的。", "Clear your entire collection? This removes all {n} CDs from your shelf.": "要清空全部收藏吗？书架上的{n}张CD将全部删除。", "Are you sure? This can’t be undone — make a Backup first if you might want them back.": "确定吗？此操作无法撤销 — 如果之后可能需要，请先备份。", "Collection cleared — 0 CDs": "收藏已清空（0张）", "Compare metadata": "比较元数据", "⇄ Compare metadata": "⇄ 比较元数据", "Look this CD up on rukoji.com and DLsite and pick what to fill in": "在 rukoji.com 和 DLsite 查找这张CD，并选择要填写的项目", "Or paste a rukoji.com / DLsite link (or RJ code)": "或粘贴 rukoji.com／DLsite 链接（或RJ编号）", "Load": "读取", "Fill in selected": "填写所选项目", "Fill in {n} selected": "填写所选{n}项", "Looking for this CD on rukojiDB and DLsite…": "正在 rukojiDB 和 DLsite 查找这张CD…", "No match found on rukojiDB or DLsite.": "在 rukojiDB 和 DLsite 均未找到匹配项。", "({n} lookups could not reach the site.)": "（{n}次查询无法连接到网站。）", "You can paste a link below.": "也可以在下方粘贴链接。", "1 possible match found.": "找到1个可能的匹配项。", "{n} possible matches — the closest is loaded; click another to compare with it.": "找到{n}个可能的匹配项 — 已读取最接近的一项；点击其他项可进行比较。", "Reading {src}…": "正在读取{src}…", "Paste a rukoji.com CD link or a DLsite work link / RJ code.": "请粘贴 rukoji.com 的CD链接，或 DLsite 作品链接／RJ编号。", "Loaded from your link.": "已从你的链接读取。", "(empty)": "（空）", "Field": "项目", "On your shelf": "书架上的内容", "{n} fields already match. Tick what you want copied over, then press Fill in selected.": "{n}项已一致。勾选要复制的项目，然后点击“填写所选项目”。", "Everything this page has already matches your shelf ♡": "此页面的信息已与书架完全一致 ♡", "Filled in 1 field ♡": "已填写1项 ♡", "Filled in {n} fields ♡": "已填写{n}项 ♡", "View on {site} ↗": "在{site}查看 ↗", "⧉ Merge duplicates": "⧉ 合并重复项", "Merge duplicates": "合并重复项", "Find the same CD added twice (e.g. from different sites) and merge them into one": "查找被重复添加的同一张CD（例如来自不同网站），并合并为一项", "The same CD added more than once — matched by title (romaji or Japanese, ignoring “CV.” tags), catalog no., JAN or source page. Each group becomes one entry: the most complete one is kept, its blanks are filled from the others, and nothing is copied twice.": "按标题（罗马音或日文，忽略“CV.”标记）、商品编号、JAN或来源页面查找重复添加的CD。每组合并为一项：保留信息最完整的一项，用其他项补全空白，内容不会重复复制。", "Merge selected": "合并所选", "Merge these {n} into one": "将这{n}项合并为一项", "added by hand": "手动添加", "merged in, then removed": "合并后删除", "kept": "保留", "Adds to the kept entry: {f}": "将补充到保留项：{f}", "The kept entry already has everything; the extra copy is just removed.": "保留项已包含全部信息，仅删除多余的副本。", "No duplicates found ♡": "没有发现重复项 ♡", "Merge 1 group": "合并1组", "Merge {n} groups": "合并{n}组", "Merged — 1 duplicate removed ♡": "已合并 — 删除了1个重复项 ♡", "Merged — {n} duplicates removed ♡": "已合并 — 删除了{n}个重复项 ♡", "Group by": "分组", "No grouping": "不分组", "Group by release year": "按发售年份分组", "Group by voice actor": "按声优分组", "Group by series": "按系列分组", "Group by publisher": "按厂牌（发行商）分组", "Unknown year": "年份未知", "No voice actor listed": "无声优信息", "No series": "无系列", "No publisher": "无厂牌信息", "Chinese title (中文)": "中文标题", "Series (中文)": "系列（中文）", "Synopsis (中文)": "简介（中文）", "Optional — shown when the 中文 toggle is on; leave blank to keep the romaji title": "选填 — 切换到中文时显示；留空则显示罗马音标题", "brand": "乙女CD书架"};
+/* 13. Scan local folders */
+Object.assign(I18N_JA, {"Search by title on every site": "すべてのサイトをタイトルで検索", "Search by title": "タイトルで検索", "Search": "検索", "Type a title (or part of one) to search for.": "検索するタイトル(または一部)を入力してね。", "Searching every site for “{t}”…": "すべてのサイトで「{t}」を検索中…", "Nothing found for “{t}”. Try fewer words, the Japanese title, or a voice actor’s name.": "「{t}」は見つかりませんでした。言葉を減らすか、日本語タイトルや声優名で試してね。", "1 result for “{t}” — click it to compare.": "「{t}」の結果1件 — クリックして比較してね。", "{n} results for “{t}” — the closest is loaded; click another to compare with it.": "「{t}」の結果{n}件 — いちばん近いものを読み込みました。ほかをクリックすると比較できます。", "Or paste a CD page link from any of the sites (or an RJ code)": "または各サイトのCDページのリンク(またはRJ番号)を貼り付け", "Paste a CD page link from rukoji.com, DLsite, HIBIKIFORUM, SKiT Dolce or STELLA PLAYER — or an RJ code.": "rukoji.com・DLsite・HIBIKIFORUM・SKiT Dolce・ステラプレイヤーのCDページのリンク、またはRJ番号を貼り付けてね。", "Sites to search": "検索するサイト", "Nothing matched on the sites searched. Try Compare metadata with a link, or rename the folder and scan again.": "検索したサイトで一致するものがありませんでした。「メタデータを比較」でリンクを貼るか、フォルダ名を直してもう一度スキャンしてね。", "Looking for this CD on rukojiDB, DLsite, HIBIKIFORUM, SKiT Dolce and STELLA PLAYER…": "rukojiDB・DLsite・HIBIKIFORUM・SKiT Dolce・ステラプレイヤーでこのCDを検索中…", "No match found on any of the sites.": "どのサイトでも見つかりませんでした。", "📁 Scan folders": "📁 フォルダをスキャン", "Read the folder names of your local drama CD folders and add or link them — files are never copied or uploaded": "パソコン内のドラマCDフォルダの名前を読み取って、棚に追加・ひも付けします(ファイルのコピーやアップロードは一切しません)", "On disk": "手元にある", "CDs linked to a folder by Scan folders": "フォルダスキャンでフォルダとひも付いたCD", "Scan local folders": "ローカルフォルダをスキャン", "Pick the folder where your drama CDs live. Only folder and file names (and sizes) are read — no files are opened, copied or uploaded, and nothing changes on your shelf until you press Apply.": "ドラマCDを保存しているフォルダを選んでね。読み取るのはフォルダ名・ファイル名(とサイズ)だけ。ファイルを開いたりコピー・アップロードしたりはしません。「適用」を押すまで棚は変わりません。", "📁 Choose folder…": "📁 フォルダを選ぶ…", "Folder layout": "フォルダ構成", "Find CD folders automatically": "CDフォルダを自動で見つける", "Each subfolder is one CD": "サブフォルダ1つ = CD1枚", "Series folders → CD folders": "シリーズフォルダ → CDフォルダ", "…or drag a folder here": "…またはここにフォルダをドラッグ", "Mark CDs found on disk as Owned": "見つかったCDを「所持」にする", "Look up DLsite codes (RJ…) online for new CDs — slower": "新しいCDのDLsite作品番号(RJ…)をネットで調べる(時間がかかります)", "Apply": "適用", "Apply ({n})": "適用({n})", "Local folder": "ローカルフォルダ", "Files on disk": "手元のファイル", "1 audio file": "音声ファイル1個", "{n} audio files": "音声ファイル{n}個", "scanned {d}": "{d}にスキャン", "{n} discs": "{n}枚組", "scans": "スキャン画像あり", "1 archive (still packed)": "圧縮ファイル1個(未解凍)", "{n} archives (still packed)": "圧縮ファイル{n}個(未解凍)", "Reading folder names… {n} files": "フォルダ名を読み取り中… {n}ファイル", "Couldn’t read that folder: {e}": "そのフォルダを読み取れませんでした: {e}", "the dropped folders": "ドロップしたフォルダ", "No CD folders found in “{f}”. Try another folder layout.": "「{f}」にCDフォルダが見つかりませんでした。別のフォルダ構成を試してね。", "Found 1 CD folder in “{f}”. Untick any you don’t want, then apply.": "「{f}」でCDフォルダが1個見つかりました。不要なものはチェックを外して適用してね。", "Found {n} CD folders in “{f}”. Untick any you don’t want, then apply.": "「{f}」でCDフォルダが{n}個見つかりました。不要なものはチェックを外して適用してね。", "Matched to your shelf": "棚のCDと一致", "Possible matches — check these": "一致しているかも — 確認してね", "Not ticked yet: pick the right CD (or “add as new”) and tick the ones you’re sure about.": "まだチェックされていません。正しいCDを選んで(または「新しいCDとして追加」)、確かなものにチェックしてね。", "New CDs": "新しいCD", "Added as new shelf entries from the folder name. You can fix the title here or edit it later.": "フォルダ名から新しいCDとして追加します。タイトルはここで直すか、あとで編集できます。", "Already linked — refresh file info": "ひも付け済み — ファイル情報を更新", "Not found in this scan": "今回のスキャンで見つからなかったもの", "These CDs were linked to a folder here that is gone now (moved or renamed?). Tick one to clear its folder link — the CD itself stays.": "これらのCDはこの中のフォルダとひも付いていましたが、今は見つかりません(移動・名前変更?)。チェックするとフォルダとのひも付けだけを解除します(CDは残ります)。", "Which CD is this?": "どのCDですか?", "Link to: {t}": "ひも付け先: {t}", "Add as a new CD instead": "新しいCDとして追加", "Title for the new CD": "新しいCDのタイトル", "Clear the folder link": "フォルダとのひも付けを解除", "Looking up {c} on DLsite… ({i} of {n})": "DLsiteで{c}を検索中…({i}/{n})", "Done — {a} linked, {b} added": "完了 — {a}件ひも付け、{b}件追加", "{n} folder links cleared": "{n}件のひも付けを解除", "This browser can’t pick folders — try dragging a folder into the box instead.": "このブラウザはフォルダを選べません。枠の中にフォルダをドラッグしてみてね。", "Scanned before: {f}. Pick the same folder again to re-scan — new folders, missing ones and file changes show up below.": "以前のスキャン: {f}。同じフォルダをもう一度選ぶと再スキャンでき、新しいフォルダ・見つからないフォルダ・ファイルの変化が下に表示されます。", "Your browser blocked the folder picker — click Choose folder again to use the standard one.": "ブラウザがフォルダ選択をブロックしました。もう一度「フォルダを選ぶ」を押すと標準の方法で開きます。", "Drop a folder, not single files ♡": "ファイルではなくフォルダをドロップしてね ♡", "Fill in missing details (cover, cast, tracks, synopsis…) from these sites — slower": "足りない情報(ジャケット・キャスト・トラック・あらすじ…)を以下のサイトから補う(時間がかかります)", "Looking up missing details online… {i} of {n}": "足りない情報をネットで検索中… {i}/{n}", "Not sure — please check": "自信なし — 確認してね", "A close but uncertain match was found. Open Compare metadata to pick it (or another) and tick what to fill in.": "近い候補は見つかりましたが確実ではありません。「メタデータを比較」を開いて正しいものを選び、補う項目にチェックしてね。", "Not found online": "ネットで見つからなかったもの", "Nothing matched on rukojiDB or DLsite. Try Compare metadata with a link, or rename the folder and scan again.": "rukojiDBにもDLsiteにも一致するものがありませんでした。「メタデータを比較」でリンクを貼るか、フォルダ名を直してもう一度スキャンしてね。", "Filled in from online": "ネットから補ったもの", "Closest: {t} ({src})": "いちばん近い候補: {t}({src})", "online: {a} filled in, {b} to check, {c} not found": "ネット: {a}件補完、{b}件要確認、{c}件見つからず", "changed since last scan (was {n} audio files)": "前回のスキャンから変化あり(以前は音声ファイル{n}個)"});
+Object.assign(I18N_ZH, {"Search by title on every site": "在所有网站按标题搜索", "Search by title": "按标题搜索", "Search": "搜索", "Type a title (or part of one) to search for.": "请输入要搜索的标题(或其中一部分)。", "Searching every site for “{t}”…": "正在所有网站搜索“{t}”…", "Nothing found for “{t}”. Try fewer words, the Japanese title, or a voice actor’s name.": "没有找到“{t}”。请试试更少的关键词、日文标题或声优名。", "1 result for “{t}” — click it to compare.": "“{t}”有1个结果——点击进行对比。", "{n} results for “{t}” — the closest is loaded; click another to compare with it.": "“{t}”有{n}个结果——已载入最接近的一个；点击其他结果可进行对比。", "Or paste a CD page link from any of the sites (or an RJ code)": "或粘贴任一网站的CD页面链接(或RJ编号)", "Paste a CD page link from rukoji.com, DLsite, HIBIKIFORUM, SKiT Dolce or STELLA PLAYER — or an RJ code.": "请粘贴rukoji.com、DLsite、HIBIKIFORUM、SKiT Dolce或STELLA PLAYER的CD页面链接，或RJ编号。", "Sites to search": "要搜索的网站", "Nothing matched on the sites searched. Try Compare metadata with a link, or rename the folder and scan again.": "搜索的网站上都没有匹配结果。可在“对比元数据”中粘贴链接，或修改文件夹名后重新扫描。", "Looking for this CD on rukojiDB, DLsite, HIBIKIFORUM, SKiT Dolce and STELLA PLAYER…": "正在rukojiDB、DLsite、HIBIKIFORUM、SKiT Dolce和STELLA PLAYER上查找这张CD…", "No match found on any of the sites.": "所有网站都没有找到匹配结果。", "📁 Scan folders": "📁 扫描文件夹", "Read the folder names of your local drama CD folders and add or link them — files are never copied or uploaded": "读取本地广播剧CD文件夹的名称并添加或关联到收藏——绝不会复制或上传文件", "On disk": "本地已有", "CDs linked to a folder by Scan folders": "通过“扫描文件夹”关联了文件夹的CD", "Scan local folders": "扫描本地文件夹", "Pick the folder where your drama CDs live. Only folder and file names (and sizes) are read — no files are opened, copied or uploaded, and nothing changes on your shelf until you press Apply.": "选择存放广播剧CD的文件夹。只读取文件夹名、文件名(和大小)——不会打开、复制或上传任何文件，在按下“应用”之前收藏不会有任何变化。", "📁 Choose folder…": "📁 选择文件夹…", "Folder layout": "文件夹结构", "Find CD folders automatically": "自动查找CD文件夹", "Each subfolder is one CD": "每个子文件夹是一张CD", "Series folders → CD folders": "系列文件夹 → CD文件夹", "…or drag a folder here": "…或将文件夹拖到这里", "Mark CDs found on disk as Owned": "将找到的CD标记为已拥有", "Look up DLsite codes (RJ…) online for new CDs — slower": "在线查询新CD的DLsite编号(RJ…)——较慢", "Apply": "应用", "Apply ({n})": "应用({n})", "Local folder": "本地文件夹", "Files on disk": "本地文件", "1 audio file": "1个音频文件", "{n} audio files": "{n}个音频文件", "scanned {d}": "扫描于{d}", "{n} discs": "{n}碟", "scans": "有扫描图", "1 archive (still packed)": "1个压缩包(未解压)", "{n} archives (still packed)": "{n}个压缩包(未解压)", "Reading folder names… {n} files": "正在读取文件夹名称… {n}个文件", "Couldn’t read that folder: {e}": "无法读取该文件夹:{e}", "the dropped folders": "拖入的文件夹", "No CD folders found in “{f}”. Try another folder layout.": "在“{f}”中没有找到CD文件夹。请试试其他文件夹结构。", "Found 1 CD folder in “{f}”. Untick any you don’t want, then apply.": "在“{f}”中找到1个CD文件夹。取消勾选不需要的，然后应用。", "Found {n} CD folders in “{f}”. Untick any you don’t want, then apply.": "在“{f}”中找到{n}个CD文件夹。取消勾选不需要的，然后应用。", "Matched to your shelf": "与收藏匹配", "Possible matches — check these": "可能匹配——请确认", "Not ticked yet: pick the right CD (or “add as new”) and tick the ones you’re sure about.": "尚未勾选：请选择正确的CD(或“作为新CD添加”)，并勾选确定的项目。", "New CDs": "新CD", "Added as new shelf entries from the folder name. You can fix the title here or edit it later.": "根据文件夹名作为新CD添加。可以在这里修改标题，或稍后编辑。", "Already linked — refresh file info": "已关联——更新文件信息", "Not found in this scan": "本次扫描未找到", "These CDs were linked to a folder here that is gone now (moved or renamed?). Tick one to clear its folder link — the CD itself stays.": "这些CD曾关联到此处的文件夹，但现在找不到了(已移动或重命名?)。勾选后只会解除文件夹关联——CD本身会保留。", "Which CD is this?": "这是哪张CD?", "Link to: {t}": "关联到:{t}", "Add as a new CD instead": "作为新CD添加", "Title for the new CD": "新CD的标题", "Clear the folder link": "解除文件夹关联", "Looking up {c} on DLsite… ({i} of {n})": "正在DLsite查询{c}…({i}/{n})", "Done — {a} linked, {b} added": "完成——关联{a}个，添加{b}个", "{n} folder links cleared": "已解除{n}个文件夹关联", "This browser can’t pick folders — try dragging a folder into the box instead.": "此浏览器无法选择文件夹——请将文件夹拖进框内。", "Scanned before: {f}. Pick the same folder again to re-scan — new folders, missing ones and file changes show up below.": "之前扫描过:{f}。再次选择同一文件夹即可重新扫描——新文件夹、缺失的文件夹和文件变化会显示在下方。", "Your browser blocked the folder picker — click Choose folder again to use the standard one.": "浏览器阻止了文件夹选择器——再次点击“选择文件夹”将使用标准方式。", "Drop a folder, not single files ♡": "请拖入文件夹，而不是单个文件 ♡", "Fill in missing details (cover, cast, tracks, synopsis…) from these sites — slower": "从以下网站补全缺少的信息(封面、声优、曲目、简介…)——较慢", "Looking up missing details online… {i} of {n}": "正在在线查找缺少的信息… {i}/{n}", "Not sure — please check": "不确定——请确认", "A close but uncertain match was found. Open Compare metadata to pick it (or another) and tick what to fill in.": "找到了接近但不确定的结果。请打开“对比元数据”选择正确的结果，并勾选要补全的项目。", "Not found online": "在线未找到", "Nothing matched on rukojiDB or DLsite. Try Compare metadata with a link, or rename the folder and scan again.": "rukojiDB和DLsite上都没有匹配结果。可在“对比元数据”中粘贴链接，或修改文件夹名后重新扫描。", "Filled in from online": "已从在线补全", "Closest: {t} ({src})": "最接近:{t}({src})", "online: {a} filled in, {b} to check, {c} not found": "在线:补全{a}个，待确认{b}个，未找到{c}个", "changed since last scan (was {n} audio files)": "自上次扫描后有变化(之前为{n}个音频文件)"});
 const I18N = {ja:I18N_JA, zh:I18N_ZH}, LANG_TAG = {en:'en', ja:'ja', zh:'zh-CN'};
 let LANG = 'en'; try{ const l = localStorage.getItem('otomeCdLang'); LANG = I18N[l] ? l : 'en'; }catch(e){}
 const i18n = (k, v) => { let o = (I18N[LANG] && I18N[LANG][k]) || k; if(v) o = o.replace(/\{(\w+)\}/g, (m, n) => v[n] != null ? v[n] : m); return o; };
-const NOT_STATIC = '#btnSelect,#selCount,#bHead,#bList,#bGo,#dupList,#dupGo,#cmpTable,#cmpHits,#cmpStatus,#cmpSub,#cmpApply,#grid,#mBody,#mPanel,#imList,#toast,#count,#statTotal,#statOwned,#eHead,#imStatus,#imGo,#fLabel,#fVA,#fSeries,script,style';
-const NOT_ATTR = '#bList,#cmpTable,#cmpHits,#grid,#mBody,#mPanel,#imList';
+const NOT_STATIC = '#scList,#scStatus,#scGo,#btnSelect,#selCount,#bHead,#bList,#bGo,#dupList,#dupGo,#cmpTable,#cmpHits,#cmpStatus,#cmpSub,#cmpApply,#grid,#mBody,#mPanel,#imList,#toast,#count,#statTotal,#statOwned,#eHead,#imStatus,#imGo,#fLabel,#fVA,#fSeries,script,style';
+const NOT_ATTR = '#scList,#bList,#cmpTable,#cmpHits,#grid,#mBody,#mPanel,#imList';
 function applyStaticLang(){
   const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT), nodes = [];
   while(w.nextNode()) nodes.push(w.currentNode);
@@ -651,7 +711,8 @@ const SEED = [
   { id:'dialovers16-vol13', title:'DIABOLIK LOVERS DAYLIGHT Vol.13 Kino', label:'Rejet', series:'DIABOLIK LOVERS', cast:['Maeno Tomoaki'], illustrator:'Satoi', category:'Situation CD [SFW]', cover:P+'dialovers16-vol13.jpg', tracks:[], bonuses:[], url:'https://rukoji.com/posts/dialovers16-vol13/' },
 ];
 /* user-owned fields every CD carries */
-const USER_DEFAULTS = { owned:false, sourceType:'', rating:0, notes:'', coverData:'', seriesRomaji:'', cnTitle:'', seriesCn:'', synopsisCn:'' };   // 中文 fields are hand-filled; imports never touch them
+const USER_DEFAULTS = { owned:false, sourceType:'', rating:0, notes:'', coverData:'', seriesRomaji:'', cnTitle:'', seriesCn:'', synopsisCn:'',
+  localFolder:'', localRoot:'', localFiles:0, localSize:0, localFormats:'', localSeen:'' };   // local* = set by Scan folders (names/sizes only)   // 中文 fields are hand-filled; imports never touch them
 const hydrate = cd => {
   const o = Object.assign({}, USER_DEFAULTS, cd, {
     cast:(cd.cast||[]).map(parsePerson).filter(p => p.en || p.ja), scenario:cd.scenario||[], bonuses:cd.bonuses||[],
@@ -776,8 +837,9 @@ function visible(){
     if(F.series && seriesName(c) !== F.series) return false;
     if(F.aud && (F.aud === 'none' ? audOf(c).length : !audOf(c).includes(F.aud))) return false;
     if(F.status === 'owned' && !c.owned) return false;
+    if(F.status === 'disk' && !c.localFolder) return false;
     if(q){
-      const hay = [c.title, c.altTitle, c.cnTitle, c.label, c.series, c.seriesRomaji, c.seriesCn, c.pn, c.jan, c.notes, ...c.cast.flatMap(p => [p.en, p.ja]), ...c.scenario].join(' ').toLowerCase();
+      const hay = [c.title, c.altTitle, c.cnTitle, c.label, c.series, c.seriesRomaji, c.seriesCn, c.pn, c.jan, c.notes, c.localFolder, ...c.cast.flatMap(p => [p.en, p.ja]), ...c.scenario].join(' ').toLowerCase();
       if(!hay.includes(q)) return false;
     }
     return true;
@@ -867,7 +929,8 @@ function openModal(id){
     [i18n('Release'), fmtDate(c.release) + (c.releaseNote ? ` — ${c.releaseNote}` : '')],
     [i18n('Label'), c.label], [i18n('Series'), shownSeries(c)],
     [i18n('Voice cast'), c.cast.map(p => p.en && p.ja ? `${p.en} (${p.ja})` : (p.en || p.ja)).join(', ')], [i18n('Scenario'), c.scenario.join(', ')], [i18n('Illustration'), c.illustrator],
-    [i18n('Category'), c.category], [i18n('Catalog no.'), c.pn], ['JAN', c.jan]
+    [i18n('Category'), c.category], [i18n('Catalog no.'), c.pn], ['JAN', c.jan],
+    [i18n('Local folder'), c.localFolder], [i18n('Files on disk'), c.localFolder ? localFacts(c) : '']
   ].filter(([, v]) => v && v !== '—' || false);
   $('#mBody').innerHTML = `
     <h2 id="mTitle">${esc(shownTitle(c))}</h2>
@@ -935,6 +998,7 @@ $('#mClose').onclick = closeModal;
 document.addEventListener('keydown', e => {
   if(e.key !== 'Escape') return;
   if($('#compare').classList.contains('open')) closeCompare();
+  else if($('#scan').classList.contains('open')) closeScan();
   else if($('#bulk').classList.contains('open')) closeBulk();
   else if($('#editor').classList.contains('open')) closeEditor(true); else if(openId) closeModal();
   else if(SEL.ids.size || SEL.mode) selClear(true);
@@ -985,6 +1049,7 @@ const isJsonDrag = e => [...(e.dataTransfer?.items || [])].some(i => i.kind === 
 document.addEventListener('dragover', e => { if(isJsonDrag(e)) e.preventDefault(); });
 document.addEventListener('drop', e => {
   if(!isJsonDrag(e)) return; e.preventDefault();
+  const dirs = dropDirs(e); if(dirs.length){ openScan(); scRun(() => scFromEntries(dirs)); return; }
   const f = [...e.dataTransfer.files].find(f => /\.json$/i.test(f.name) || f.type === 'application/json');
   if(f) restoreFile(f); else toast(i18n('Drop a backup .json file to restore it'));
 });
@@ -1607,6 +1672,55 @@ const Skit = {
   }
 };
 
+/* ---- STELLA PLAYER (stellaplayer.jp, Stellaworth's download shop). A Next.js site: each product page carries the
+   whole record as JSON (__NEXT_DATA__). Its keyword search only exists after the page's own script has run, so the
+   search page is read through the reader's real browser — wait for the result list (or the "nothing found" box),
+   markdown keeps the product links. ---- */
+const Stella = {
+  id:'stella', name:'STELLA PLAYER', root:'https://www.stellaplayer.jp/',
+  match: u => /stellaplayer\.jp/i.test(u),
+  code: u => (String(u).match(/stellaplayer\.jp\/product\/(\d+)/i) || [])[1] || '',
+  isItem(u){ return !!this.code(u); },
+  async find(term){
+    const url = this.root + 'archive?keyword=' + encodeURIComponent(term);
+    let timer;
+    const timeout = new Promise((_, rej) => { timer = setTimeout(() => rej(new Error('timed out')), 40000); });
+    try{
+      const res = await Promise.race([fetch(READER.pre + url, {credentials:'omit', referrerPolicy:'no-referrer',
+        headers:{'X-Return-Format':'markdown', 'X-No-Cache':'true', 'X-Wait-For-Selector':'.p-productList__items a, .p-productList__items .c-noData', 'X-Timeout':'25'}}), timeout]);
+      if(!res.ok) throw new Error('HTTP ' + res.status);
+      const md = await res.text(), out = new Map();
+      /* "[NEW ステラ専売 ![Image 1](cover.png) ステラワース Title(CV：Name) ¥1,100](…/product/2866)" */
+      for(const m of md.matchAll(/\[((?:[^\[\]]|\[[^\]]*\]\([^)]*\))*)\]\((https:\/\/www\.stellaplayer\.jp\/product\/(\d+))\)/g)){
+        if(out.has(m[3])) continue;
+        const im = m[1].match(/!\[[^\]]*\]\(([^)]+)\)/), after = im ? m[1].slice(m[1].indexOf(im[0]) + im[0].length) : m[1];
+        const words = after.replace(/[¥￥][\d,]+.*$/, '').trim().split(/\s+/);
+        const title = (words.length > 1 ? words.slice(1) : words).join(' ').trim();   // the first word is the brand
+        if(title) out.set(m[3], {src:this.name, url:m[2], title, thumb:im ? im[1] : '', meta:{title, url:m[2], cover:im ? im[1] : '', id:'stella-' + m[3], source:this.name}});
+      }
+      return [...out.values()].slice(0, 12);
+    }finally{ clearTimeout(timer); }
+  },
+  async fromUrl(url){
+    const id = this.code(url); if(!id) throw new Error('not a stellaplayer.jp product link');
+    const page = this.root + 'product/' + id, {text, via} = await Net.text(page, t => /__NEXT_DATA__/.test(t));
+    const nd = JSON.parse(text.match(/<script id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/)[1]);
+    const p = (nd.props.pageProps.dehydratedState.queries || []).map(q => q.state.data && q.state.data.product).find(Boolean);
+    if(!p) throw new Error('no product data on that page');
+    const who = g => (p.creators || []).filter(c => String(c.creator_group_id) === g).map(c => c.name);   // 1 CV · 2 シナリオ · 3 イラスト
+    const img = p.converted_featured_images || {};
+    const blocks = ((p.converted_descriptions_blocks || {}).product || {}).blocks || [];
+    const story = []; for(const b of blocks){ if(b.type === 'headline' && b.size !== 'large' && story.length) break; if(b.type === 'text' || b.type === 'headline') story.push(b.text || b.title); }
+    return {meta:{
+      title:String(p.name || '').replace(/\s*[(（]CV[：:][^)）]*[)）]\s*$/, ''), release:String(p.release_schedule || '').slice(0, 10),
+      label:(p.brand || {}).name || '', series:((p.series || [])[0] || {}).name || '', cast:who('1'), scenario:who('2'), illustrator:who('3').join(', '),
+      category:(p.category || {}).name || '', synopsis:story.join('\n').slice(0, 1500), cover:img['800x800_webp'] || img['800x800_png'] || Object.values(img)[0] || '',
+      tracks:((p.audio_tracks || {}).tracks || []).filter(t => !t.hidden).map(t => ({t:t.name, d:''})),
+      url:page, id:'stella-' + id, source:this.name, _via:via
+    }};
+  }
+};
+
 /* ---- TEAM Entertainment (team-e.co.jp). Title index → series page → individual CDs. ---- */
 const TeamE = {
   id:'teame', name:'TEAM Entertainment', base:'https://www.team-e.co.jp/', index:null,
@@ -1664,7 +1778,7 @@ const TeamE = {
     return out;
   }
 };
-const SOURCES = [Rukoji, Hibiki, DLsite, Skit, TeamE];
+const SOURCES = [Rukoji, Hibiki, DLsite, Skit, Stella, TeamE];
 const IMPORT_SOURCES = [Rukoji, Hibiki, DLsite, Skit];
 
 /* ---- turning metadata into shelf entries ---- */
@@ -1929,14 +2043,38 @@ function openCompare(id){
   Object.assign(CMP, {id, hits:[], pick:-1, meta:null, rows:[], seq:CMP.seq + 1});
   el('cmpSub').textContent = c.title + (c.altTitle ? ' · ' + c.altTitle : '');
   el('cmpHits').innerHTML = ''; el('cmpTable').innerHTML = ''; el('cmpActions').hidden = true; el('cmpLink').value = '';
+  el('cmpQuery').value = c.altTitle || c.title;
   const m = el('compare'); m.classList.add('open'); m.setAttribute('aria-hidden', 'false');
   cmpSearch(c);
 }
+/* your own words, sent as-is to every site — for when the automatic search (by the CD's titles) finds the wrong thing or nothing */
+async function cmpFind(){
+  const c = DB.byId(CMP.id), term = el('cmpQuery').value.trim(); if(!c) return;
+  if(!term){ cmpStatus(i18n('Type a title (or part of one) to search for.'), 'err'); el('cmpQuery').focus(); return; }
+  if(cmpLinkSrc(term)){ el('cmpLink').value = term; el('cmpQuery').value = ''; return cmpLoadLink(); }   // a pasted link/RJ code goes to Load
+  const seq = ++CMP.seq; CMP.pick = -1; el('cmpTable').innerHTML = ''; el('cmpActions').hidden = true; el('cmpFind').disabled = true;
+  cmpStatus(spin + i18n('Searching every site for “{t}”…', {t:esc(term)}));
+  const got = await Promise.allSettled([Rukoji.find(term), DLsite.find(term), Hibiki.search(term), Skit.search(term), Stella.find(term)]);
+  if(seq !== CMP.seq) return;
+  el('cmpFind').disabled = false;
+  const seen = new Map();
+  got.forEach(g => { if(g.status === 'fulfilled') (g.value || []).forEach(h => { const k = nu(h.url); if(!seen.has(k)) seen.set(k, h); }); });
+  CMP.hits = [...seen.values()].map(h => ({...h, score:Math.max(scScore(h.title, term), scScore(h.title, c.title), c.altTitle ? scScore(h.title, c.altTitle) : 0)}))
+    .sort((a, b) => b.score - a.score).slice(0, 12);   // nothing filtered out: you asked for these words
+  cmpRenderHits();
+  const failed = got.filter(g => g.status === 'rejected').length, n = CMP.hits.length;
+  const off = failed ? ' ' + i18n('({n} lookups could not reach the site.)', {n:failed}) : '';
+  if(!n){ cmpStatus(i18n('Nothing found for “{t}”. Try fewer words, the Japanese title, or a voice actor’s name.', {t:esc(term)}) + off, 'err'); return; }
+  cmpStatus(i18n(n === 1 ? '1 result for “{t}” — click it to compare.' : '{n} results for “{t}” — the closest is loaded; click another to compare with it.', {n, t:esc(term)}) + off, 'ok');
+  cmpLoad(0);
+}
+el('cmpFind').onclick = cmpFind;
+el('cmpQuery').addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); cmpFind(); } });
 function closeCompare(){ const m = el('compare'); m.classList.remove('open'); m.setAttribute('aria-hidden', 'true'); CMP.seq++; }
 
 async function cmpSearch(c){
   const seq = CMP.seq;
-  cmpStatus(spin + i18n('Looking for this CD on rukojiDB and DLsite…'));
+  cmpStatus(spin + i18n('Looking for this CD on rukojiDB, DLsite, HIBIKIFORUM, SKiT Dolce and STELLA PLAYER…'));
   const jobs = [];
   if(Rukoji.isItem(c.url || '')) jobs.push(Rukoji.fromUrl(c.url).then(r => [{src:Rukoji.name, url:r.meta.url, title:r.meta.title, thumb:r.meta.cover, meta:r.meta, full:true}]));
   const code = DLsite.code(c.pn || '') || DLsite.code(c.url || '');
@@ -1944,6 +2082,8 @@ async function cmpSearch(c){
   if(c.title) jobs.push(Rukoji.find(c.title));
   const jp = c.altTitle || (hasCJK(c.title) ? c.title : '');
   if(jp) jobs.push(DLsite.find(jp));
+  jobs.push(Hibiki.search(c.title), Skit.search(jp || c.title), Stella.find(jp || c.title));
+  if(Stella.isItem(c.url || '')) jobs.push(Stella.fromUrl(c.url).then(r => [{src:Stella.name, url:r.meta.url, title:r.meta.title, thumb:r.meta.cover, meta:r.meta, full:true}]));
   const got = await Promise.allSettled(jobs);
   if(seq !== CMP.seq) return;
   const seen = new Map();
@@ -1953,7 +2093,7 @@ async function cmpSearch(c){
   CMP.hits = hits; cmpRenderHits();
   if(!hits.length){
     const failed = got.filter(g => g.status === 'rejected').length;
-    cmpStatus(i18n('No match found on rukojiDB or DLsite.') + (failed ? ' ' + i18n('({n} lookups could not reach the site.)', {n:failed}) : '') + ' ' + i18n('You can paste a link below.'), 'err');
+    cmpStatus(i18n('No match found on any of the sites.') + (failed ? ' ' + i18n('({n} lookups could not reach the site.)', {n:failed}) : '') + ' ' + i18n('You can paste a link below.'), 'err');
     return;
   }
   cmpStatus(i18n(hits.length === 1 ? '1 possible match found.' : '{n} possible matches — the closest is loaded; click another to compare with it.', {n:hits.length}), 'ok');
@@ -1975,8 +2115,8 @@ async function cmpLoad(i){
   }catch(e){ if(seq === CMP.seq) el('cmpTable').innerHTML = `<p class="lstatus err">${failMsg(e)}</p>`; }
 }
 async function cmpLoadLink(){
-  const q = el('cmpLink').value.trim(), src = q && itemSource(q);
-  if(!src){ cmpStatus(i18n('Paste a rukoji.com CD link or a DLsite work link / RJ code.'), 'err'); return; }
+  const q = el('cmpLink').value.trim(), src = q && cmpLinkSrc(q);
+  if(!src){ cmpStatus(i18n('Paste a CD page link from rukoji.com, DLsite, HIBIKIFORUM, SKiT Dolce or STELLA PLAYER — or an RJ code.'), 'err'); return; }
   const seq = ++CMP.seq;
   cmpStatus(spin + i18n('Reading that CD page…'));
   try{
@@ -1985,6 +2125,8 @@ async function cmpLoadLink(){
     cmpStatus(i18n('Loaded from your link.'), 'ok'); cmpRenderHits(); cmpRender(meta);
   }catch(e){ if(seq === CMP.seq) cmpStatus(failMsg(e), 'err'); }
 }
+/* one CD's page on any of the sites (or a bare RJ code) */
+function cmpLinkSrc(q){ return itemSource(q) || (Stella.isItem(q) && Stella) || (Skit.code(q) && Skit) || (/^https?:/i.test(q) && Hibiki.match(q) && Hibiki) || null; }
 el('cmpLoad').onclick = cmpLoadLink;
 el('cmpLink').addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); cmpLoadLink(); } });
 
@@ -2085,6 +2227,7 @@ function planMerge(group){
       if(hasCJK(o.title) && !hasCJK(m.title)){ m.altTitle = cleanTitle(o.title); gained.add('altTitle'); }
       else if(hasCJK(m.title) && !hasCJK(o.title)){ m.altTitle = cleanTitle(m.title); m.title = o.title; gained.add('title'); gained.add('altTitle'); }   // romaji title + Japanese original
     }
+    if(!m.localFolder && o.localFolder){ LOCAL_KEYS.forEach(k => m[k] = o[k]); gained.add('localFolder'); }
     const cast = mergeCast(m.cast || [], o.cast || []); if(JSON.stringify(cast) !== JSON.stringify(m.cast)){ m.cast = cast; gained.add('cast'); }
     for(const k of ['scenario', 'bonuses']){ const u = unionList(m[k] || [], o[k] || []); if(u.length !== (m[k] || []).length){ m[k] = u; gained.add(k); } }
     if((o.tracks || []).length > (m.tracks || []).length){ m.tracks = o.tracks; gained.add('tracks'); }   // never interleave two tracklists
@@ -2100,7 +2243,7 @@ function applyMerge(plan){
 }
 
 const DUP = { plans:[] };
-const FIELD_LABEL = Object.fromEntries([...CMP_FIELDS.map(([k, l]) => [k, l]), ['notes', 'Notes'], ['coverData', 'Cover'], ['sourceType', 'Source'], ['cnTitle', 'Chinese title (中文)'], ['seriesCn', 'Series (中文)'], ['synopsisCn', 'Synopsis (中文)']]);
+const FIELD_LABEL = Object.fromEntries([...CMP_FIELDS.map(([k, l]) => [k, l]), ['notes', 'Notes'], ['coverData', 'Cover'], ['sourceType', 'Source'], ['cnTitle', 'Chinese title (中文)'], ['seriesCn', 'Series (中文)'], ['synopsisCn', 'Synopsis (中文)'], ['localFolder', 'Local folder']]);
 function openDupes(){
   DUP.plans = findDupes().map(planMerge);
   const m = el('dupes'); m.classList.add('open'); m.setAttribute('aria-hidden', 'false'); document.body.style.overflow = 'hidden';
@@ -2213,6 +2356,433 @@ el('bForm').onsubmit = ev => {
   toast(i18n(ids.length === 1 ? 'Updated 1 CD ♡' : 'Updated {n} CDs ♡', {n:ids.length}));
 };
 
+/* =====================================================================
+   13. SCAN LOCAL FOLDERS — reads folder & file NAMES (and sizes) only; no file is opened, copied or uploaded.
+       Folder access, best first: showDirectoryPicker (Chrome/Edge) → <input webkitdirectory> (Firefox, Safari,
+       everything) → dragging a folder in (webkitGetAsEntry, every browser). Browsers never reveal the full
+       disk path, so a CD remembers the path below the folder you picked ("Drama CDs/Rejet/Vol.1").
+       Re-scan works the same everywhere: pick the same folder again and it is recognised by its name (localRoot).
+   ===================================================================== */
+const SC = { dirs:null, root:'', rows:[], busy:false, noFS:false, res:null, msg:'' };
+const LOCAL_KEYS = ['localFolder', 'localRoot', 'localFiles', 'localSize', 'localFormats', 'localSeen'];
+const AUDIO_EXT = /^(mp3|flac|wav|m4a|m4b|aac|ogg|opus|ape|wv|alac|aiff?|wma|dsf|tak|tta|mka)$/i;
+const PACK_EXT = /^(rar|zip|7z|lzh|iso|cue|mds|mdf|nrg)$/i;
+const IMG_EXT = /^(jpe?g|png|webp|gif|bmp|tiff?)$/i;
+const AUX_DIR = /^(?:(?:disc|disk|cd|dvd)[\s._-]*\d+|scans?|bk|booklet|bonus|extras?|art(?:work)?s?|covers?|jackets?|images?|特典|おまけ|ブックレット|スキャン|flac|mp3|wav|m4a|aac|hi-?res|ハイレゾ|\d{3}k(?:bps)?|v0)$/i;
+const GENERIC_TAG = /^(?:同人音声|同人|ドラマCD|ドラマ|シチュエーションCD|シチュCD|乙女向け|女性向け|asmr|blcd|bl|drama ?cds?|situation ?cds?|mp3|flac|wav|aac|m4a|\d{3}k(?:bps)?|hi-?res|ハイレゾ|特典(?:付き?)?|初回(?:限定)?盤?|限定盤|通常盤|full|complete|(?:web|cd) ?rip|dl版|cd版|dlsite|booth|ci-en|fanbox|pixiv)$/i;
+const extOf = n => (String(n).match(/\.([^./]+)$/) || [])[1] || '';
+const upDir = p => p.includes('/') ? p.slice(0, p.lastIndexOf('/')) : '';
+const fmtSize = b => b >= 1073741824 ? (b / 1073741824).toFixed(2) + ' GB' : b >= 1048576 ? Math.round(b / 1048576) + ' MB' : Math.max(1, Math.round(b / 1024)) + ' KB';
+const localFacts = c => [i18n(c.localFiles === 1 ? '1 audio file' : '{n} audio files', {n:c.localFiles}), c.localFormats, c.localSize ? fmtSize(c.localSize) : '', c.localSeen ? i18n('scanned {d}', {d:fmtDate(c.localSeen)}) : ''].filter(Boolean).join(' · ');
+function scStatus(html, cls){ const s = el('scStatus'); s.innerHTML = html; s.className = 'lstatus' + (cls ? ' ' + cls : ''); }
+
+/* ---- 1. collecting names: every route ends in a list of {path, size} plus the folder paths seen ---- */
+async function scFromHandle(h){
+  const files = [], dirs = [];
+  async function walk(d, p){
+    dirs.push(p);
+    for await (const e of d.values()){
+      if(e.kind === 'directory') await walk(e, p + '/' + e.name);
+      else { let size = 0; try{ size = (await e.getFile()).size; }catch(x){} files.push({path:p + '/' + e.name, size}); if(files.length % 250 === 0) scStatus(spin + i18n('Reading folder names… {n} files', {n:files.length})); }
+    }
+  }
+  await walk(h, h.name);
+  return {files, dirs};
+}
+const scFromInput = list => ({files:[...list].map(f => ({path:f.webkitRelativePath || f.name, size:f.size})), dirs:[]});
+/* the entries must be taken during the drop event itself — the browser empties dataTransfer afterwards */
+const dropDirs = e => [...(e.dataTransfer?.items || [])].map(i => i.kind === 'file' && i.webkitGetAsEntry ? i.webkitGetAsEntry() : null).filter(x => x && x.isDirectory);
+async function scFromEntries(entries){
+  const files = [], dirs = [];
+  const readAll = r => new Promise((res, rej) => { const out = []; const next = () => r.readEntries(b => { if(!b.length) res(out); else { out.push(...b); next(); } }, rej); next(); });   // Chrome hands out 100 at a time
+  const sizeOf = e => new Promise(res => e.file(f => res(f.size), () => res(0)));
+  async function walk(e){
+    const p = e.fullPath.replace(/^\/+/, '');
+    if(e.isDirectory){ dirs.push(p); for(const k of await readAll(e.createReader())) await walk(k); }
+    else { files.push({path:p, size:await sizeOf(e)}); if(files.length % 250 === 0) scStatus(spin + i18n('Reading folder names… {n} files', {n:files.length})); }
+  }
+  for(const e of entries) await walk(e);
+  return {files, dirs};
+}
+async function scRun(get){
+  if(SC.busy) return; SC.busy = true;
+  el('scList').innerHTML = ''; el('scBar').hidden = true; SC.rows = [];
+  scStatus(spin + i18n('Reading folder names… {n} files', {n:0}));
+  try{
+    const {files, dirs} = await get();
+    SC.dirs = scTree(files, dirs); SC.busy = false; scBuild();
+  }catch(e){ scStatus(i18n('Couldn’t read that folder: {e}', {e:esc(e.message || e)}), 'err'); }
+  finally{ SC.busy = false; scCount(); }
+}
+
+/* ---- 2. the folder tree; '' is a virtual root above whatever was picked or dropped ---- */
+function scTree(files, dirPaths){
+  const dirs = new Map();
+  const get = p => {
+    if(!dirs.has(p)){ dirs.set(p, {path:p, name:p.split('/').pop(), files:[], kids:new Set(), deep:null}); if(p) get(upDir(p)).kids.add(p); }
+    return dirs.get(p);
+  };
+  get('');
+  dirPaths.forEach(get);
+  files.forEach(f => { if(f.path.includes('/')) get(upDir(f.path)).files.push({name:f.path.split('/').pop(), size:f.size || 0}); });
+  return dirs;
+}
+function scDeep(d){
+  if(!d.deep) d.deep = [...d.files, ...[...d.kids].flatMap(k => scDeep(SC.dirs.get(k)))];
+  return d.deep;
+}
+const isMedia = f => AUDIO_EXT.test(extOf(f.name)) || PACK_EXT.test(extOf(f.name));
+/* a CD folder holds audio (or a still-packed archive) itself, or only Disc 1 / Scans / Bonus style subfolders */
+function scIsCD(d){
+  if(d.files.some(isMedia) || /\b[RBV]J\d{6,8}\b/i.test(d.name)) return true;
+  return d.kids.size > 0 && [...d.kids].every(k => AUX_DIR.test(SC.dirs.get(k).name.trim())) && scDeep(d).some(isMedia);
+}
+function scPickCDs(mode){
+  const D = SC.dirs, kids = p => [...D.get(p).kids].sort((a, b) => a.localeCompare(b, 'ja')), top = kids('');
+  let base = '';
+  if(top.length === 1 && !(mode === 'auto' && scIsCD(D.get(top[0])))) base = top[0];
+  SC.root = base || (top.length === 1 ? top[0] : '');
+  const hasFiles = p => scDeep(D.get(p)).length > 0;
+  if(mode === 'flat') return kids(base).filter(hasFiles).map(p => ({path:p, series:''}));
+  if(mode === 'series') return kids(base).flatMap(s => { const k = kids(s).filter(hasFiles); return k.length ? k.map(p => ({path:p, series:D.get(s).name})) : hasFiles(s) ? [{path:s, series:''}] : []; });
+  const out = [];
+  const walk = p => { if(p && scIsCD(D.get(p))) out.push({path:p, series:''}); else kids(p).forEach(walk); };
+  walk(base);
+  return out;
+}
+function scStats(d){
+  const all = scDeep(d), audio = all.filter(f => AUDIO_EXT.test(extOf(f.name))), packs = all.filter(f => PACK_EXT.test(extOf(f.name)));
+  const subs = [...d.kids].map(k => SC.dirs.get(k).name);
+  return {
+    audio:audio.length, packs:packs.length, size:all.reduce((s, f) => s + f.size, 0),
+    formats:[...new Set(audio.map(f => extOf(f.name).toUpperCase()))].sort(),
+    scans:subs.some(n => /^(scans?|bk|booklet|ブックレット|スキャン)$/i.test(n)) || all.filter(f => IMG_EXT.test(extOf(f.name))).length >= 4,
+    discs:subs.filter(n => /^(disc|disk|cd)[\s._-]*\d+$/i.test(n)).length
+  };
+}
+
+/* ---- 3. reading meaning out of a folder name ---- */
+/* "[2019.05.24][KDSD-0123] 【Rejet】 DIABOLIK LOVERS Vol.1 (CV.緑川光、木村良平)" →
+   {release:'2019-05-24', pn:'KDSD-0123', label:'Rejet', cast:[…], title:'DIABOLIK LOVERS Vol.1'} */
+function scParse(raw){
+  /* full-width letters/digits/brackets → plain ones, but Ⅱ, ～ etc. stay as written so the shop searches still match */
+  let s = String(raw).replace(/[！-｝]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0xFEE0)).replace(/　/g, ' ');
+  const o = {rj:'', pn:'', release:'', cast:[], label:'', title:'', altTitle:''};
+  /* cuts the match out; a leading (^|\D) group is put back so neighbouring words don't run together */
+  const take = (re, fn) => { const m = s.match(re), ok = !!m && fn(m) !== false; if(ok) s = s.replace(m[0], re.source.startsWith('(^|') ? (m[1] || '') + ' ' : ' '); return ok; };
+  take(/\b([RBV]J)[\s_-]?(\d{6,8})\b/i, m => { o.rj = (m[1] + m[2]).toUpperCase(); });
+  take(/(^|[^A-Za-z0-9])([A-Za-z]{2,6})[-_](\d{3,6})(?![0-9])/, m => { if(/^(vol|disc|disk|cd|dvd|part|track)$/i.test(m[2])) return false; o.pn = (m[2] + '-' + m[3]).toUpperCase(); });
+  s = s.replace(/_/g, ' ');
+  const okDate = (y, mo, d) => +mo >= 1 && +mo <= 12 && +d >= 1 && +d <= 31 ? `${y}-${String(mo).padStart(2, '0')}-${String(d).padStart(2, '0')}` : '';
+  take(/(^|\D)((?:19|20)\d{2})[.\-\/年 ](\d{1,2})[.\-\/月 ](\d{1,2})日?(?!\d)/, m => { o.release = okDate(m[2], m[3], m[4]); return !!o.release; }) ||
+  take(/(^|\D)((?:19|20)\d{2})(0[1-9]|1[0-2])([0-2]\d|3[01])(?!\d)/, m => { o.release = okDate(m[2], m[3], m[4]); }) ||
+  take(/[\[(【](\d{2})(0[1-9]|1[0-2])([0-2]\d|3[01])[\])】]/, m => { o.release = okDate('20' + m[1], m[2], m[3]); });
+  /* cast: "(CV.A、B)" / "【CV:A/B】" — or a bare "CV.緑川光" / "CV. Midorikawa Hikaru" */
+  const addCast = n => { n = n.replace(/^\s*CV\s*[.:]?\s*/i, '').trim(); if(!n) return; const p = parsePerson(hasCJK(n) ? n.replace(/\s+/g, '') : n); if(p.en || p.ja) o.cast.push(Names.fillPerson(p)); };
+  if(!take(/[\[(【]\s*CV\s*[.:]?\s*([^\])】]+)[\])】]/i, m => { m[1].split(/[、,\/&・]|\s{2,}/).forEach(addCast); })){
+    cvNames(s).forEach(addCast);
+    take(/\bCV\s*[.:]\s*([A-Za-z][A-Za-z'-]+(?:\s[A-Za-z][A-Za-z'-]+)?)/i, m => { addCast(m[1]); });
+    s = s.replace(CV_TAG, ' ');
+  }
+  /* bracket tags: generic ones ("同人音声", "FLAC") go; a leading tag that is a known voice actor joins the cast, otherwise it's the label */
+  s = s.replace(/[\[【(]([^\]】)]+)[\]】)]/g, (all, t) => GENERIC_TAG.test(t.trim()) ? ' ' : all);
+  let m;
+  while((m = s.match(/^\s*[\[【]([^\]】]+)[\]】]\s*/))){
+    const t = m[1].trim();
+    if(Names.toEn('va', t)) addCast(t); else if(!o.label) o.label = t; else break;
+    s = s.slice(m[0].length);
+  }
+  s = s.replace(/[\[(【「『]\s*[\])】」』]/g, ' ').replace(/\s+/g, ' ').replace(/^[\s\-–—~～・:|]+/, '').replace(/\s+[\-–—・:|]+$/, '').trim();   // a closing "-" or "～" that belongs to the title stays
+  o.title = s || String(raw).trim();
+  if(hasCJK(o.title)) o.altTitle = o.title;
+  return o;
+}
+
+/* ---- 4. matching against the shelf ---- */
+const bigrams = s => { const a = []; for(let i = 0; i < s.length - 1; i++) a.push(s.slice(i, i + 2)); return a; };
+function dice(a, b){
+  if(!a || !b) return 0; if(a === b) return 1;
+  const x = bigrams(a), y = bigrams(b); if(!x.length || !y.length) return 0;
+  const m = new Map(); x.forEach(g => m.set(g, (m.get(g) || 0) + 1));
+  let hit = 0; y.forEach(g => { const n = m.get(g); if(n){ hit++; m.set(g, n - 1); } });
+  return 2 * hit / (x.length + y.length);
+}
+function scMatch(path, p){
+  const all = DB.all;
+  const linked = all.find(c => c.localFolder === path); if(linked) return {kind:'linked', target:linked.id};
+  const exact = (p.rj && all.find(c => (c.pn || '').toUpperCase() === p.rj || c.id === 'dlsite-' + p.rj.toLowerCase() || (c.url || '').toUpperCase().includes(p.rj)))
+    || (p.pn && all.find(c => c.pn && pnKey(c.pn) === pnKey(p.pn)));
+  const k = dupTitle(p.title);
+  const same = exact || (k.length >= 4 && all.find(c => [c.title, c.altTitle, c.cnTitle].some(t => t && dupTitle(t) === k)));
+  if(same) return {kind:'match', target:same.id};
+  const castKeys = new Set(p.cast.flatMap(x => [Names.key(x.en), Names.flat(x.ja)]).filter(Boolean));
+  const cands = all.map(c => {
+    let sc = Math.max(0, ...[c.title, c.altTitle, c.cnTitle].filter(Boolean).map(t => { const j = dupTitle(t); return j && (j.includes(k) || k.includes(j)) ? (Math.min(j.length, k.length) >= 5 ? .8 : 0) : dice(k, j); }));
+    if(castKeys.size && c.cast.some(x => castKeys.has(Names.key(x.en)) || castKeys.has(Names.flat(x.ja)))) sc += .15;
+    return {c, sc};
+  }).filter(x => x.sc >= .55).sort((a, b) => b.sc - a.sc).slice(0, 4).map(x => x.c.id);
+  return cands.length ? {kind:'maybe', target:cands[0], cands} : {kind:'new', target:''};
+}
+/* a guess only, and only ever fills a blank Source: DLsite codes are downloads; lossless + scans/catalog no. look like a disc rip */
+const scGuess = (p, st) => p.rj ? 'WEB RIP' : (st.formats.some(f => /^(FLAC|WAV|APE|WV|TAK|TTA|ALAC|AIFF?)$/.test(f)) && (st.scans || p.pn)) ? 'CD RIP' : '';
+
+function scBuild(){
+  const found = scPickCDs(el('scMode').value);
+  SC.rows = found.map(({path, series}) => {
+    const d = SC.dirs.get(path), p = scParse(d.name), st = scStats(d);
+    if(series) p[hasCJK(series) ? 'series' : 'seriesRomaji'] = scParse(series).title;
+    const mt = scMatch(path, p);
+    return {path, p, st, guess:scGuess(p, st), ...mt, on:mt.kind !== 'maybe'};
+  });
+  const seen = new Set(SC.rows.map(r => r.path));
+  if(SC.root) DB.all.filter(c => c.localRoot === SC.root && c.localFolder && !seen.has(c.localFolder))
+    .forEach(c => SC.rows.push({kind:'missing', target:c.id, path:c.localFolder, on:false}));
+  const where = SC.root || i18n('the dropped folders');
+  const n = SC.rows.filter(r => r.kind !== 'missing').length;
+  if(!n) scStatus(i18n('No CD folders found in “{f}”. Try another folder layout.', {f:esc(where)}), 'err');
+  else scStatus(i18n(n === 1 ? 'Found 1 CD folder in “{f}”. Untick any you don’t want, then apply.' : 'Found {n} CD folders in “{f}”. Untick any you don’t want, then apply.', {n, f:esc(where)}), 'ok');
+  scRender();
+}
+const SC_SECTIONS = [
+  ['match', 'Matched to your shelf', ''],
+  ['maybe', 'Possible matches — check these', 'Not ticked yet: pick the right CD (or “add as new”) and tick the ones you’re sure about.'],
+  ['new', 'New CDs', 'Added as new shelf entries from the folder name. You can fix the title here or edit it later.'],
+  ['linked', 'Already linked — refresh file info', ''],
+  ['missing', 'Not found in this scan', 'These CDs were linked to a folder here that is gone now (moved or renamed?). Tick one to clear its folder link — the CD itself stays.']
+];
+function scFacts(r){
+  const {p, st} = r, f = [];
+  f.push(st.audio ? i18n(st.audio === 1 ? '1 audio file' : '{n} audio files', {n:st.audio}) + (st.formats.length ? ' · ' + st.formats.join(', ') : '') : '');
+  if(st.discs > 1) f.push(i18n('{n} discs', {n:st.discs}));
+  f.push(fmtSize(st.size));
+  if(st.scans) f.push(i18n('scans'));
+  [p.rj, p.pn, p.release, p.label, p.seriesRomaji || p.series].forEach(x => x && f.push(x));
+  if(p.cast.length) f.push('CV: ' + p.cast.map(x => x.ja || x.en).join(', '));
+  if(r.guess) f.push(r.guess);
+  const was = r.kind === 'linked' && DB.byId(r.target), changed = was && (was.localFiles !== st.audio || was.localSize !== st.size);
+  return (changed ? `<span class="warn">${esc(i18n('changed since last scan (was {n} audio files)', {n:was.localFiles}))}</span>` : '') + f.filter(Boolean).map(x => `<span>${esc(x)}</span>`).join('') + (st.packs ? `<span class="warn">${esc(i18n(st.packs === 1 ? '1 archive (still packed)' : '{n} archives (still packed)', {n:st.packs}))}</span>` : '');
+}
+function scRender(){
+  el('scList').innerHTML = SC_SECTIONS.map(([kind, head, note]) => {
+    const rows = SC.rows.map((r, i) => [r, i]).filter(([r]) => r.kind === kind); if(!rows.length) return '';
+    return `<section class="scsec"><h3>${esc(i18n(head))}<span class="badge">${rows.length}</span></h3>${note ? `<p>${esc(i18n(note))}</p>` : ''}` + rows.map(([r, i]) => {
+      const c = r.target && DB.byId(r.target);
+      let body;
+      if(kind === 'missing') body = `<b>${esc(c ? shownTitle(c) : '')}</b><div class="path">${esc(r.path)}</div>`;
+      else{
+        body = `<b>${esc(r.p.title)}</b><div class="path">${esc(r.path)}</div><div class="facts">${scFacts(r)}</div>`;
+        if(kind === 'match' || kind === 'linked') body += `<div class="to">→ ${esc(c ? shownTitle(c) : '')}</div>`;
+        if(kind === 'maybe') body += `<select class="sel" data-pick="${i}" aria-label="${esc(i18n('Which CD is this?'))}">${r.cands.map(id => `<option value="${esc(id)}" ${id === r.target ? 'selected' : ''}>${esc(i18n('Link to: {t}', {t:shownTitle(DB.byId(id))}))}</option>`).join('')}<option value="" ${r.target ? '' : 'selected'}>${esc(i18n('Add as a new CD instead'))}</option></select>`;
+        if(kind === 'new' || (kind === 'maybe' && !r.target)) body += `<input class="in" data-title="${i}" value="${esc(r.p.title)}" aria-label="${esc(i18n('Title for the new CD'))}" autocomplete="off">`;
+      }
+      return `<div class="scrow"><input type="checkbox" data-i="${i}" ${r.on ? 'checked' : ''} aria-label="${esc(kind === 'missing' ? i18n('Clear the folder link') : r.path)}"><div>${body}</div></div>`;
+    }).join('') + '</section>';
+  }).join('');
+  scCount();
+}
+function scCount(){
+  const n = SC.rows.filter(r => r.on).length;
+  el('scBar').hidden = !SC.rows.length;
+  el('scGo').disabled = !n || SC.busy;
+  el('scGo').textContent = n ? i18n('Apply ({n})', {n}) : i18n('Apply');
+}
+
+/* ---- 5. applying: links / new entries; existing data is only ever filled where blank ---- */
+const scLocal = r => ({localFolder:r.path, localRoot:SC.root, localFiles:r.st.audio, localSize:r.st.size, localFormats:r.st.formats.join(', '), localSeen:new Date().toLocaleDateString('sv')});   // 'sv' = YYYY-MM-DD in local time
+const scMeta = r => ({title:r.p.title, altTitle:r.p.altTitle, release:r.p.release, label:r.p.label, pn:r.p.pn || r.p.rj, cast:r.p.cast, series:r.p.series || '', seriesRomaji:r.p.seriesRomaji || ''});
+function scLinkTo(id, r, meta){
+  const c = DB.byId(id); if(!c) return;
+  const patch = scLocal(r), f = cdFields(normMeta(meta));
+  ['release', 'label', 'pn', 'cast', 'series', 'seriesRomaji', 'altTitle'].forEach(k => { if(isEmpty(c[k]) && !isEmpty(f[k])) patch[k] = f[k]; });
+  if(!c.sourceType && r.guess) patch.sourceType = r.guess;
+  if(el('scOwned').checked) patch.owned = true;
+  DB.update(id, patch); Names.fillCD(DB.byId(id));
+}
+async function scApply(){
+  const rows = SC.rows.filter(r => r.on); if(!rows.length || SC.busy) return;
+  SC.busy = true; scCount();
+  const prog = el('scProg'), bar = prog.firstElementChild, online = el('scFill').checked;
+  prog.hidden = false; bar.style.width = '0';
+  let linked = 0, added = 0, cleared = 0;
+  const touched = [], fresh = new Set();
+  for(let i = 0; i < rows.length; i++){
+    const r = rows[i];
+    if(r.kind === 'missing'){ DB.update(r.target, Object.fromEntries(LOCAL_KEYS.map(k => [k, USER_DEFAULTS[k]]))); cleared++; }
+    else if(r.target){ scLinkTo(r.target, r, scMeta(r)); touched.push(r.target); linked++; }
+    else{
+      const meta = scMeta(r), m = normMeta(meta), ex = findExisting(m);
+      if(ex){ scLinkTo(ex.id, r, meta); touched.push(ex.id); linked++; }
+      else{
+        let id = m.id || (r.p.rj ? 'dlsite-' + r.p.rj.toLowerCase() : 'cd-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5));
+        while(DB.byId(id)) id += '-x';
+        DB.add(hydrate({id, ...cdFields(m), ...scLocal(r), owned:el('scOwned').checked, sourceType:r.guess}));
+        Names.learnFrom(m); touched.push(id); fresh.add(id); added++;
+      }
+    }
+    bar.style.width = Math.round((i + 1) / rows.length * (online ? 30 : 100)) + '%';
+  }
+  DB.touch(); SC.rows = []; SC.dirs = null; buildFilters(); render();
+  let res = null;
+  if(online) res = await scFillOnline([...new Set(touched)], fresh, f => bar.style.width = 30 + Math.round(f * 70) + '%');
+  SC.busy = false; prog.hidden = true;
+  const msg = i18n('Done — {a} linked, {b} added', {a:linked, b:added}) + (cleared ? ' · ' + i18n('{n} folder links cleared', {n:cleared}) : '');
+  if(!res){ closeScan(); toast(msg + ' ♡'); return; }
+  buildFilters(); render(); scSummary(msg, res);
+}
+
+/* ---- 6. filling the gaps from the sites we import from ----
+   Only ever fills blank fields. A CD made from a folder name also takes the site's proper title.
+   Exact hits (the CD's own source page, DLsite RJ code, same catalog no.) are used straight away; a title-only hit
+   must be close AND carry the same numbers (so "Vol.1" never fills "Vol.2") — anything less is listed
+   for a look with Compare metadata instead of being guessed.
+   Fast sites first (rukojiDB, DLsite); the rest (HIBIKIFORUM, SKiT Dolce, STELLA PLAYER) only when those find nothing sure. */
+const SC_WANT = ['cover', 'release', 'cast', 'tracks', 'synopsis', 'label', 'altTitle'];
+const scNeeds = c => SC_WANT.some(k => isEmpty(c[k]));
+/* the numbers in a title (Ⅱ, 弐 and 二 count as 2) — titles that differ in them are different CDs */
+const ROMAN_NUM = 'ⅠⅡⅢⅣⅤⅥⅦⅧⅨⅩ', KANJI_NUM = {一:1, 壱:1, 二:2, 弐:2, 三:3, 参:3, 四:4, 五:5, 六:6, 七:7, 八:8, 九:9, 十:10};
+const numsOf = s => (String(s || '').replace(/[ⅠⅡⅢⅣⅤⅥⅦⅧⅨⅩ]/g, ch => ` ${ROMAN_NUM.indexOf(ch) + 1} `).replace(/[一壱二弐三参四五六七八九十]/g, ch => ` ${KANJI_NUM[ch]} `)
+  .normalize('NFKC').replace(/【CV[^】]*】/gi, '').replace(/\bCV\s*[.:：][^\s)）]*/gi, '').match(/\d+/g) || []).map(Number).sort((a, b) => a - b).join(',');
+/* likeness 0–1 with the CV tags taken off; Japanese titles have few spaces, so they are compared letter by letter */
+const scScore = (a, b) => Math.max(titleScore(cleanTitle(a), cleanTitle(b)), hasCJK(a) && hasCJK(b) ? dice(dupTitle(a), dupTitle(b)) : 0);
+/* [source, search(c, jp) → Promise<hits>]; a source missing from the "scanSites" setting is skipped */
+const SC_STAGES = [
+  [[Rukoji, (c) => Rukoji.find(c.title)], [DLsite, (c, jp) => jp ? DLsite.find(jp) : []]],
+  [[Hibiki, (c, jp) => Hibiki.search(jp && !hasCJK(c.title) ? c.title : jp || c.title)], [Skit, (c, jp) => Skit.search(jp || c.title)], [Stella, (c, jp) => Stella.find(jp || c.title)]]
+];
+const SC_SITES = SC_STAGES.flat().map(([s]) => s);
+const scSites = () => { const v = DB.setting('scanSites'); return Array.isArray(v) ? v : SC_SITES.map(s => s.id); };
+async function scFindOnline(c){
+  const on = scSites(), own = c.url && SOURCES.find(s => s.match(c.url));   // a CD's url is always its own item page
+  if(own){ try{ const r = await own.fromUrl(c.url); if(r.meta && r.meta.title) return {meta:r.meta}; }catch(e){} }
+  const code = DLsite.code(c.pn || '') || DLsite.code(c.url || '');
+  if(code && on.includes('dlsite')){ try{ const r = await DLsite.fromUrl(code); if(r.meta && r.meta.title) return {meta:r.meta}; }catch(e){} }
+  let all = [], failed = 0, last = {};
+  for(const stage of SC_STAGES){
+    const jobs = stage.filter(([s]) => on.includes(s.id)); if(!jobs.length) continue;
+    const got = await Promise.allSettled(jobs.map(([, find]) => Promise.resolve(find(c, c.altTitle || (hasCJK(c.title) ? c.title : '')))));
+    failed += got.filter(g => g.status === 'rejected').length;
+    all = all.concat(got.flatMap(g => g.status === 'fulfilled' ? g.value || [] : []));
+    last = await scJudge(c, all);
+    if(last.meta) return last;
+  }
+  return last.unsure ? last : {failed};
+}
+async function scJudge(c, found){
+  const titles = [c.title, c.altTitle].filter(Boolean);
+  const hits = found.map(h => {
+    const samePn = !!(h.meta && h.meta.pn && c.pn && pnKey(h.meta.pn) === pnKey(c.pn));
+    const best = titles.map(t => [scScore(h.title, t), t]).sort((a, b) => b[0] - a[0])[0];
+    return {...h, samePn, score:samePn ? 2 : best[0], vs:best[1]};
+  }).sort((a, b) => b.score - a.score);
+  const best = hits[0];
+  if(!best) return {};
+  const pnClash = best.meta && best.meta.pn && c.pn && pnKey(best.meta.pn) !== pnKey(c.pn);
+  /* folder names are often a shortened title: every word of it inside exactly one hit counts as close too */
+  const words = s => cleanTitle(s).toLowerCase().split(/[\s　・.\-~～()（）\[\]【】「」]+/).filter(Boolean);
+  const inside = h => titles.some(t => { const w = words(t), hw = new Set(words(h.title)); return w.length >= 3 && w.every(x => hw.has(x)) && numsOf(h.title) === numsOf(t); });
+  const within = hits.filter(inside);
+  const clash = h => h.meta && h.meta.pn && c.pn && pnKey(h.meta.pn) !== pnKey(c.pn);
+  const pick = best.samePn || (best.score >= .75 && numsOf(best.title) === numsOf(best.vs) && !pnClash) ? best
+    : within.length === 1 && !clash(within[0]) ? within[0] : null;
+  if(!pick) return {unsure:best};
+  return {meta:pick.full ? pick.meta : mergeMeta(pick.meta, (await srcByName(pick.src).fromUrl(pick.url)).meta)};
+}
+function scFillFrom(id, meta, fromScan){
+  const c = DB.byId(id), f = cdFields(normMeta(meta)), patch = {};
+  for(const k in f) if(isEmpty(c[k]) && !isEmpty(f[k])) patch[k] = f[k];
+  if(fromScan && f.title && f.title !== c.title){ patch.title = f.title; if(f.altTitle) patch.altTitle = f.altTitle; }   // the folder-made title gives way to the site's own
+  if(patch.cover) patch.coverData = '';
+  const n = Object.keys(patch).length;
+  if(n){ DB.update(id, patch); Names.fillCD(DB.byId(id)); }
+  return n;
+}
+async function scFillOnline(ids, fresh, onProg){
+  const todo = ids.filter(id => { const c = DB.byId(id); return c && scNeeds(c); });
+  const res = {filled:[], unsure:[], none:[], offline:0};
+  let done = 0, next = 0;
+  const one = async id => {
+    try{
+      const r = await scFindOnline(DB.byId(id));
+      if(r.meta && scFillFrom(id, r.meta, fresh.has(id))) res.filled.push({id, src:r.meta.source || hostOf(r.meta.url || '')});
+      else if(r.unsure) res.unsure.push({id, hit:r.unsure});
+      else if(!r.meta){ res.none.push({id}); if(r.failed) res.offline++; }
+    }catch(e){ res.none.push({id}); res.offline++; }
+    done++; onProg(done / todo.length);
+    scStatus(spin + i18n('Looking up missing details online… {i} of {n}', {i:done, n:todo.length}));
+  };
+  const worker = async () => { while(next < todo.length) await one(todo[next++]); };
+  await Promise.all([worker(), worker(), worker()]);   // three at a time: quicker, still gentle on the sites
+  DB.touch();
+  return res;
+}
+/* after Apply with online lookup: what was filled, and what needs a human look (opens Compare metadata) */
+function scSummary(msg, res){
+  SC.res = res; SC.msg = msg;
+  const row = (it, note) => { const c = DB.byId(it.id); if(!c) return ''; return `<div class="scrow plain"><div><b>${esc(shownTitle(c))}</b><div class="path">${esc(c.localFolder)}</div>
+    ${note ? `<div class="facts"><span>${esc(note)}</span></div>` : ''}
+    <div class="btnrow"><button type="button" class="pill sm" data-cmp="${esc(c.id)}">${esc(i18n('⇄ Compare metadata'))}</button></div></div></div>`; };
+  const sec = (head, note, items, fn) => items.length ? `<section class="scsec"><h3>${esc(i18n(head))}<span class="badge">${items.length}</span></h3>${note ? `<p>${esc(i18n(note))}</p>` : ''}${items.map(fn).join('')}</section>` : '';
+  el('scList').innerHTML =
+    sec('Not sure — please check', 'A close but uncertain match was found. Open Compare metadata to pick it (or another) and tick what to fill in.', res.unsure, it => row(it, i18n('Closest: {t} ({src})', {t:it.hit.title, src:it.hit.src})))
+    + sec('Not found online', 'Nothing matched on the sites searched. Try Compare metadata with a link, or rename the folder and scan again.', res.none, it => row(it, ''))
+    + sec('Filled in from online', '', res.filled, it => row(it, it.src));
+  el('scBar').hidden = true;
+  scStatus(esc(msg) + ' · ' + i18n('online: {a} filled in, {b} to check, {c} not found', {a:res.filled.length, b:res.unsure.length, c:res.none.length})
+    + (res.offline ? ' ' + i18n('({n} lookups could not reach the site.)', {n:res.offline}) : ''), res.unsure.length || res.none.length ? '' : 'ok');
+}
+
+/* ---- 7. wiring ---- */
+function scIntro(){
+  if(!('webkitdirectory' in el('scInput'))) return scStatus(i18n('This browser can’t pick folders — try dragging a folder into the box instead.'), 'err');
+  const roots = new Map(); DB.all.forEach(c => { if(c.localRoot) roots.set(c.localRoot, (roots.get(c.localRoot) || 0) + 1); });
+  scStatus(roots.size ? i18n('Scanned before: {f}. Pick the same folder again to re-scan — new folders, missing ones and file changes show up below.', {f:[...roots].map(([f, n]) => `“${esc(f)}” (${n})`).join(', ')}) : '');
+}
+function openScan(){
+  const m = el('scan'); m.classList.add('open'); m.setAttribute('aria-hidden', 'false'); document.body.style.overflow = 'hidden';
+  el('scMode').value = DB.setting('scanMode') || 'auto'; el('scFill').checked = DB.setting('scanFill') !== false; scSitesSync();
+  if(SC.res && !SC.busy){ SC.res = null; el('scList').innerHTML = ''; }
+  if(!SC.rows.length && !SC.busy) scIntro();
+  setTimeout(() => el('scPick').focus(), 60);
+}
+function closeScan(){ if(SC.busy && !el('scProg').hidden) return; const m = el('scan'); m.classList.remove('open'); m.setAttribute('aria-hidden', 'true'); document.body.style.overflow = ''; }
+el('btnScan').onclick = openScan;
+el('scClose').onclick = closeScan;
+el('scan').addEventListener('click', e => { if(e.target.id === 'scan') closeScan(); });
+el('scPick').onclick = async () => {
+  if(window.showDirectoryPicker && window.isSecureContext && window.self === window.top && !SC.noFS){
+    try{ const h = await window.showDirectoryPicker({id:'otomeScan', mode:'read'}); return scRun(() => scFromHandle(h)); }
+    catch(e){ if(e.name === 'AbortError') return; SC.noFS = true; scStatus(i18n('Your browser blocked the folder picker — click Choose folder again to use the standard one.'), 'err'); return; }   // the click is used up by now, so the fallback needs a fresh one
+  }
+  el('scInput').click();
+};
+el('scInput').onchange = e => { const list = [...e.target.files]; e.target.value = ''; if(list.length) scRun(() => scFromInput(list)); };
+el('scMode').onchange = () => { DB.setting('scanMode', el('scMode').value); if(SC.dirs && !SC.busy) scBuild(); };
+const scDrop = el('scDrop');
+['dragenter', 'dragover'].forEach(t => scDrop.addEventListener(t, e => { e.preventDefault(); scDrop.classList.add('over'); }));
+['dragleave', 'drop'].forEach(t => scDrop.addEventListener(t, () => scDrop.classList.remove('over')));
+el('scan').addEventListener('dragover', e => e.preventDefault());   // a drop that misses the box shouldn't open the files in the tab
+el('scan').addEventListener('drop', e => {
+  e.preventDefault();
+  const dirs = dropDirs(e);
+  if(dirs.length) scRun(() => scFromEntries(dirs)); else toast(i18n('Drop a folder, not single files ♡'));
+});
+el('scList').addEventListener('change', e => {
+  const t = e.target;
+  if(t.dataset.i !== undefined){ SC.rows[+t.dataset.i].on = t.checked; scCount(); }
+  else if(t.dataset.pick !== undefined){ const r = SC.rows[+t.dataset.pick]; r.target = t.value; r.on = true; scRender(); }
+});
+el('scList').addEventListener('input', e => { const t = e.target; if(t.dataset.title !== undefined){ const r = SC.rows[+t.dataset.title]; r.p.title = t.value.trim() || r.p.title; r.p.altTitle = hasCJK(r.p.title) ? r.p.title : ''; } });
+el('scFill').onchange = () => { DB.setting('scanFill', el('scFill').checked); scSitesSync(); };
+function scSitesSync(){
+  const on = scSites();
+  el('scSites').innerHTML = SC_SITES.map(s => `<label class="check"><input type="checkbox" data-site="${s.id}" ${on.includes(s.id) ? 'checked' : ''} ${el('scFill').checked ? '' : 'disabled'}> ${esc(s.name)}</label>`).join('');
+}
+el('scSites').addEventListener('change', () => DB.setting('scanSites', [...el('scSites').querySelectorAll('input:checked')].map(x => x.dataset.site)));
+el('scList').addEventListener('click', e => { const b = e.target.closest('[data-cmp]'); if(b) openCompare(b.dataset.cmp); });
+el('scAll').onclick = () => { SC.rows.forEach(r => r.on = true); scRender(); };
+el('scNone').onclick = () => { SC.rows.forEach(r => r.on = false); scRender(); };
+el('scGo').onclick = scApply;
+
 /* ---------- boot ---------- */
 (function init(){
   const labelsOn = DB.setting('labels') !== false;
@@ -2248,6 +2818,7 @@ function setLang(l, save){
   if(el('editor').classList.contains('open')) el('eHead').textContent = i18n(ED.id ? 'Edit CD' : 'Add a CD');
   imSync(); imCount(); if(IM.items.length) imRenderList();
   selSync(); if(el('bulk').classList.contains('open')) openBulk();
+  if(SC.rows.length) scRender(); else if(SC.res && el('scan').classList.contains('open')) scSummary(SC.msg, SC.res);
 }
 document.querySelectorAll('.langs button').forEach(b => b.addEventListener('click', () => setLang(b.dataset.l, true)));
 setLang(LANG, false);

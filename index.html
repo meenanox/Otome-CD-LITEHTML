@@ -243,6 +243,13 @@ footer{text-align:center;color:var(--ink-faint);font-size:12px;padding:0 20px 40
 .ph b{font-size:44px;margin-bottom:6px}
 .sec p{white-space:pre-line}
 .pill.sm{padding:7px 13px;font-size:12.5px}
+.trbar{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:12px 0 0}
+.trbar .sel{padding:6px 28px 6px 12px;font-size:12.5px;max-width:250px;background-position:right 10px center}
+.trbar .swap{padding:6px 10px}
+.sec p.tr{background:var(--accent-faint);border-radius:16px;padding:10px 14px}
+.trnote{margin:8px 0 0;font-size:12.5px;display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center}
+.trnote button{border:0;background:none;padding:0;color:var(--accent);font:inherit;cursor:pointer;border-bottom:2px solid var(--accent-soft)}
+.trnote button:hover{border-color:var(--accent)}
 .btnrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
 .in{width:100%;border:2px solid var(--accent-soft);background:var(--surface);border-radius:16px;padding:9px 13px;outline:none;font-weight:400;font-size:14px;transition:border-color .2s,box-shadow .2s}
 textarea.in{resize:vertical;font-weight:500;line-height:1.5}
@@ -987,13 +994,14 @@ function openModal(id){
       ${c.label ? `<span class="tag pink">${esc(c.label)}</span>` : ''}
     </div>
     <dl class="info">${info.map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('')}</dl>
-    <section class="sec"><h3>${i18n('Synopsis')}</h3>${shownSynopsis(c) ? `<p>${esc(shownSynopsis(c))}</p>` : `<p class="muted">${i18n('No synopsis saved yet.')}</p>`}</section>
+    <section class="sec"><h3>${i18n('Synopsis')}</h3>${shownSynopsis(c) ? `<p id="mSyn">${esc(shownSynopsis(c))}</p>${trBarHTML()}` : `<p class="muted">${i18n('No synopsis saved yet.')}</p>`}</section>
     <section class="sec"><h3>${i18n('Tracklist')}</h3>
       ${c.tracks.length ? `<ol class="tracks">${c.tracks.map(t => `<li><span class="tt">${esc(t.t)}</span><span class="dur">${esc(t.d)}</span></li>`).join('')}</ol>` : `<p class="muted">${i18n('No tracklist saved yet.')}</p>`}
     </section>
     ${c.bonuses.length ? `<section class="sec"><h3>${i18n('Bonuses')}</h3><ul class="bonus">${c.bonuses.map(b => `<li>${esc(b)}</li>`).join('')}</ul></section>` : ''}
     ${c.url ? `<a class="src" href="${esc(c.url)}" target="_blank" rel="noopener noreferrer">${i18n('View on {site} ↗', {site:esc(((SOURCES.find(s => s.match(c.url)) || {}).name) || hostOf(c.url))})}</a>` : ''}`;
   renderPanel(c);
+  if(shownSynopsis(c)) trWire(c);
   const m = $('#modal'); m.classList.add('open'); m.setAttribute('aria-hidden', 'false');
   document.body.style.overflow = 'hidden';
   setTimeout(() => $('#mClose').focus(), 50);
@@ -2855,6 +2863,120 @@ el('scGo').onclick = scApply;
   let cur = 'lavender'; try{ cur = localStorage.getItem('otomeCdTheme') || cur; }catch(e){}
   setTheme(cur, false);
 })();
+
+/* =====================================================================
+   14. TRANSLATE SYNOPSIS — Google Translate's free web endpoint (CORS-open, works from file://), MyMemory as a fallback.
+       Shown in place of the synopsis until "Show original"; nothing is saved unless the user asks.
+   ===================================================================== */
+const TR_LANGS = [['auto', 'Auto-detect'], ['en', 'English'], ['ja', 'Japanese · 日本語'], ['zh-CN', 'Chinese (Simplified) · 简体中文'], ['zh-TW', 'Chinese (Traditional) · 繁體中文'],
+  ['ko', 'Korean · 한국어'], ['es', 'Spanish · Español'], ['fr', 'French · Français'], ['de', 'German · Deutsch'], ['it', 'Italian · Italiano'], ['pt', 'Portuguese · Português'],
+  ['ru', 'Russian · Русский'], ['th', 'Thai · ไทย'], ['vi', 'Vietnamese · Tiếng Việt'], ['id', 'Indonesian · Bahasa Indonesia'], ['tl', 'Filipino · Tagalog']];
+const trName = k => i18n(((TR_LANGS.find(l => l[0] === k) || [])[1] || k).split(' · ')[0]);
+const TR = {cache:new Map(), from:null};   // cache: "from|to|text" → result; from = language Google detected last
+const trGuess = s => /[぀-ヿ]/.test(s) ? 'ja' : /[가-힯]/.test(s) ? 'ko' : /[一-鿿]/.test(s) ? 'zh-CN' : 'en';
+async function trJSON(url){
+  let timer;
+  try{
+    const timeout = new Promise((_, rej) => { timer = setTimeout(() => rej(new Error('timed out')), 20000); });
+    const res = await Promise.race([fetch(url, {credentials:'omit', referrerPolicy:'no-referrer'}), timeout]);
+    if(!res.ok) throw new Error('HTTP ' + res.status);
+    return await res.json();
+  }finally{ clearTimeout(timer); }
+}
+/* split at line / sentence ends so long synopses fit each service's request size */
+function trChunks(text, max){
+  const out = []; let cur = '';
+  for(let p of text.replace(/([\n。．！？!?]+|\.\s+)/g, '$1\u0000').split('\u0000')){
+    if(cur.length + p.length <= max){ cur += p; continue; }
+    if(cur) out.push(cur);
+    while(p.length > max){ out.push(p.slice(0, max)); p = p.slice(max); }
+    cur = p;
+  }
+  if(cur) out.push(cur);
+  return out;
+}
+const TR_ENGINES = [
+  {name:'Google Translate', max:1200, async run(q, from, to){
+    const d = await trJSON(`https://translate.googleapis.com/translate_a/single?client=gtx&dt=t&sl=${from}&tl=${to}&q=${encodeURIComponent(q)}`);
+    if(!Array.isArray(d) || !Array.isArray(d[0])) throw new Error('unexpected reply');
+    return {text:d[0].map(s => s[0] || '').join(''), from:d[2] || from};
+  }},
+  {name:'MyMemory', max:150, async run(q, from, to){   // ~500-byte limit per request, no auto-detect
+    if(from === 'auto') from = trGuess(q);
+    if(from === to) return {text:q, from};
+    const d = await trJSON(`https://api.mymemory.translated.net/get?langpair=${from}|${to}&q=${encodeURIComponent(q)}`);
+    if(+d.responseStatus !== 200 || d.quotaFinished) throw new Error(d.responseDetails || 'daily limit reached');
+    return {text:d.responseData.translatedText, from};
+  }}
+];
+async function translateText(text, from, to){
+  const key = from + '|' + to + '|' + text;
+  if(TR.cache.has(key)) return TR.cache.get(key);
+  let last;
+  for(const eng of TR_ENGINES){
+    try{
+      let out = '', got = from;
+      for(const q of trChunks(text, eng.max)){
+        const r = await eng.run(q, from, to);
+        out += r.text.replace(/\s+$/, '') + q.match(/\s*$/)[0];   // keep the original line breaks between chunks
+        if(got === 'auto') got = r.from;
+      }
+      const res = {text:out.trim(), via:eng.name, from:got};
+      TR.cache.set(key, res); return res;
+    }catch(e){ last = e; }
+  }
+  throw last || new Error('no translator answered');
+}
+function trBarHTML(){
+  const from = DB.setting('trFrom') || 'auto', to = DB.setting('trTo') || LANG_TAG[LANG];
+  const opts = (sel, auto) => TR_LANGS.filter(l => auto || l[0] !== 'auto').map(([k, n]) => `<option value="${k}" ${k === sel ? 'selected' : ''}>${esc(k === 'auto' ? i18n(n) : n)}</option>`).join('');
+  return `<div class="trbar">
+      <select class="sel" id="trFrom" aria-label="${i18n('Translate from')}" title="${i18n('Translate from')}">${opts(from, true)}</select>
+      <button class="pill sm swap" id="trSwap" title="${i18n('Swap languages')}" aria-label="${i18n('Swap languages')}">⇄</button>
+      <select class="sel" id="trTo" aria-label="${i18n('Translate to')}" title="${i18n('Translate to')}">${opts(to, false)}</select>
+      <button class="pill sm" id="trGo">${i18n('🌐 Translate')}</button>
+    </div>
+    <p class="muted trnote" id="trNote" hidden></p>`;
+}
+function trWire(c){
+  const orig = shownSynopsis(c), p = el('mSyn'), note = el('trNote'), go = el('trGo'), fromSel = el('trFrom'), toSel = el('trTo');
+  const showOriginal = () => { p.textContent = orig; p.classList.remove('tr'); p.lang = ''; note.hidden = true; };
+  fromSel.onchange = () => DB.setting('trFrom', fromSel.value);
+  toSel.onchange = () => DB.setting('trTo', toSel.value);
+  el('trSwap').onclick = () => {
+    const f = fromSel.value === 'auto' ? (TR.from || trGuess(orig)) : fromSel.value, t = toSel.value;
+    if(!TR_LANGS.some(l => l[0] === f)) return;
+    fromSel.value = t; toSel.value = f; fromSel.onchange(); toSel.onchange();
+  };
+  go.onclick = async () => {
+    const from = fromSel.value, to = toSel.value;
+    if(from === to){ toast(i18n('Pick two different languages.')); return; }
+    go.disabled = true; go.textContent = i18n('Translating…');
+    try{
+      const r = await translateText(orig, from, to);
+      if(openId !== c.id || !p.isConnected) return;
+      TR.from = r.from;
+      p.textContent = r.text; p.classList.add('tr'); p.lang = to;
+      note.innerHTML = `<span>${esc(i18n('Machine translation by {via}: {from} → {to}', {via:r.via, from:trName(r.from), to:trName(to)}))}</span>
+        <button id="trOrig">${i18n('Show original')}</button>
+        ${to === 'zh-CN' ? `<button id="trSaveCn">${i18n('Save as 中文 synopsis')}</button>` : ''}`;
+      note.hidden = false;
+      el('trOrig').onclick = showOriginal;
+      if(el('trSaveCn')) el('trSaveCn').onclick = () => { DB.update(c.id, {synopsisCn:r.text}); toast(i18n('Saved as the 中文 synopsis.')); };
+    }catch(e){ toast(i18n('Translation failed — {e}', {e:e.message})); }
+    finally{ if(go.isConnected){ go.disabled = false; go.textContent = i18n('🌐 Translate'); } }
+  };
+}
+Object.assign(I18N_JA, {"Translate from": "翻訳元の言語", "Translate to": "翻訳先の言語", "Swap languages": "言語を入れ替える", "🌐 Translate": "🌐 翻訳", "Translating…": "翻訳中…", "Auto-detect": "自動検出",
+  "Pick two different languages.": "違う言語を2つ選んでね。", "Machine translation by {via}: {from} → {to}": "{via} による機械翻訳:{from} → {to}", "Show original": "原文を表示", "Save as 中文 synopsis": "中文あらすじとして保存",
+  "Saved as the 中文 synopsis.": "中文あらすじとして保存しました。", "Translation failed — {e}": "翻訳できませんでした — {e}", "English": "英語", "Japanese": "日本語", "Chinese (Simplified)": "中国語(簡体字)",
+  "Chinese (Traditional)": "中国語(繁体字)", "Korean": "韓国語", "Spanish": "スペイン語", "French": "フランス語", "German": "ドイツ語", "Italian": "イタリア語", "Portuguese": "ポルトガル語", "Russian": "ロシア語",
+  "Thai": "タイ語", "Vietnamese": "ベトナム語", "Indonesian": "インドネシア語", "Filipino": "フィリピン語"});
+Object.assign(I18N_ZH, {"Translate from": "源语言", "Translate to": "目标语言", "Swap languages": "交换语言", "🌐 Translate": "🌐 翻译", "Translating…": "正在翻译…", "Auto-detect": "自动检测",
+  "Pick two different languages.": "请选择两种不同的语言。", "Machine translation by {via}: {from} → {to}": "由 {via} 机器翻译:{from} → {to}", "Show original": "显示原文", "Save as 中文 synopsis": "保存为中文简介",
+  "Saved as the 中文 synopsis.": "已保存为中文简介。", "Translation failed — {e}": "翻译失败 — {e}", "English": "英语", "Japanese": "日语", "Chinese (Simplified)": "简体中文",
+  "Chinese (Traditional)": "繁体中文", "Korean": "韩语", "Spanish": "西班牙语", "French": "法语", "German": "德语", "Italian": "意大利语", "Portuguese": "葡萄牙语", "Russian": "俄语",
+  "Thai": "泰语", "Vietnamese": "越南语", "Indonesian": "印尼语", "Filipino": "菲律宾语"});
 
 /* ---------- language switcher (EN ・ 日本 ・ 中文) ---------- */
 function setLang(l, save){

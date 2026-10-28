@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 560" width="1400" height="560">
+<defs><style>@import url("https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&amp;display=swap");</style>
+<style>.w{font-family:'Fredoka',sans-serif;font-weight:700;font-size:200px;letter-spacing:4px} .s{font-family:'Fredoka',sans-serif;font-weight:600}</style>
+<linearGradient id="fill" x1="0" y1="0" x2="0" y2="1"><stop offset=".1" stop-color="#FBCFE8"/><stop offset=".4" stop-color="#F0A5D0"/><stop offset=".7" stop-color="#C084FC"/><stop offset="1" stop-color="#7C3AED"/></linearGradient>
+<linearGradient id="gloss" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".95"/><stop offset=".42" stop-color="#fff" stop-opacity=".35"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/></linearGradient>
+<linearGradient id="pill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F472B6"/><stop offset="1" stop-color="#DB2777"/></linearGradient>
+<radialGradient id="disc" cx=".35" cy=".3" r=".9"><stop offset="0" stop-color="#fff"/><stop offset=".35" stop-color="#3D2D5E"/><stop offset=".7" stop-color="#A855F7"/><stop offset="1" stop-color="#C084FC"/></radialGradient>
+<linearGradient id="sheen" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".45" stop-color="#fff" stop-opacity=".85"/><stop offset=".55" stop-color="#fff" stop-opacity="0"/></linearGradient>
+<clipPath id="top"><rect x="0" y="0" width="1400" height="245"/></clipPath>
+<filter id="glow" x="-20%" y="-30%" width="140%" height="160%"><feGaussianBlur in="SourceAlpha" stdDeviation="14" result="b"/><feFlood flood-color="#C084FC" flood-opacity=".8"/><feComposite in2="b" operator="in"/><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+</defs>
+<circle cx="60" cy="110" r="26" fill="#D8B4FE" fill-opacity=".55" stroke="#fff" stroke-width="3"/><ellipse cx="50.9" cy="100.12" rx="8.32" ry="5.2" fill="#fff" fill-opacity=".9" transform="rotate(-35 50.9 100.12)"/><circle cx="1335" cy="445" r="30" fill="#F5B8DC" fill-opacity=".55" stroke="#fff" stroke-width="3"/><ellipse cx="1324.5" cy="433.6" rx="9.6" ry="6.0" fill="#fff" fill-opacity=".9" transform="rotate(-35 1324.5 433.6)"/><circle cx="1290" cy="60" r="16" fill="#D8B4FE" fill-opacity=".55" stroke="#fff" stroke-width="3"/><ellipse cx="1284.4" cy="53.92" rx="5.12" ry="3.2" fill="#fff" fill-opacity=".9" transform="rotate(-35 1284.4 53.92)"/><circle cx="420" cy="505" r="14" fill="#F5B8DC" fill-opacity=".55" stroke="#fff" stroke-width="3"/><ellipse cx="415.1" cy="499.68" rx="4.48" ry="2.8000000000000003" fill="#fff" fill-opacity=".9" transform="rotate(-35 415.1 499.68)"/><circle cx="1150" cy="510" r="12" fill="#D8B4FE" fill-opacity=".55" stroke="#fff" stroke-width="3"/><ellipse cx="1145.8" cy="505.44" rx="3.84" ry="2.4000000000000004" fill="#fff" fill-opacity=".9" transform="rotate(-35 1145.8 505.44)"/>
+<path d="M1350,229 Q1357.28,247.72 1376,255 Q1357.28,262.28 1350,281 Q1342.72,262.28 1324,255 Q1342.72,247.72 1350,229Z" fill="#F5B8DC" stroke="#fff" stroke-width="4" stroke-linejoin="round"/><path d="M370,38 Q376.16,53.84 392,60 Q376.16,66.16 370,82 Q363.84,66.16 348,60 Q363.84,53.84 370,38Z" fill="#D8B4FE" stroke="#fff" stroke-width="4" stroke-linejoin="round"/><path d="M1060,29 Q1064.48,40.519999999999996 1076,45 Q1064.48,49.480000000000004 1060,61 Q1055.52,49.480000000000004 1044,45 Q1055.52,40.519999999999996 1060,29Z" fill="#F5B8DC" stroke="#fff" stroke-width="4" stroke-linejoin="round"/><path d="M55,435 Q60.6,449.4 75,455 Q60.6,460.6 55,475 Q49.4,460.6 35,455 Q49.4,449.4 55,435Z" fill="#F5B8DC" stroke="#fff" stroke-width="4" stroke-linejoin="round"/>
+<g filter="url(#glow)">
+<g transform="translate(205 280) rotate(-12)">
+  <circle r="150" fill="#06030E" opacity=".35" transform="translate(0 12)"/>
+  <circle r="150" fill="#F3E8FF"/>
+  <circle r="136" fill="url(#disc)" stroke="#2B1A4A" stroke-width="9"/>
+  <circle r="112" fill="none" stroke="#fff" stroke-opacity=".5" stroke-width="3"/>
+  <circle r="90" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="3"/>
+  <path d="M-131,-8 A131,131 0 0 1 -8,-131 L-8,-55 A55,55 0 0 0 -55,-8Z" fill="url(#sheen)" opacity=".8"/>
+  <circle r="50" fill="#fff" stroke="#2B1A4A" stroke-width="7"/>
+  <g transform="translate(0 -2) scale(.95)"><path d="M0,-14 C-6,-30 -34,-28 -34,-6 C-34,12 -12,24 0,36 C12,24 34,12 34,-6 C34,-28 6,-30 0,-14Z" fill="#F472B6" stroke="#2B1A4A" stroke-width="6" stroke-linejoin="round"/><ellipse cx="-14" cy="-10" rx="8" ry="5" fill="#fff" opacity=".85" transform="rotate(-30 -14 -10)"/></g>
+</g>
+<text x="790" y="300" text-anchor="middle" rotate="-8 5 -6 7 -5 0 6 -7" class="w" fill="#06030E" stroke="#06030E" stroke-width="44" stroke-linejoin="round" opacity=".35" transform="translate(0 14)"><tspan dy="0">O</tspan><tspan dy="-10">t</tspan><tspan dy="24">o</tspan><tspan dy="-26">m</tspan><tspan dy="22">e</tspan><tspan dy="-10">&#160;</tspan><tspan dy="-8">C</tspan><tspan dy="20">D</tspan></text>
+<text x="790" y="300" text-anchor="middle" rotate="-8 5 -6 7 -5 0 6 -7" class="w" fill="#F3E8FF" stroke="#F3E8FF" stroke-width="44" stroke-linejoin="round"><tspan dy="0">O</tspan><tspan dy="-10">t</tspan><tspan dy="24">o</tspan><tspan dy="-26">m</tspan><tspan dy="22">e</tspan><tspan dy="-10">&#160;</tspan><tspan dy="-8">C</tspan><tspan dy="20">D</tspan></text>
+<text x="790" y="300" text-anchor="middle" rotate="-8 5 -6 7 -5 0 6 -7" class="w" fill="#2B1A4A" stroke="#2B1A4A" stroke-width="18" stroke-linejoin="round"><tspan dy="0">O</tspan><tspan dy="-10">t</tspan><tspan dy="24">o</tspan><tspan dy="-26">m</tspan><tspan dy="22">e</tspan><tspan dy="-10">&#160;</tspan><tspan dy="-8">C</tspan><tspan dy="20">D</tspan></text>
+<text x="790" y="300" text-anchor="middle" rotate="-8 5 -6 7 -5 0 6 -7" class="w" fill="url(#fill)"><tspan dy="0">O</tspan><tspan dy="-10">t</tspan><tspan dy="24">o</tspan><tspan dy="-26">m</tspan><tspan dy="22">e</tspan><tspan dy="-10">&#160;</tspan><tspan dy="-8">C</tspan><tspan dy="20">D</tspan></text>
+<g clip-path="url(#top)"><text x="790" y="300" text-anchor="middle" rotate="-8 5 -6 7 -5 0 6 -7" class="w" fill="url(#gloss)" opacity=".7"><tspan dy="0">O</tspan><tspan dy="-10">t</tspan><tspan dy="24">o</tspan><tspan dy="-26">m</tspan><tspan dy="22">e</tspan><tspan dy="-10">&#160;</tspan><tspan dy="-8">C</tspan><tspan dy="20">D</tspan></text></g>
+<g transform="translate(1215 135) rotate(12)">
+  <rect x="-96" y="-38" width="192" height="76" rx="38" fill="#06030E" opacity=".35" transform="translate(0 8)"/>
+  <rect x="-104" y="-46" width="208" height="92" rx="46" fill="#F3E8FF"/>
+  <rect x="-92" y="-34" width="184" height="68" rx="34" fill="url(#pill)" stroke="#2B1A4A" stroke-width="6"/>
+  <rect x="-70" y="-26" width="110" height="14" rx="7" fill="#fff" opacity=".55"/>
+  <text x="0" y="17" text-anchor="middle" class="s" font-size="48" fill="#FFFFFF" letter-spacing="5">LITE</text>
+</g>
+<g transform="translate(790 445)">
+  <rect x="-300" y="-30" width="600" height="60" rx="30" fill="#06030E" opacity=".3" transform="translate(0 7)"/>
+  <rect x="-310" y="-38" width="620" height="76" rx="38" fill="#F3E8FF"/>
+  <rect x="-300" y="-28" width="600" height="56" rx="28" fill="#1F1830" stroke="#2B1A4A" stroke-width="5"/>
+  <text x="0" y="11" text-anchor="middle" class="s" font-size="31" fill="#E6D6FB" letter-spacing="1.5">&#9825; my little drama CD shelf &#9825;</text>
+</g>
+</g>
+</svg>

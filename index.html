@@ -414,7 +414,7 @@ details.more p{margin:8px 0 0;color:var(--ink-faint);font-weight:400;line-height
 /* ---------- shopping list (section 15). Prices and sales only ever show inside #shop — the shelf just gets the small 🛍️ ---------- */
 .ov.wantb{top:48px;right:11px;width:28px;height:28px;border-radius:50%;background:rgba(var(--surface-rgb),.92);display:grid;place-items:center;font-size:13px;box-shadow:0 3px 10px -3px rgba(var(--shadow-rgb),.5)}
 .labels-off .ov.wantb{opacity:1;transform:none;top:38px;right:8px;width:24px;height:24px;font-size:11px}
-.pill .shn{background:var(--pink-soft);color:var(--pink-ink);border-radius:999px;padding:0 7px;font-size:11.5px;line-height:1.6}
+.pill .shn{background:rgba(255,255,255,.9);color:var(--accent);font-weight:500;border-radius:999px;padding:0 7px;font-size:11.5px;line-height:1.6}
 .sheet.shop{width:min(1120px,100%);grid-template-columns:minmax(0,1fr)}   /* minmax: the sideways sale strip must not widen the sheet on phones */
 #shBody{min-width:0}
 @media (max-width:600px){#shBody .sh-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}#shBody .sh-tile .v{font-size:22px}}
@@ -517,7 +517,7 @@ details.more p{margin:8px 0 0;color:var(--ink-faint);font-weight:400;line-height
       <span class="knob"></span><span>Toggle Labels</span>
     </button>
     <button class="pill primary" id="btnAdd" title="Add a CD by hand">＋ Add CD</button>
-    <button class="pill" id="btnShop" title="CDs you want to buy, with current prices and sales"><span>🛍️ Shopping list</span><span class="shn" id="shCount" hidden></span></button>
+    <button class="pill primary" id="btnShop" title="CDs you want to buy, with current prices and sales"><span>🛍️ Shopping list</span><span class="shn" id="shCount" hidden></span></button>
     <button class="pill" id="btnImportSrc" title="Import CDs from rukojiDB, HIBIKIFORUM, DLsite Girls or SKiT Dolce">⇩ Import CDs</button>
     <button class="pill" id="btnScan" title="Read the folder names of your local drama CD folders and add or link them — files are never copied or uploaded">📁 Scan folders</button>
     <button class="pill" id="btnDupes" title="Find the same CD added twice (e.g. from different sites) and merge them into one">⧉ Merge duplicates</button>

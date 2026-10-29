@@ -10,7 +10,7 @@
 <script>
 /* APP VERSION — the one place to change it. Shown next to the logo, in the footer and saved into backups.
    Bump it whenever a new index.html goes up, so people who re-download can tell which copy they have. */
-var APP_VERSION = '0.5.5';
+var APP_VERSION = '0.5.6';
 /* apply the saved theme before first paint (no flash) */
 try{ var _th = localStorage.getItem('otomeCdTheme'); if(_th) document.documentElement.setAttribute('data-theme', _th); }catch(e){}
 </script>
@@ -1126,7 +1126,7 @@ function cardHTML(c, i){
         <div class="ov tl">${c.sourceType ? `<span class="chip">${esc(c.sourceType)}</span>` : ''}</div>
         ${audHTML(c)}
         ${listenHTML(c)}
-        <button class="ov heart ${c.owned ? 'on' : ''}" data-heart="${esc(c.id)}" aria-label="${i18n(c.owned ? 'Owned — click to unmark' : 'Mark as owned')}" aria-pressed="${c.owned}"><span class="h">💜</span></button>
+        <button class="ov heart ${c.owned ? 'on' : ''}" data-heart="${esc(c.id)}" aria-label="${i18n(c.owned ? 'Owned — click to unmark' : 'Mark as owned')}" aria-pressed="${c.owned}"><span class="h">💿</span></button>
         ${c.want ? `<span class="ov wantb" title="${esc(i18n('On your shopping list'))}" role="img" aria-label="${esc(i18n('On your shopping list'))}">🛍️</span>` : ''}
       </div>
       <div class="cap"><div class="cap-in">
@@ -3534,7 +3534,7 @@ function shItemHTML(c){
         <p class="sh-sub" style="margin-top:6px">${i18n('From dlwatcher.com — can be up to 2 days behind DLsite.')}</p>`
         : `<p class="sh-sub">${i18n('Sale history comes from dlwatcher.com and covers DLsite works only. Link the DLsite page and check prices to fill it in.')}</p>`}
       <div class="field" style="margin-top:16px"><label for="shMax">${i18n('I’d buy it at or under (¥)')}</label><input class="in" id="shMax" type="number" min="0" step="10" value="${c.wantMax || ''}" style="max-width:140px" placeholder="—"></div>
-      <div class="btnrow"><button class="pill sm" data-act="detail">${i18n('Open CD details')}</button><button class="pill sm primary" data-act="bought">${i18n('💜 Bought it — mark as owned')}</button><button class="pill sm danger" data-act="drop">${i18n('Remove from list')}</button></div>
+      <div class="btnrow"><button class="pill sm" data-act="detail">${i18n('Open CD details')}</button><button class="pill sm primary" data-act="bought">${i18n('💿 Bought it — mark as owned')}</button><button class="pill sm danger" data-act="drop">${i18n('Remove from list')}</button></div>
     </div></div>`;
 }
 function shStatus(){
@@ -3601,7 +3601,7 @@ Object.assign(I18N_JA, {"🛍️ Shopping list": "🛍️ 買い物リスト", "
   "🔎 Find on stores": "🔎 お店で探す", "↻ Check prices": "↻ 価格を確認", "Paste a store link (DLsite, SKiT Dolce, STELLA PLAYER, Stellaworth)": "お店のリンクを貼る(DLsite・SKiT Dolce・STELLA PLAYER・ステラワース)", "Add link": "リンクを追加",
   "Price history": "価格の推移", "Latest sale": "最近のセール", "All-time low": "過去最安値", "Days on sale (past year)": "年間セール日数", "{n} days": "{n}日", "From dlwatcher.com — can be up to 2 days behind DLsite.": "dlwatcher.com より — DLsiteより最大2日遅れることがあるよ。",
   "Sale history comes from dlwatcher.com and covers DLsite works only. Link the DLsite page and check prices to fill it in.": "セール履歴は dlwatcher.com から取得していて、DLsite作品だけが対象だよ。DLsiteのページをリンクして価格を確認すると表示されるよ。",
-  "I’d buy it at or under (¥)": "この価格以下なら買う(¥)", "Open CD details": "CDの詳細を開く", "💜 Bought it — mark as owned": "💜 買った — 所持にする", "Remove from list": "リストから外す",
+  "I’d buy it at or under (¥)": "この価格以下なら買う(¥)", "Open CD details": "CDの詳細を開く", "💿 Bought it — mark as owned": "💿 買った — 所持にする", "Remove from list": "リストから外す",
   "Checking prices… {a} of {b}": "価格を確認中… {a} / {b}", "Prices last checked {t}. They refresh by themselves when older than 12 hours.": "価格の最終確認: {t}。12時間以上たつと自動で更新するよ。",
   "View": "表示", "Overview": "概要", "All items": "すべて", "↻ Refresh prices": "↻ 価格を更新", "Your shopping list is empty": "買い物リストは空っぽだよ", "Open a CD and switch on “Want to buy”, or select several CDs and use Edit selected.": "CDを開いて「欲しい」をオンにするか、複数選んで「選択したCDを編集」を使ってね。",
   "Checking prices…": "価格を確認中…", "Couldn’t read: {s}": "読み込めなかったお店: {s}", "Prices updated ♡": "価格を更新したよ ♡", "That link isn’t from a store the list can read (DLsite, SKiT Dolce, STELLA PLAYER, Stellaworth).": "そのリンクは読み込めるお店のものじゃないよ(DLsite・SKiT Dolce・STELLA PLAYER・ステラワース)。",
@@ -3621,7 +3621,7 @@ Object.assign(I18N_ZH, {"🛍️ Shopping list": "🛍️ 购物清单", "CDs yo
   "🔎 Find on stores": "🔎 在商店中查找", "↻ Check prices": "↻ 检查价格", "Paste a store link (DLsite, SKiT Dolce, STELLA PLAYER, Stellaworth)": "粘贴商店链接(DLsite、SKiT Dolce、STELLA PLAYER、Stellaworth)", "Add link": "添加链接",
   "Price history": "价格历史", "Latest sale": "最近促销", "All-time low": "史低", "Days on sale (past year)": "过去一年促销天数", "{n} days": "{n} 天", "From dlwatcher.com — can be up to 2 days behind DLsite.": "数据来自 dlwatcher.com — 可能比 DLsite 晚最多 2 天。",
   "Sale history comes from dlwatcher.com and covers DLsite works only. Link the DLsite page and check prices to fill it in.": "促销历史来自 dlwatcher.com,仅限 DLsite 作品。关联 DLsite 页面并检查价格即可显示。",
-  "I’d buy it at or under (¥)": "不高于此价格就买(¥)", "Open CD details": "打开CD详情", "💜 Bought it — mark as owned": "💜 已购买 — 标记为拥有", "Remove from list": "从清单移除",
+  "I’d buy it at or under (¥)": "不高于此价格就买(¥)", "Open CD details": "打开CD详情", "💿 Bought it — mark as owned": "💿 已购买 — 标记为拥有", "Remove from list": "从清单移除",
   "Checking prices… {a} of {b}": "正在检查价格… {a} / {b}", "Prices last checked {t}. They refresh by themselves when older than 12 hours.": "价格最后检查于 {t}。超过 12 小时会自动刷新。",
   "View": "视图", "Overview": "概览", "All items": "全部", "↻ Refresh prices": "↻ 刷新价格", "Your shopping list is empty": "购物清单是空的", "Open a CD and switch on “Want to buy”, or select several CDs and use Edit selected.": "打开一张CD并开启“想买”,或选中多张CD后使用“编辑所选”。",
   "Checking prices…": "正在检查价格…", "Couldn’t read: {s}": "无法读取:{s}", "Prices updated ♡": "价格已更新 ♡", "That link isn’t from a store the list can read (DLsite, SKiT Dolce, STELLA PLAYER, Stellaworth).": "该链接不属于可读取的商店(DLsite、SKiT Dolce、STELLA PLAYER、Stellaworth)。",

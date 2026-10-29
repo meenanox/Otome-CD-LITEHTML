@@ -91,6 +91,21 @@ button{cursor:pointer}
 .seg button{border:0;background:transparent;border-radius:999px;padding:7px 14px;font-weight:400;font-size:13px;color:var(--ink-soft);transition:background .2s,color .2s,transform .25s var(--spring)}
 .seg button[aria-pressed="true"]{background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#fff;box-shadow:0 4px 12px -4px rgba(var(--accent-rgb),.7)}
 .seg button:active{transform:scale(.94)}
+/* filter row runs ~15% smaller than the buttons above it so the header reads lighter */
+.filters{gap:12px}
+.filters .search{flex:1 1 220px;min-width:190px;max-width:360px}
+.filters .search input{padding:9px 15px 9px 37px;font-size:13.5px}
+.filters .search::before{left:14px;font-size:13px}
+.filters .sel{padding:8px 31px 8px 14px;font-size:12px;max-width:180px;background-position:right 12px center}
+.filters .seg button{padding:6px 12px;font-size:11px}
+.filters .link-btn{font-size:11px}
+/* Backup / Restore: one ⇅ button with a small pop-up menu */
+.bkmenu{position:relative}
+.bkbtn{font-size:17px;padding:7px 14px}
+.bkpop{position:absolute;top:calc(100% + 8px);right:0;z-index:30;min-width:170px;padding:6px;background:var(--surface);border:2px solid var(--accent-soft);border-radius:20px;box-shadow:var(--shadow-lg);display:grid;gap:2px}
+.bkpop button{display:flex;align-items:center;gap:10px;border:0;background:none;border-radius:14px;padding:9px 12px;font-size:14px;text-align:left;color:var(--ink)}
+.bkpop button:hover,.bkpop button:focus-visible{background:var(--accent-faint)}
+.bkpop b{font-weight:400;width:18px;text-align:center}
 .link-btn{border:0;background:none;color:var(--accent);font-weight:400;font-size:13px;text-decoration:underline;text-underline-offset:3px;padding:6px 8px}
 
 /* ---------- grid ---------- */
@@ -507,8 +522,13 @@ details.more p{margin:8px 0 0;color:var(--ink-faint);font-weight:400;line-height
     <button class="pill" id="btnScan" title="Read the folder names of your local drama CD folders and add or link them — files are never copied or uploaded">📁 Scan folders</button>
     <button class="pill" id="btnDupes" title="Find the same CD added twice (e.g. from different sites) and merge them into one">⧉ Merge duplicates</button>
     <button class="pill" id="btnVA" title="Update the romaji ↔ 日本語 voice actor list (with alias names) from rukojiDB and fill in missing spellings">🎙 VA names</button>
-    <button class="pill" id="btnExport" title="Download your whole collection as a JSON backup file">⬇ Backup</button>
-    <button class="pill" id="btnImport" title="Restore a JSON backup file">⬆ Restore</button>
+    <div class="bkmenu">
+      <button class="pill bkbtn" id="btnBackup" title="Backup / Restore" aria-label="Backup / Restore" aria-haspopup="menu" aria-expanded="false">⇅</button>
+      <div class="bkpop" id="bkPop" role="menu" hidden>
+        <button role="menuitem" id="btnExport" title="Download your whole collection as a JSON backup file"><b>⬇</b><span>Backup</span></button>
+        <button role="menuitem" id="btnImport" title="Restore a JSON backup file"><b>⬆</b><span>Restore</span></button>
+      </div>
+    </div>
     <input type="file" id="fileImport" accept=".json,application/json,text/plain" hidden>
     <button class="pill danger" id="btnClear" title="Delete every CD on your shelf">🗑 Clear entire collection</button>
   </div>
@@ -1232,6 +1252,12 @@ $('#fReset').onclick = () => {
   render();
 };
 
+/* ⇅ Backup / Restore menu: opens on click, closes on a choice, an outside click or Escape */
+function bkMenu(open){ $('#bkPop').hidden = !open; $('#btnBackup').setAttribute('aria-expanded', String(open)); if(open) $('#btnExport').focus(); }
+$('#btnBackup').onclick = e => { e.stopPropagation(); bkMenu($('#bkPop').hidden); };
+$('#bkPop').addEventListener('click', () => bkMenu(false));
+document.addEventListener('click', e => { if(!$('#bkPop').hidden && !e.target.closest('.bkmenu')) bkMenu(false); });
+document.addEventListener('keydown', e => { if(e.key === 'Escape' && !$('#bkPop').hidden){ e.stopImmediatePropagation(); bkMenu(false); $('#btnBackup').focus(); } }, true);
 $('#btnExport').onclick = () => {
   const a = document.createElement('a'); a.href = URL.createObjectURL(Store.exportBlob(DB.data));
   a.download = `otome-cd-shelf-${new Date().toISOString().slice(0, 10)}.json`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
@@ -3552,6 +3578,8 @@ async function shFind(c){
   SH.msg = (SH.found.length ? i18n('Pick the listing that matches to link it.') : i18n('Nothing found — try pasting the link instead.')) + (bad.length ? ' ' + i18n('(Couldn’t search: {s})', {s:bad.join(', ')}) : '');
   shRender();
 }
+Object.assign(I18N_JA, {"Backup": "バックアップ", "Backup / Restore": "バックアップ / 復元"});
+Object.assign(I18N_ZH, {"Backup": "备份", "Backup / Restore": "备份 / 恢复"});
 Object.assign(I18N_JA, {"🛍️ Shopping list": "🛍️ 買い物リスト", "CDs you want to buy, with current prices and sales": "欲しいCDと、今の価格・セール情報", "Want": "欲しい", "CDs on your shopping list": "買い物リストにあるCD",
   "On your shopping list": "買い物リストに入ってるよ", "Want to buy": "欲しい", "🛍️ Open in shopping list": "🛍️ 買い物リストで開く", "Marked as owned. Take “{t}” off your shopping list?": "所持にしたよ。「{t}」を買い物リストから外す?", "Remove": "外す",
   "Nothing to check — link a store to a CD first.": "確認するものがないよ — まずCDにお店をリンクしてね。", "never": "まだ", "{n} min ago": "{n}分前", "{n} h ago": "{n}時間前", "{n} days ago": "{n}日前",

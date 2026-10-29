@@ -395,6 +395,85 @@ details.more p{margin:8px 0 0;color:var(--ink-faint);font-weight:400;line-height
 .langs button{border:0;background:transparent;border-radius:999px;padding:5px 11px;font-size:13px;color:var(--ink-soft);transition:background .2s,color .2s}
 .langs button[aria-pressed="true"]{background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#fff}
 .langs .dot{color:var(--ink-faint)}
+
+/* ---------- shopping list (section 15). Prices and sales only ever show inside #shop — the shelf just gets the small 🛍️ ---------- */
+.ov.wantb{top:48px;right:11px;width:28px;height:28px;border-radius:50%;background:rgba(var(--surface-rgb),.92);display:grid;place-items:center;font-size:13px;box-shadow:0 3px 10px -3px rgba(var(--shadow-rgb),.5)}
+.labels-off .ov.wantb{opacity:1;transform:none;top:38px;right:8px;width:24px;height:24px;font-size:11px}
+.pill .shn{background:var(--pink-soft);color:var(--pink-ink);border-radius:999px;padding:0 7px;font-size:11.5px;line-height:1.6}
+.sheet.shop{width:min(1120px,100%);grid-template-columns:minmax(0,1fr)}   /* minmax: the sideways sale strip must not widen the sheet on phones */
+#shBody{min-width:0}
+@media (max-width:600px){#shBody .sh-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}#shBody .sh-tile .v{font-size:22px}}
+.sh-head{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:0 50px 4px 0}
+.sh-head h2{margin:0 auto 0 0}
+.sh-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin:12px 0 6px}
+.sh-tile{background:var(--surface);border:2px solid var(--accent-faint);border-radius:22px;padding:12px 16px}
+.sh-tile .k{font-size:12.5px;color:var(--ink-soft)}
+.sh-tile .v{font-family:var(--font-display);font-size:26px;font-weight:500;margin-top:2px}
+.sh-tile .s{font-size:12px;color:var(--ink-faint);margin-top:2px}
+.sh-tile.hot{border-color:rgba(236,72,153,.45)}.sh-tile.hot .v{color:#EC4899}
+#shBody .grp{margin:18px 2px 10px;font-size:17px}
+.sh-strip{display:flex;gap:12px;overflow-x:auto;padding:4px 2px 12px;scroll-snap-type:x mandatory}
+.sh-mini{flex:0 0 150px;scroll-snap-align:start;border:0;background:none;padding:0;text-align:left;color:inherit;font:inherit;cursor:pointer}
+.sh-cv{position:relative;aspect-ratio:1/1;border-radius:18px;overflow:hidden;background:var(--accent-faint)}
+.sh-cv img{width:100%;height:100%;object-fit:cover;display:block}
+.sh-cv .ph b{font-size:30px}
+.sh-mini .t,.sh-card h4{font-size:13px;font-weight:400;margin:8px 3px 2px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.sh-cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;margin-top:6px}
+@media (max-width:760px){.sh-cols{grid-template-columns:minmax(0,1fr)}}
+.sh-box{background:var(--surface);border:2px solid var(--accent-faint);border-radius:22px;padding:4px 14px 10px}
+.sh-li{display:flex;gap:10px;align-items:center;width:100%;padding:8px 2px;border:0;border-bottom:1.5px solid var(--accent-faint);background:none;text-align:left;color:inherit;font:inherit;cursor:pointer}
+.sh-li:last-child{border-bottom:0}
+.sh-li:hover .t{color:var(--accent)}
+.sh-li .sh-cv{width:44px;flex:none;border-radius:10px}
+.sh-li .mid{flex:1;min-width:0}
+.sh-li .t{font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sh-li .r{text-align:right;flex:none}
+.sh-price{font-family:var(--font-display);font-size:17px;font-weight:500;color:var(--ink)}
+.sh-was{font-size:12px;color:var(--ink-faint);text-decoration:line-through;margin-left:5px}
+.sh-sub{font-size:12px;color:var(--ink-faint);margin:0}
+.sh-tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:5px}
+.sh-tag{font-size:11.5px;border-radius:999px;padding:2px 9px;white-space:nowrap;font-weight:500}
+.sh-tag.sale{color:#DB2777;background:rgba(236,72,153,.12)}
+.sh-tag.low{color:#059669;background:rgba(16,185,129,.13)}
+.sh-tag.soon{color:#EA580C;background:rgba(249,115,22,.13)}
+.sh-tag.under{color:var(--ok);border:1px dashed currentColor}
+[data-theme="midnight"] .sh-tag.sale{color:#F9A8D4}[data-theme="midnight"] .sh-tag.low{color:#6EE7B7}[data-theme="midnight"] .sh-tag.soon{color:#FDBA74}
+.sh-store{display:inline-block;font-size:11px;border-radius:999px;padding:2px 8px;background:var(--accent-faint);color:var(--ink-soft);white-space:nowrap}
+/* neon sale pill on covers inside the list — same glow idea as the listening ring; green = lowest price ever */
+.sh-neon{--ng:236,72,153;position:absolute;top:8px;left:8px;padding:3px 8px;border-radius:999px;font:600 12px var(--font);color:#fff;
+  border:1.5px solid rgb(var(--ng));background:rgba(20,8,30,.45);-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px);
+  box-shadow:inset 0 0 5px 1px rgba(var(--ng),.8),0 0 4px 1px rgb(var(--ng)),0 0 12px 2px rgba(var(--ng),.55);animation:shglow 2.6s ease-in-out infinite}
+.sh-neon.low{--ng:16,185,129}
+@keyframes shglow{50%{box-shadow:inset 0 0 5px 1px rgba(var(--ng),.6),0 0 2px 1px rgb(var(--ng)),0 0 7px 1px rgba(var(--ng),.35)}}
+.sh-bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:6px 0 4px}
+.sh-bar .sel{max-width:220px}
+.sh-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px;margin-top:8px}
+.sh-card{background:var(--card);border:2px solid var(--accent-faint);border-radius:24px;padding:9px 9px 10px;text-align:left;color:inherit;font:inherit;cursor:pointer;transition:transform .3s var(--spring),border-color .2s}
+.sh-card:hover{transform:translateY(-4px);border-color:var(--accent-2)}
+.sh-card .va{font-size:12px;color:var(--accent);margin:3px 3px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sh-card .pr{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px;margin:7px 3px 0}
+.sh-card .pr .sh-store{margin-left:auto}
+.sh-card .sh-tags{margin:6px 3px 0}
+[data-theme="midnight"] .sh-card,[data-theme="midnight"] .sh-box,[data-theme="midnight"] .sh-tile{border-color:rgba(216,180,254,.35)}
+.sh-item{display:grid;grid-template-columns:240px 1fr;gap:26px;align-items:start}
+.sh-item > div{min-width:0}
+@media (max-width:760px){.sh-item{grid-template-columns:minmax(0,1fr)}.sh-item > div:first-child{max-width:260px}}
+.sh-item h3.sh-title{margin:0;font-family:var(--font-display);font-weight:400;font-size:22px;line-height:1.25}
+.sh-item .va{margin:4px 0 0;font-size:13px;color:var(--accent)}
+.sh-off{display:grid;grid-template-columns:120px auto 1fr auto;gap:10px;align-items:center;padding:8px 0;border-bottom:1.5px solid var(--accent-faint);font-size:13px}
+.sh-off.best .sh-price{color:#EC4899}
+.sh-off .src{margin-top:0}
+@media (max-width:600px){.sh-off{grid-template-columns:1fr auto}}
+.sh-log{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:4px;font-size:12.5px;color:var(--ink-soft)}
+.sh-hist{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
+.sh-hist div{background:var(--surface);border:2px solid var(--accent-faint);border-radius:16px;padding:8px 12px;font-size:13px}
+.sh-hist dt{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-faint);margin:0 0 2px}
+.sh-hist dd{margin:0}
+#shBody .results{max-height:300px}
+#shBody .results .sh-store{flex:none}
+#shBody .field{justify-content:flex-start;flex-wrap:wrap}
+#shBody .lrow .pill{white-space:nowrap;flex:none}
+@media (prefers-reduced-motion:reduce){.sh-neon{animation:none}}
 </style>
 </head>
 <body>
@@ -423,6 +502,7 @@ details.more p{margin:8px 0 0;color:var(--ink-faint);font-weight:400;line-height
       <span class="knob"></span><span>Toggle Labels</span>
     </button>
     <button class="pill primary" id="btnAdd" title="Add a CD by hand">＋ Add CD</button>
+    <button class="pill" id="btnShop" title="CDs you want to buy, with current prices and sales"><span>🛍️ Shopping list</span><span class="shn" id="shCount" hidden></span></button>
     <button class="pill" id="btnImportSrc" title="Import CDs from rukojiDB, HIBIKIFORUM, DLsite Girls or SKiT Dolce">⇩ Import CDs</button>
     <button class="pill" id="btnScan" title="Read the folder names of your local drama CD folders and add or link them — files are never copied or uploaded">📁 Scan folders</button>
     <button class="pill" id="btnDupes" title="Find the same CD added twice (e.g. from different sites) and merge them into one">⧉ Merge duplicates</button>
@@ -456,6 +536,7 @@ details.more p{margin:8px 0 0;color:var(--ink-faint);font-weight:400;line-height
       <button data-v="all" aria-pressed="true">All</button>
       <button data-v="owned" aria-pressed="false">Owned</button>
       <button data-v="disk" aria-pressed="false" title="CDs linked to a folder by Scan folders">On disk</button>
+      <button data-v="want" aria-pressed="false" title="CDs on your shopping list">Want</button>
     </div>
     <select class="sel" id="fSort" aria-label="Sort">
       <option value="new">Newest release</option>
@@ -680,6 +761,12 @@ details.more p{margin:8px 0 0;color:var(--ink-faint);font-weight:400;line-height
   <button class="pill sm danger" id="selDel">🗑 Delete selected</button>
   <button class="pill sm" id="selClear" title="Clear selection" aria-label="Clear selection">✕</button>
 </div>
+<div class="backdrop" id="shop" aria-hidden="true">
+  <div class="sheet im shop" role="dialog" aria-modal="true" aria-labelledby="shHead">
+    <button class="close" id="shClose" aria-label="Close">✕</button>
+    <div class="body" id="shBody"></div>
+  </div>
+</div>
 <div class="backdrop ask" id="ask" aria-hidden="true">
   <div class="sheet ask" role="alertdialog" aria-modal="true" aria-describedby="askMsg">
     <div class="body">
@@ -706,8 +793,8 @@ Object.assign(I18N_ZH, {"Search by title on every site": "在所有网站按标�
 const I18N = {ja:I18N_JA, zh:I18N_ZH}, LANG_TAG = {en:'en', ja:'ja', zh:'zh-CN'};
 let LANG = 'en'; try{ const l = localStorage.getItem('otomeCdLang'); LANG = I18N[l] ? l : 'en'; }catch(e){}
 const i18n = (k, v) => { let o = (I18N[LANG] && I18N[LANG][k]) || k; if(v) o = o.replace(/\{(\w+)\}/g, (m, n) => v[n] != null ? v[n] : m); return o; };
-const NOT_STATIC = '#fCatPick,#scList,#scStatus,#scGo,#btnSelect,#selCount,#bHead,#bList,#bGo,#dupList,#dupGo,#cmpTable,#cmpHits,#cmpStatus,#cmpSub,#cmpApply,#grid,#mBody,#mPanel,#imList,#toast,#count,#statTotal,#statOwned,#eHead,#imStatus,#imGo,#fLabel,#fVA,#fSeries,script,style';
-const NOT_ATTR = '#scList,#bList,#cmpTable,#cmpHits,#grid,#mBody,#mPanel,#imList';
+const NOT_STATIC = '#shBody,#shCount,#fCatPick,#scList,#scStatus,#scGo,#btnSelect,#selCount,#bHead,#bList,#bGo,#dupList,#dupGo,#cmpTable,#cmpHits,#cmpStatus,#cmpSub,#cmpApply,#grid,#mBody,#mPanel,#imList,#toast,#count,#statTotal,#statOwned,#eHead,#imStatus,#imGo,#fLabel,#fVA,#fSeries,script,style';
+const NOT_ATTR = '#shBody,#scList,#bList,#cmpTable,#cmpHits,#grid,#mBody,#mPanel,#imList';
 function applyStaticLang(){
   const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT), nodes = [];
   while(w.nextNode()) nodes.push(w.currentNode);
@@ -766,7 +853,8 @@ const SEED = [
 ];
 /* user-owned fields every CD carries */
 const USER_DEFAULTS = { owned:false, sourceType:'', rating:0, listen:'', notes:'', coverData:'', seriesRomaji:'', cnTitle:'', seriesCn:'', synopsisCn:'',
-  localFolder:'', localRoot:'', localFiles:0, localSize:0, localFormats:'', localSeen:'' };   // local* = set by Scan folders (names/sizes only)   // 中文 fields are hand-filled; imports never touch them
+  localFolder:'', localRoot:'', localFiles:0, localSize:0, localFormats:'', localSeen:'',   // local* = set by Scan folders (names/sizes only)   // 中文 fields are hand-filled; imports never touch them
+  want:false, wantMax:0, shop:null };   // shopping list (section 15): wantMax = yen you'd pay (0 = none), shop = linked stores + last prices
 const hydrate = cd => {
   const o = Object.assign({}, USER_DEFAULTS, cd, {
     cast:(cd.cast||[]).map(parsePerson).filter(p => p.en || p.ja), scenario:cd.scenario||[], bonuses:cd.bonuses||[],
@@ -893,6 +981,7 @@ function visible(){
     if(F.listen && (F.listen === 'none' ? c.listen : c.listen !== F.listen)) return false;
     if(F.status === 'owned' && !c.owned) return false;
     if(F.status === 'disk' && !c.localFolder) return false;
+    if(F.status === 'want' && !c.want) return false;
     if(q){
       const hay = [c.title, c.altTitle, c.cnTitle, c.label, c.series, c.seriesRomaji, c.seriesCn, c.pn, c.jan, c.notes, c.localFolder, ...c.cast.flatMap(p => { const m = Names.mainOf(p); return [p.en, p.ja, m && m.en, m && m.ja]; }), ...c.scenario].join(' ').toLowerCase();
       if(!hay.includes(q)) return false;
@@ -936,6 +1025,7 @@ function render(){
   $('#count').textContent = i18n('Showing {a} of {b} CDs', {a:list.length, b:DB.all.length});
   $('#statTotal').textContent = i18n(DB.all.length === 1 ? '{n} CD' : '{n} CDs', {n:DB.all.length});
   $('#statOwned').textContent = i18n('{n} owned', {n:owned});
+  const nWant = DB.all.filter(c => c.want).length; $('#shCount').textContent = nWant; $('#shCount').hidden = !nWant;
   selSync();
 }
 /* Rating badges (lower-left of the cover), read from the category / title / label / notes text:
@@ -1010,6 +1100,7 @@ function cardHTML(c, i){
         ${audHTML(c)}
         ${listenHTML(c)}
         <button class="ov heart ${c.owned ? 'on' : ''}" data-heart="${esc(c.id)}" aria-label="${i18n(c.owned ? 'Owned — click to unmark' : 'Mark as owned')}" aria-pressed="${c.owned}"><span class="h">💜</span></button>
+        ${c.want ? `<span class="ov wantb" title="${esc(i18n('On your shopping list'))}" role="img" aria-label="${esc(i18n('On your shopping list'))}">🛍️</span>` : ''}
       </div>
       <div class="cap"><div class="cap-in">
         <h3>${esc(shownTitle(c))}</h3>
@@ -1059,19 +1150,30 @@ function renderPanel(c){
   $('#mPanel').innerHTML = `
     <h4>${i18n('My collection')}</h4>
     <div class="field"><label>${i18n('Owned')}</label><button class="switch" id="pOwned" role="switch" aria-checked="${c.owned}" aria-label="${i18n('Owned')}"></button></div>
+    <div class="field"><label>${i18n('Want to buy')}</label><button class="switch" id="pWant" role="switch" aria-checked="${!!c.want}" aria-label="${i18n('Want to buy')}"></button></div>
     <div class="field"><label for="pSrc">${i18n('Source')}</label>
       <select class="sel" id="pSrc">${['', 'CD RIP', 'WEB RIP'].map(v => `<option value="${v}" ${c.sourceType === v ? 'selected' : ''}>${v || i18n('Not set')}</option>`).join('')}</select></div>
     <div class="field"><label>${i18n('Rating')}</label><div class="stars" id="pStars">${[1,2,3,4,5].map(n => `<button class="${n <= c.rating ? 'on' : ''}" data-n="${n}" aria-label="${i18n('{n} of 5', {n})}">♥</button>`).join('')}</div></div>
     <div class="field"><label>${i18n('Listening')}</label><div class="lsnpick" id="pListen">${Object.keys(LISTEN).map(k => `<button class="${c.listen === k ? 'on' : ''}" data-k="${k}" style="${listenVars(k)}" title="${esc(i18n(LISTEN[k].t))}" aria-label="${esc(i18n(LISTEN[k].t))}" aria-pressed="${c.listen === k}">${listenSVG(k)}</button>`).join('')}</div></div>
     <textarea id="pNotes" placeholder="${i18n('Notes, impressions, where the files live…')}" aria-label="${i18n('Notes')}">${esc(c.notes)}</textarea>
-    <div class="btnrow"><button class="pill sm" id="pEdit">${i18n('✎ Edit')}</button><button class="pill sm" id="pCompare" title="${i18n('Look this CD up on rukoji.com and DLsite and pick what to fill in')}">${i18n('⇄ Compare metadata')}</button></div>`;
+    <div class="btnrow"><button class="pill sm" id="pEdit">${i18n('✎ Edit')}</button><button class="pill sm" id="pCompare" title="${i18n('Look this CD up on rukoji.com and DLsite and pick what to fill in')}">${i18n('⇄ Compare metadata')}</button>${c.want ? `<button class="pill sm" id="pShop">${i18n('🛍️ Open in shopping list')}</button>` : ''}</div>`;
   $('#pEdit').onclick = () => { closeModal(); openEditor({id:c.id, returnTo:c.id}); };
   $('#pCompare').onclick = () => openCompare(c.id);
-  $('#pOwned').onclick = () => { const v = !DB.byId(c.id).owned; DB.update(c.id, {owned:v}); renderPanel(DB.byId(c.id)); render(); };
+  $('#pOwned').onclick = () => setOwned(c.id, !DB.byId(c.id).owned);
+  $('#pWant').onclick = () => { DB.update(c.id, {want:!DB.byId(c.id).want}); renderPanel(DB.byId(c.id)); render(); };
+  if(c.want) $('#pShop').onclick = () => { closeModal(); openShop(c.id); };
   $('#pSrc').onchange = e => { DB.update(c.id, {sourceType:e.target.value}); render(); };
   $('#pStars').onclick = e => { const b = e.target.closest('button'); if(!b) return; const n = +b.dataset.n; DB.update(c.id, {rating: DB.byId(c.id).rating === n ? 0 : n}); renderPanel(DB.byId(c.id)); render(); };
   $('#pListen').onclick = e => { const b = e.target.closest('button'); if(!b) return; DB.update(c.id, {listen: DB.byId(c.id).listen === b.dataset.k ? '' : b.dataset.k}); renderPanel(DB.byId(c.id)); render(); };
   $('#pNotes').oninput = e => DB.update(c.id, {notes:e.target.value});
+}
+/* marking a wanted CD as owned offers to take it off the shopping list */
+async function setOwned(id, v){
+  DB.update(id, {owned:v}); render(); if(openId === id) renderPanel(DB.byId(id));
+  const c = DB.byId(id);
+  if(v && c.want && await ask(i18n('Marked as owned. Take “{t}” off your shopping list?', {t:shownTitle(c)}), 'Remove')){
+    DB.update(id, {want:false}); render(); if(openId === id) renderPanel(DB.byId(id));
+  }
 }
 function closeModal(){
   const m = $('#modal'); m.classList.remove('open'); m.setAttribute('aria-hidden', 'true');
@@ -1090,7 +1192,7 @@ $('#toggleLabels').onclick = () => { const on = $('#toggleLabels').getAttribute(
 
 $('#grid').addEventListener('click', e => {
   const heart = e.target.closest('[data-heart]');
-  if(heart){ e.stopPropagation(); const c = DB.byId(heart.dataset.heart); DB.update(c.id, {owned:!c.owned}); render(); return; }
+  if(heart){ e.stopPropagation(); const c = DB.byId(heart.dataset.heart); setOwned(c.id, !c.owned); return; }
   const card = e.target.closest('.card'); if(!card) return;
   if(e.shiftKey && SEL.anchor){ e.preventDefault(); selRange(card.dataset.id, e.ctrlKey || e.metaKey); }
   else if(e.ctrlKey || e.metaKey || SEL.mode){ e.preventDefault(); selToggle(card.dataset.id); }
@@ -1103,7 +1205,8 @@ $('#modal').addEventListener('click', e => { if(e.target.id === 'modal') closeMo
 $('#mClose').onclick = closeModal;
 document.addEventListener('keydown', e => {
   if(e.key !== 'Escape') return;
-  if($('#compare').classList.contains('open')) closeCompare();
+  if($('#shop').classList.contains('open')){ if(SH.item){ SH.item = null; shRender(); } else closeShop(); }
+  else if($('#compare').classList.contains('open')) closeCompare();
   else if($('#scan').classList.contains('open')) closeScan();
   else if($('#bulk').classList.contains('open')) closeBulk();
   else if($('#editor').classList.contains('open')) closeEditor(true); else if(openId) closeModal();
@@ -1955,9 +2058,7 @@ const Stella = {
   async fromUrl(url){
     const id = this.code(url); if(!id) throw new Error('not a stellaplayer.jp product link');
     const page = this.root + 'product/' + id, {text, via} = await Net.text(page, t => /__NEXT_DATA__/.test(t));
-    const nd = JSON.parse(text.match(/<script id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/)[1]);
-    const p = (nd.props.pageProps.dehydratedState.queries || []).map(q => q.state.data && q.state.data.product).find(Boolean);
-    if(!p) throw new Error('no product data on that page');
+    const p = this.product(text);
     const who = g => (p.creators || []).filter(c => String(c.creator_group_id) === g).map(c => c.name);   // 1 CV · 2 シナリオ · 3 イラスト
     const img = p.converted_featured_images || {};
     const blocks = ((p.converted_descriptions_blocks || {}).product || {}).blocks || [];
@@ -1969,6 +2070,12 @@ const Stella = {
       tracks:((p.audio_tracks || {}).tracks || []).filter(t => !t.hidden).map(t => ({t:t.name, d:''})),
       url:page, id:'stella-' + id, source:this.name, _via:via
     }};
+  },
+  product(html){   // the product record inside a product page's __NEXT_DATA__ (also read by the shopping list for prices)
+    const nd = JSON.parse(html.match(/<script id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/)[1]);
+    const p = (nd.props.pageProps.dehydratedState.queries || []).map(q => q.state.data && q.state.data.product).find(Boolean);
+    if(!p) throw new Error('no product data on that page');
+    return p;
   }
 };
 
@@ -2483,6 +2590,7 @@ function planMerge(group){
     for(const k of ['scenario', 'bonuses']){ const u = unionList(m[k] || [], o[k] || []); if(u.length !== (m[k] || []).length){ m[k] = u; gained.add(k); } }
     if((o.tracks || []).length > (m.tracks || []).length){ m.tracks = o.tracks; gained.add('tracks'); }   // never interleave two tracklists
     m.owned = m.owned || o.owned; m.rating = Math.max(m.rating || 0, o.rating || 0); m.listen = m.listen || o.listen || '';
+    m.want = !!(m.want || o.want); m.wantMax = m.wantMax || o.wantMax || 0; if(!(m.shop && m.shop.links && m.shop.links.length) && o.shop) m.shop = o.shop;
     if(o.notes && !(m.notes || '').includes(o.notes.trim())){ m.notes = [m.notes, o.notes].filter(Boolean).join('\n\n'); gained.add('notes'); }
   }
   return {keep, rest, merged:m, gained:[...gained]};
@@ -2557,7 +2665,7 @@ const BULK_FIELDS = [
   ['label', 'Label', 'text'], ['category', 'Category', 'category'], ['illustrator', 'Illustration', 'text'],
   ['scenario', 'Scenario (comma-separated)', 'list'], ['cast', 'Voice cast — one per line: Romaji / 日本語', 'cast'],
   ['release', 'Release date', 'date'], ['releaseNote', 'Release note', 'text'],
-  ['sourceType', 'Source', 'source'], ['owned', 'Owned', 'bool'], ['rating', 'Rating', 'rating'], ['listen', 'Listening', 'listen']
+  ['sourceType', 'Source', 'source'], ['owned', 'Owned', 'bool'], ['want', 'Want to buy', 'bool'], ['rating', 'Rating', 'rating'], ['listen', 'Listening', 'listen']
 ];
 const bulkText = (c, k, kind) => kind === 'list' ? (c[k] || []).join(', ') : kind === 'cast' ? castToText(c[k]) : kind === 'bool' ? (c[k] ? '1' : '0') : String(c[k] ?? '');
 const bulkRead = (v, kind) => kind === 'list' ? splitList(v) : kind === 'cast' ? parseCast(v) : kind === 'bool' ? v === '1' : kind === 'rating' ? +v : v.trim();
@@ -3184,6 +3292,335 @@ Object.assign(I18N_ZH, {"🎙 VA names": "🎙 声优名", "Update the romaji �
   "alias of {n}": "{n} 的别名", "Voice actor list updated — {n} names; {f} missing spellings filled in": "声优名单已更新 — {n} 位，补全了 {f} 处写法",
   "Couldn’t update the voice actor list — {e}": "无法更新声优名单 — {e}", "page not found": "未找到页面", "the list looks empty — the page may have changed": "名单为空 — 页面可能已更改"});
 
+/* =====================================================================
+   15. SHOPPING LIST — CDs you want to buy, priced from the stores we already read.
+       Prices and sales only ever show in this dialog, never on the shelf (keeps the collection screen uncluttered).
+       Per CD: want, wantMax (yen you'd pay, 0 = none), shop = {links:[{src, url}], offers:{src:{price, list, pct, ends, stock, at, err}}, hist, at}.
+       hist = dlwatcher.com's record of a DLsite work: {last, low, days, log:[{from, to, pct, price}]}. Pokedora is offline — add an entry to SHOPS when it's back.
+   ===================================================================== */
+const DAY = 864e5;
+const yen = n => '¥' + Number(n || 0).toLocaleString('en-US');
+const toNum = s => +String(s ?? '').replace(/[^\d]/g, '') || 0;
+const pctOf = (p, l) => l > p ? Math.round((1 - p / l) * 100) : 0;
+const ymd = (y, m, d) => `${y}-${pad2(m)}-${pad2(d)}`;
+/* DLsite gives "10/31 23:59" with no year: this year, or next if that date is long gone */
+function dlEnd(s){
+  const m = String(s || '').match(/(?:(\d{4})[\/-])?(\d{1,2})[\/-](\d{1,2})/); if(!m) return '';
+  let y = +m[1] || new Date().getFullYear();
+  if(!m[1] && new Date(y, m[2] - 1, m[3]) < Date.now() - 60 * DAY) y++;
+  return ymd(y, m[2], m[3]);
+}
+const SHOPS = {
+  dlsite:{name:'DLsite', match:u => !!DLsite.code(u) && (DLsite.match(u) || /^[A-Z]{2}\d{5,}$/i.test(String(u).trim())), norm:u => DLsite.itemUrl(u),
+    async price(url){
+      const code = DLsite.code(url);
+      const {text} = await Net.text(`https://www.dlsite.com/girls/product/info/ajax?product_id=${code}&cdn_cache_min=1`, t => t.includes(code) && /"price"/.test(t), {readerFormat:'text'});
+      const d = JSON.parse(text.slice(text.indexOf('{'), text.lastIndexOf('}') + 1))[code];
+      if(!d || !d.price) throw new Error('no price data');
+      const list = d.official_price || d.price;
+      return {price:d.price, list, pct:d.discount_rate || pctOf(d.price, list), ends:d.discount_rate ? dlEnd(d.discount_end_date) : '', stock:!d.is_sold_out};
+    }},
+  skit:{name:'SKiT Dolce', match:u => Skit.match(u) && !!Skit.code(u), norm:u => u,
+    async price(url){
+      const {text} = await Net.text(url, Skit.check), doc = htmlDoc(text);
+      const amt = doc.querySelector('.itemDetail-price-amount'), price = toNum(amt ? amt.textContent : (text.match(/販売価格[^\d]{0,40}([\d,]+)\s*円/) || [])[1]);
+      if(!price) throw new Error('no price on the page');
+      const was = [...doc.querySelectorAll('.itemDetail-prices del, .itemDetail-prices s, .itemDetail-prices [class*="before"], .itemDetail-prices [class*="regular"]')].map(e => toNum(e.textContent)).find(n => n > price);
+      const cart = doc.querySelector('.itemDetail-cart'), st = cart ? cart.textContent : '';
+      return {price, list:was || price, pct:pctOf(price, was || price), ends:'', stock:!/SOLD\s*OUT|品切|在庫切れ|在庫なし|販売終了|受付終了/i.test(st)};
+    }},
+  stella:{name:'STELLA PLAYER', match:u => !!Stella.code(u), norm:u => Stella.root + 'product/' + Stella.code(u),
+    async price(url){
+      const {text} = await Net.text(url, t => /__NEXT_DATA__/.test(t)), p = Stella.product(text), cp = p.current_price || {};
+      const price = toNum(cp.price); if(!price) throw new Error('no price data');
+      const list = toNum(cp.original_price || cp.regular_price || cp.base_price || cp.list_price) || price;
+      const camp = (p.publishedCampaigns || []).map(c => c.ends_at || c.end_at || c.finished_at || c.end_date).find(Boolean);
+      return {price, list, pct:pctOf(price, list), ends:list > price && camp ? String(camp).slice(0, 10) : '', stock:p.is_sellable !== false && p.sale_status !== 'SOLD_OUT'};
+    }},
+  /* Stellaworth's own web shop (physical CDs, Shift_JIS pages). Its search needs Shift_JIS keywords, so items are linked by pasting their page. */
+  stellaworth:{name:'Stellaworth', match:u => /stellaworth\.co\.jp\/shop\/item\.php\?[^#]*item_id=/i.test(u), norm:u => u,
+    async price(url){
+      const {text} = await Net.text(url, t => /ステラワース|stellaworth/i.test(t)), doc = htmlDoc(text);
+      const th = [...doc.querySelectorAll('th')].find(x => /販売価格/.test(x.textContent)), cell = th && th.nextElementSibling ? th.nextElementSibling.textContent : text;
+      const price = toNum((cell.match(/税込\s*[￥¥]\s*([\d,]+)/) || cell.match(/[￥¥]\s*([\d,]+)/) || [])[1]);
+      if(!price) throw new Error('no price on the page');
+      const st = (doc.querySelector('.txtAboutItem') || {}).textContent || '';
+      return {price, list:price, pct:0, ends:'', stock:!/品切|受付終了|販売終了|SOLD/i.test(st)};
+    }}
+};
+const shopOf = u => u ? Object.keys(SHOPS).find(k => SHOPS[k].match(u)) || '' : '';
+/* dlwatcher.com renders with JavaScript, so it's read through the reader as plain text */
+const Watcher = {
+  async hist(code){
+    const {text} = await Net.text(`https://dlwatcher.com/product/${code}`, t => /過去最安値|定価/.test(t), {readerFormat:'text'});
+    const t = text.replace(/[*\\]/g, '').replace(/\s+/g, ' ');
+    const sale = lab => {
+      const m = t.match(new RegExp(lab + '\\s*[:：]\\s*([\\d,]+)\\s*円\\s*\\(\\s*(\\d+)\\s*%\\s*OFF\\s*\\)\\s*\\(\\s*(\\d{4})\\/(\\d{1,2})\\/(\\d{1,2})\\s*[-–~〜]\\s*(\\d{4})\\/(\\d{1,2})\\/(\\d{1,2})', 'i'));
+      return m ? {price:toNum(m[1]), pct:+m[2], from:ymd(m[3], m[4], m[5]), to:ymd(m[6], m[7], m[8])} : null;
+    };
+    const log = [...t.matchAll(/(\d{4})年(\d{1,2})月(\d{1,2})日から(?:(\d{4})年)?(\d{1,2})月(\d{1,2})日までの期間[^。]*。[^。]*?(\d+)%OFF[^。]*?([\d,]+)円/g)].map(m => {
+      const y2 = +m[4] || (+m[5] < +m[2] ? +m[1] + 1 : +m[1]);
+      return {from:ymd(m[1], m[2], m[3]), to:ymd(y2, m[5], m[6]), pct:+m[7], price:toNum(m[8])};
+    });
+    const h = {last:sale('最近のセール'), low:sale('過去最安値'), days:+((t.match(/年間セール日数\s*[:：]\s*(\d+)/) || [])[1] || 0), log:log.slice(0, 8)};
+    if(!h.last && !h.low && !log.length && !/定価/.test(t)) throw new Error('not tracked on dlwatcher');
+    return h;
+  }
+};
+
+const SH = {view:'ov', item:null, sort:'sale', busy:false, done:0, total:0, found:null, msg:''};
+const wanted = () => DB.all.filter(c => c.want);
+function autoLinks(c){
+  const out = [], add = u => { const s = shopOf(u); if(s && !out.some(l => l.src === s)) out.push({src:s, url:SHOPS[s].norm(u)}); };
+  add(c.url); add(c.pn);
+  return out;
+}
+function shEnsure(c){
+  const s = c.shop;
+  if(!s || !Array.isArray(s.links)) DB.update(c.id, {shop:{links:autoLinks(c), offers:{}, hist:null, at:0}});
+  else if(!s.links.length){ const l = autoLinks(c); if(l.length) DB.update(c.id, {shop:{...s, links:l}}); }
+  return DB.byId(c.id).shop;
+}
+async function shRefreshOne(id){
+  const c = DB.byId(id); if(!c) return [];
+  const shop = shEnsure(c), offers = {...shop.offers}, failed = [];
+  for(const l of shop.links){
+    const S = SHOPS[l.src]; if(!S) continue;
+    try{ offers[l.src] = {...await S.price(l.url), at:Date.now()}; }
+    catch(e){ failed.push(S.name); offers[l.src] = {...(offers[l.src] || {}), err:e.message, at:Date.now()}; }
+  }
+  let hist = shop.hist;
+  const dl = shop.links.find(l => l.src === 'dlsite');
+  if(dl){ try{ hist = {...await Watcher.hist(DLsite.code(dl.url)), at:Date.now()}; }catch(e){ /* not tracked yet — keep what we had */ } }
+  DB.update(id, {shop:{...DB.byId(id).shop, offers, hist, at:Date.now()}});
+  return failed;
+}
+/* refresh every wanted CD older than half a day (or all of them when forced), two at a time to stay polite to the sites */
+async function shRefresh(force){
+  if(SH.busy) return;
+  const ids = wanted().filter(c => { const s = shEnsure(c); return s.links.length && (force || Date.now() - (s.at || 0) > DAY / 2); }).map(c => c.id);
+  if(!ids.length){ if(force) toast(i18n('Nothing to check — link a store to a CD first.')); return; }
+  SH.busy = true; SH.done = 0; SH.total = ids.length; shRender();
+  const q = [...ids];
+  await Promise.all([0, 1].map(async () => { while(q.length){ const id = q.shift(); try{ await shRefreshOne(id); }catch(e){} SH.done++; SH.item ? shStatus() : shRender(); } }));
+  SH.busy = false; shRender();
+}
+
+/* everything the views need about one CD */
+function shInfo(c){
+  const s = c.shop || {links:[], offers:{}};
+  const offers = s.links.map(l => ({src:l.src, url:l.url, ...(s.offers[l.src] || {})})).filter(o => o.price);
+  const live = offers.filter(o => o.stock !== false), pool = live.length ? live : offers;
+  const best = pool.length ? pool.reduce((a, b) => b.price < a.price ? b : a) : null, h = s.hist;
+  const sale = !!(best && best.pct > 0);
+  return {c, offers, best, sale, pct:sale ? best.pct : 0, linked:s.links.length,
+    endsIn:sale && best.ends ? Math.round((new Date(best.ends + 'T00:00:00') - new Date().setHours(0, 0, 0, 0)) / DAY) : null,   // whole days, 0 = last day today
+    last:h && h.last, low:h && h.low, atLow:!!(sale && h && h.low && best.price <= h.low.price), under:!!(best && c.wantMax && best.price <= c.wantMax)};
+}
+const ago = t => { if(!t) return i18n('never'); const m = Math.round((Date.now() - t) / 6e4); return m < 60 ? i18n('{n} min ago', {n:Math.max(m, 1)}) : m < 1440 ? i18n('{n} h ago', {n:Math.round(m / 60)}) : i18n('{n} days ago', {n:Math.round(m / 1440)}); };
+const shName = k => (SHOPS[k] || {}).name || k;
+const saleSpan = x => `${yen(x.price)} (−${x.pct}%) · ${fmtDate(x.from)} – ${fmtDate(x.to)}`;
+const shNeon = i => i.sale ? `<span class="sh-neon${i.atLow ? ' low' : ''}">−${i.pct}%</span>` : '';
+const shCover = (c, i) => `<div class="sh-cv">${coverHTML(c)}${i ? shNeon(i) : ''}</div>`;
+const shPrice = i => i.best ? `<span class="sh-price">${yen(i.best.price)}</span>${i.sale ? `<span class="sh-was">${yen(i.best.list)}</span>` : ''}`
+  : `<span class="sh-sub">${i18n(i.linked ? 'not checked yet' : 'no store linked')}</span>`;
+function shTags(i){
+  return [
+    i.sale && `<span class="sh-tag sale">−${i.pct}%</span>`,
+    i.endsIn != null && i.endsIn <= 7 && `<span class="sh-tag soon">${i18n(i.endsIn <= 0 ? 'ends today' : i.endsIn === 1 ? 'ends tomorrow' : 'ends in {n} days', {n:i.endsIn})}</span>`,
+    i.atLow && `<span class="sh-tag low">${i18n('★ lowest ever')}</span>`,
+    i.under && `<span class="sh-tag under">${i18n('≤ your {p}', {p:yen(i.c.wantMax)})}</span>`
+  ].filter(Boolean).join('');
+}
+const shTile = (k, v, s, cls) => `<div class="sh-tile ${cls || ''}"><div class="k">${esc(i18n(k))}</div><div class="v">${esc(v)}</div><div class="s">${esc(s || '')}</div></div>`;
+
+function shOverview(list){
+  const sale = list.filter(i => i.sale).sort((a, b) => b.pct - a.pct), soon = sale.filter(i => i.endsIn != null && i.endsIn <= 3);
+  const priced = list.filter(i => i.best), total = priced.reduce((s, i) => s + i.best.price, 0), full = priced.reduce((s, i) => s + (i.best.list || i.best.price), 0);
+  const rest = list.filter(i => !i.sale), look = list.filter(i => i.atLow || i.under);
+  const li = (i, right, sub) => `<button class="sh-li" data-open="${esc(i.c.id)}">${shCover(i.c)}<div class="mid"><div class="t">${esc(shownTitle(i.c))}</div>${sub}</div><div class="r">${right}</div></button>`;
+  const restSub = i => `<div class="sh-sub">${esc(i.last ? i18n('Last sale {s}', {s:saleSpan(i.last)}) : !i.linked ? i18n('No store linked yet — open it to add one') : !i.best ? i18n('Prices not checked yet') : i.c.shop.hist ? i18n('Never on sale') : i18n('No sale history'))}</div>`;
+  return `<div class="sh-tiles">
+      ${shTile('Wanted', list.length, i18n('{n} with a price', {n:priced.length}))}
+      ${shTile('On sale now', sale.length, sale.length ? i18n('save {p} if you buy them', {p:yen(sale.reduce((s, i) => s + i.best.list - i.best.price, 0))}) : i18n('nothing right now'), sale.length ? 'hot' : '')}
+      ${shTile('Sales ending soon', soon.length, i18n('within 3 days'))}
+      ${shTile('Buy everything today', yen(total), full > total ? i18n('{p} at full price', {p:yen(full)}) : '')}
+    </div>
+    ${sale.length ? `<h3 class="grp">${i18n('On sale now')}<span class="n">${sale.length}</span></h3>
+      <div class="sh-strip">${sale.map(i => `<button class="sh-mini" data-open="${esc(i.c.id)}">${shCover(i.c, i)}<div class="t">${esc(shownTitle(i.c))}</div>
+        <div style="margin:0 3px">${shPrice(i)}</div><div class="sh-tags" style="margin:5px 3px 0">${i.endsIn != null ? `<span class="sh-tag soon">${esc(i18n('until {d}', {d:fmtDate(i.best.ends)}))}</span>` : ''}${i.atLow ? `<span class="sh-tag low">${i18n('★ lowest ever')}</span>` : ''}<span class="sh-store">${esc(shName(i.best.src))}</span></div></button>`).join('')}</div>` : ''}
+    <div class="sh-cols">
+      <div class="sh-box"><h3 class="grp">${i18n('Not on sale — when was the last one?')}<span class="n">${rest.length}</span></h3>
+        ${rest.map(i => li(i, `${shPrice(i)}${i.low ? `<div class="sh-sub">${esc(i18n('low {p}', {p:yen(i.low.price)}))}</div>` : ''}`, restSub(i))).join('') || `<p class="sh-sub" style="padding:4px 2px 8px">${i18n('Everything on your list is on sale ♡')}</p>`}</div>
+      <div class="sh-box"><h3 class="grp">${i18n('Worth a look')}<span class="n">${look.length}</span></h3>
+        ${look.map(i => li(i, shPrice(i), `<div class="sh-tags">${shTags(i)}</div>`)).join('') || `<p class="sh-sub" style="padding:4px 2px 8px">${i18n('CDs at their lowest price ever, or at or under the price you said you’d pay, show up here.')}</p>`}</div>
+    </div>`;
+}
+const SH_SORTS = {
+  sale:  ['On sale first',   (a, b) => (b.sale - a.sale) || (b.pct - a.pct) || (!!b.best - !!a.best)],
+  cheap: ['Cheapest first',  (a, b) => (a.best ? a.best.price : 1e9) - (b.best ? b.best.price : 1e9)],
+  ends:  ['Sale ending soonest', (a, b) => (a.endsIn ?? 1e9) - (b.endsIn ?? 1e9)],
+  az:    ['Title A–Z',       (a, b) => shownTitle(a.c).localeCompare(shownTitle(b.c), LANG_TAG[LANG])]
+};
+function shCards(list){
+  const rows = [...list].sort(SH_SORTS[SH.sort][1]);
+  return `<div class="sh-bar"><select class="sel" id="shSort" aria-label="${esc(i18n('Sort'))}">${Object.entries(SH_SORTS).map(([k, [t]]) => `<option value="${k}" ${k === SH.sort ? 'selected' : ''}>${esc(i18n(t))}</option>`).join('')}</select></div>
+    <div class="sh-grid">${rows.map(i => `<button class="sh-card" data-open="${esc(i.c.id)}">${shCover(i.c, i)}
+      <h4>${esc(shownTitle(i.c))}</h4><div class="va">${esc(castLabel(i.c) || i18n('Cast unknown'))}</div>
+      <div class="pr">${shPrice(i)}${i.best ? `<span class="sh-store">${esc(shName(i.best.src))}</span>` : ''}</div>
+      <div class="sh-tags">${shTags(i) || `<span class="sh-sub">${esc(i.last ? i18n('last sale {d} (−{p}%)', {d:fmtDate(i.last.from), p:i.last.pct}) : '')}</span>`}</div></button>`).join('')}</div>`;
+}
+function shItemHTML(c){
+  const i = shInfo(c), s = c.shop || {links:[], offers:{}}, h = s.hist;
+  const row = l => {
+    const o = s.offers[l.src] || {}, best = i.best && i.best.src === l.src && i.offers.length > 1;
+    const facts = [o.ends && i18n('sale until {d}', {d:fmtDate(o.ends)}), o.price && o.stock === false && i18n('out of stock'), o.price && o.stock === true && l.src !== 'dlsite' && l.src !== 'stella' && i18n('in stock'),
+      o.err && i18n('last check failed'), o.at && i18n('checked {t}', {t:ago(o.at)})].filter(Boolean).join(' · ');
+    return `<div class="sh-off${best ? ' best' : ''}"><span class="sh-store">${esc(shName(l.src))}${best ? ' ✓' : ''}</span>
+      <span>${o.price ? `<span class="sh-price">${yen(o.price)}</span>${o.pct ? `<span class="sh-was">${yen(o.list)}</span> <span class="sh-tag sale">−${o.pct}%</span>` : ''}` : `<span class="sh-sub">${i18n('not checked yet')}</span>`}</span>
+      <span class="sh-sub">${esc(facts)}</span>
+      <span><a class="src" href="${esc(l.url)}" target="_blank" rel="noopener noreferrer">${i18n('open ↗')}</a> <button class="link-btn" data-act="unlink" data-src="${esc(l.src)}" title="${esc(i18n('Unlink this store'))}" aria-label="${esc(i18n('Unlink this store'))}">✕</button></span></div>`;
+  };
+  return `<div class="sh-item">
+    <div>${shCover(c, i)}<div class="btnrow"><button class="pill sm" data-act="back">${i18n('← Back to the list')}</button></div></div>
+    <div>
+      <h3 class="sh-title">${esc(shownTitle(c))}</h3><p class="va">${esc(castLabel(c) || i18n('Cast unknown'))}</p>
+      <div class="sh-tags">${shTags(i)}</div>
+      <h3 class="grp">${i18n('Where to buy')}<span class="n">${s.links.length}</span></h3>
+      ${s.links.length ? s.links.map(row).join('') : `<p class="sh-sub">${i18n('No store linked yet. Find it automatically, or paste a link from DLsite, SKiT Dolce, STELLA PLAYER or Stellaworth.')}</p>`}
+      <div class="sh-bar" style="margin-top:12px"><button class="pill sm" data-act="find">${i18n('🔎 Find on stores')}</button><button class="pill sm" data-act="one">${i18n('↻ Check prices')}</button></div>
+      <div class="lrow" style="margin-top:8px"><input class="in" id="shLink" placeholder="${esc(i18n('Paste a store link (DLsite, SKiT Dolce, STELLA PLAYER, Stellaworth)'))}" autocomplete="off"><button class="pill sm" data-act="link">${i18n('Add link')}</button></div>
+      <div class="lstatus" id="shItemSt">${esc(SH.msg)}</div>
+      ${SH.found && SH.found.length ? `<ul class="results">${SH.found.map((x, k) => `<li><button data-act="pick" data-k="${k}">${thumbHTML(x)}<span style="flex:1;min-width:0">${esc(x.title)}</span><span class="sh-store">${esc(shName(x.src))}</span></button></li>`).join('')}</ul>` : ''}
+      <h3 class="grp">${i18n('Price history')}</h3>
+      ${h ? `<dl class="sh-hist">
+          ${h.last ? `<div><dt>${i18n('Latest sale')}</dt><dd>${esc(saleSpan(h.last))}</dd></div>` : ''}
+          ${h.low ? `<div><dt>${i18n('All-time low')}</dt><dd>${esc(saleSpan(h.low))}</dd></div>` : ''}
+          ${h.days ? `<div><dt>${i18n('Days on sale (past year)')}</dt><dd>${esc(i18n('{n} days', {n:h.days}))}</dd></div>` : ''}
+        </dl>${h.log && h.log.length ? `<ul class="sh-log">${h.log.map(x => `<li>${esc(fmtDate(x.from))} – ${esc(fmtDate(x.to))} · −${x.pct}% · ${yen(x.price)}</li>`).join('')}</ul>` : ''}
+        <p class="sh-sub" style="margin-top:6px">${i18n('From dlwatcher.com — can be up to 2 days behind DLsite.')}</p>`
+        : `<p class="sh-sub">${i18n('Sale history comes from dlwatcher.com and covers DLsite works only. Link the DLsite page and check prices to fill it in.')}</p>`}
+      <div class="field" style="margin-top:16px"><label for="shMax">${i18n('I’d buy it at or under (¥)')}</label><input class="in" id="shMax" type="number" min="0" step="10" value="${c.wantMax || ''}" style="max-width:140px" placeholder="—"></div>
+      <div class="btnrow"><button class="pill sm" data-act="detail">${i18n('Open CD details')}</button><button class="pill sm primary" data-act="bought">${i18n('💜 Bought it — mark as owned')}</button><button class="pill sm danger" data-act="drop">${i18n('Remove from list')}</button></div>
+    </div></div>`;
+}
+function shStatus(){
+  const st = el('shSt'); if(!st) return;
+  const at = Math.max(0, ...wanted().map(c => (c.shop && c.shop.at) || 0));
+  st.textContent = SH.busy ? i18n('Checking prices… {a} of {b}', {a:SH.done, b:SH.total}) : i18n('Prices last checked {t}. They refresh by themselves when older than 12 hours.', {t:ago(at)});
+}
+function shRender(){
+  if(!el('shop').classList.contains('open')) return;
+  const it = SH.item && DB.byId(SH.item); if(!it) SH.item = null;
+  const list = wanted().map(shInfo);
+  el('shBody').innerHTML = `
+    <div class="sh-head"><h2 id="shHead">${i18n('🛍️ Shopping list')}</h2>
+      ${it || !list.length ? '' : `<div class="seg" id="shTabs" role="group" aria-label="${esc(i18n('View'))}">${[['ov', 'Overview'], ['all', 'All items']].map(([v, t]) => `<button data-v="${v}" aria-pressed="${SH.view === v}">${i18n(t)}</button>`).join('')}</div>`}
+      <button class="pill sm primary" data-act="refresh" ${SH.busy || !list.length ? 'disabled' : ''}>${i18n('↻ Refresh prices')}</button></div>
+    <p class="alt" id="shSt" role="status"></p>
+    ${it ? shItemHTML(it) : !list.length ? `<div class="empty"><div class="big">🛍️</div><strong>${i18n('Your shopping list is empty')}</strong><p>${i18n('Open a CD and switch on “Want to buy”, or select several CDs and use Edit selected.')}</p></div>`
+      : SH.view === 'all' ? shCards(list) : shOverview(list)}`;
+  shStatus();
+}
+function openShop(id){
+  SH.item = id || null; SH.found = null; SH.msg = '';
+  const m = el('shop'); m.classList.add('open'); m.setAttribute('aria-hidden', 'false'); document.body.style.overflow = 'hidden';
+  shRender(); setTimeout(() => el('shClose').focus(), 50);
+  shRefresh(false);
+}
+function closeShop(){ const m = el('shop'); m.classList.remove('open'); m.setAttribute('aria-hidden', 'true'); document.body.style.overflow = ''; render(); }
+function shOpenItem(id){ SH.item = id; SH.found = null; SH.msg = ''; shRender(); el('shBody').scrollTop = 0; }
+async function shCheckItem(id){
+  SH.msg = i18n('Checking prices…'); shRender();
+  const failed = await shRefreshOne(id);
+  SH.msg = failed.length ? i18n('Couldn’t read: {s}', {s:failed.join(', ')}) : i18n('Prices updated ♡'); shRender();
+}
+async function shAddLink(id, url){
+  const src = shopOf(url);
+  if(!src){ SH.msg = i18n('That link isn’t from a store the list can read (DLsite, SKiT Dolce, STELLA PLAYER, Stellaworth).'); shRender(); return; }
+  const shop = shEnsure(DB.byId(id)), links = shop.links.filter(l => l.src !== src).concat({src, url:SHOPS[src].norm(url)}), offers = {...shop.offers}; delete offers[src];
+  DB.update(id, {shop:{...shop, links, offers}}); SH.found = null;
+  await shCheckItem(id);
+}
+async function shFind(c){
+  SH.msg = i18n('Searching the stores…'); SH.found = null; shRender();
+  const term = String(c.altTitle || c.title).replace(/\s*[(（【\[]\s*CV[^)）】\]]*[)）】\]]/gi, '').trim();
+  const jobs = [['dlsite', () => DLsite.find(term)], ['stella', () => Stella.find(term)], ['skit', () => Skit.search(term)]];
+  const res = await Promise.allSettled(jobs.map(([, f]) => f()));
+  SH.found = res.flatMap((r, k) => r.status === 'fulfilled' ? r.value.slice(0, 5).map(x => ({src:jobs[k][0], url:x.url, title:x.title, thumb:x.thumb})).filter(x => shopOf(x.url)) : []);
+  const bad = res.map((r, k) => r.status === 'rejected' ? shName(jobs[k][0]) : '').filter(Boolean);
+  SH.msg = (SH.found.length ? i18n('Pick the listing that matches to link it.') : i18n('Nothing found — try pasting the link instead.')) + (bad.length ? ' ' + i18n('(Couldn’t search: {s})', {s:bad.join(', ')}) : '');
+  shRender();
+}
+Object.assign(I18N_JA, {"🛍️ Shopping list": "🛍️ 買い物リスト", "CDs you want to buy, with current prices and sales": "欲しいCDと、今の価格・セール情報", "Want": "欲しい", "CDs on your shopping list": "買い物リストにあるCD",
+  "On your shopping list": "買い物リストに入ってるよ", "Want to buy": "欲しい", "🛍️ Open in shopping list": "🛍️ 買い物リストで開く", "Marked as owned. Take “{t}” off your shopping list?": "所持にしたよ。「{t}」を買い物リストから外す?", "Remove": "外す",
+  "Nothing to check — link a store to a CD first.": "確認するものがないよ — まずCDにお店をリンクしてね。", "never": "まだ", "{n} min ago": "{n}分前", "{n} h ago": "{n}時間前", "{n} days ago": "{n}日前",
+  "not checked yet": "未確認", "no store linked": "お店未リンク", "ends today": "今日まで", "ends tomorrow": "明日まで", "ends in {n} days": "あと{n}日", "★ lowest ever": "★ 過去最安値", "≤ your {p}": "希望 {p} 以下",
+  "Last sale {s}": "前回のセール {s}", "No store linked yet — open it to add one": "お店がまだリンクされてないよ — 開いて追加してね", "Prices not checked yet": "価格はまだ未確認", "Never on sale": "セール歴なし", "No sale history": "セール履歴なし",
+  "Wanted": "欲しいCD", "{n} with a price": "価格あり {n}枚", "On sale now": "セール中", "save {p} if you buy them": "全部買うと {p} お得", "nothing right now": "今はなし", "Sales ending soon": "もうすぐ終わるセール", "within 3 days": "3日以内",
+  "Buy everything today": "今日ぜんぶ買うと", "{p} at full price": "定価だと {p}", "until {d}": "{d}まで", "Not on sale — when was the last one?": "セール中じゃないもの — 前回のセールは?", "low {p}": "最安 {p}",
+  "Everything on your list is on sale ♡": "リストのCDは全部セール中 ♡", "Worth a look": "チェックしてみて", "CDs at their lowest price ever, or at or under the price you said you’d pay, show up here.": "過去最安値のCDや、希望価格以下になったCDがここに出るよ。",
+  "On sale first": "セール中を先に", "Cheapest first": "安い順", "Sale ending soonest": "セール終了が近い順", "last sale {d} (−{p}%)": "前回のセール {d}(−{p}%)", "sale until {d}": "{d}までセール", "out of stock": "在庫なし", "in stock": "在庫あり",
+  "last check failed": "前回の確認に失敗", "checked {t}": "{t}に確認", "open ↗": "開く ↗", "Unlink this store": "このお店のリンクを外す", "← Back to the list": "← リストに戻る", "Where to buy": "買えるお店",
+  "No store linked yet. Find it automatically, or paste a link from DLsite, SKiT Dolce, STELLA PLAYER or Stellaworth.": "お店がまだリンクされてないよ。自動で探すか、DLsite・SKiT Dolce・STELLA PLAYER・ステラワースのリンクを貼ってね。",
+  "🔎 Find on stores": "🔎 お店で探す", "↻ Check prices": "↻ 価格を確認", "Paste a store link (DLsite, SKiT Dolce, STELLA PLAYER, Stellaworth)": "お店のリンクを貼る(DLsite・SKiT Dolce・STELLA PLAYER・ステラワース)", "Add link": "リンクを追加",
+  "Price history": "価格の推移", "Latest sale": "最近のセール", "All-time low": "過去最安値", "Days on sale (past year)": "年間セール日数", "{n} days": "{n}日", "From dlwatcher.com — can be up to 2 days behind DLsite.": "dlwatcher.com より — DLsiteより最大2日遅れることがあるよ。",
+  "Sale history comes from dlwatcher.com and covers DLsite works only. Link the DLsite page and check prices to fill it in.": "セール履歴は dlwatcher.com から取得していて、DLsite作品だけが対象だよ。DLsiteのページをリンクして価格を確認すると表示されるよ。",
+  "I’d buy it at or under (¥)": "この価格以下なら買う(¥)", "Open CD details": "CDの詳細を開く", "💜 Bought it — mark as owned": "💜 買った — 所持にする", "Remove from list": "リストから外す",
+  "Checking prices… {a} of {b}": "価格を確認中… {a} / {b}", "Prices last checked {t}. They refresh by themselves when older than 12 hours.": "価格の最終確認: {t}。12時間以上たつと自動で更新するよ。",
+  "View": "表示", "Overview": "概要", "All items": "すべて", "↻ Refresh prices": "↻ 価格を更新", "Your shopping list is empty": "買い物リストは空っぽだよ", "Open a CD and switch on “Want to buy”, or select several CDs and use Edit selected.": "CDを開いて「欲しい」をオンにするか、複数選んで「選択したCDを編集」を使ってね。",
+  "Checking prices…": "価格を確認中…", "Couldn’t read: {s}": "読み込めなかったお店: {s}", "Prices updated ♡": "価格を更新したよ ♡", "That link isn’t from a store the list can read (DLsite, SKiT Dolce, STELLA PLAYER, Stellaworth).": "そのリンクは読み込めるお店のものじゃないよ(DLsite・SKiT Dolce・STELLA PLAYER・ステラワース)。",
+  "Searching the stores…": "お店を検索中…", "Pick the listing that matches to link it.": "合っている商品を選んでリンクしてね。", "Nothing found — try pasting the link instead.": "見つからなかったよ — リンクを貼ってみてね。", "(Couldn’t search: {s})": "(検索できなかったお店: {s})",
+  "Marked as owned and taken off your list ♡": "所持にして、リストから外したよ ♡", "Removed from your shopping list": "買い物リストから外したよ"});
+Object.assign(I18N_ZH, {"🛍️ Shopping list": "🛍️ 购物清单", "CDs you want to buy, with current prices and sales": "想买的CD,以及当前价格和促销", "Want": "想要", "CDs on your shopping list": "购物清单里的CD",
+  "On your shopping list": "在你的购物清单里", "Want to buy": "想买", "🛍️ Open in shopping list": "🛍️ 在购物清单中打开", "Marked as owned. Take “{t}” off your shopping list?": "已标记为拥有。要把“{t}”从购物清单移除吗?", "Remove": "移除",
+  "Nothing to check — link a store to a CD first.": "没有可检查的 — 请先给CD关联商店。", "never": "从未", "{n} min ago": "{n} 分钟前", "{n} h ago": "{n} 小时前", "{n} days ago": "{n} 天前",
+  "not checked yet": "尚未检查", "no store linked": "未关联商店", "ends today": "今天结束", "ends tomorrow": "明天结束", "ends in {n} days": "还剩 {n} 天", "★ lowest ever": "★ 史低", "≤ your {p}": "≤ 你的 {p}",
+  "Last sale {s}": "上次促销 {s}", "No store linked yet — open it to add one": "尚未关联商店 — 打开以添加", "Prices not checked yet": "价格尚未检查", "Never on sale": "从未促销", "No sale history": "没有促销记录",
+  "Wanted": "想要", "{n} with a price": "{n} 个有价格", "On sale now": "正在促销", "save {p} if you buy them": "全部购买可省 {p}", "nothing right now": "目前没有", "Sales ending soon": "即将结束的促销", "within 3 days": "3 天内",
+  "Buy everything today": "今天全部购买", "{p} at full price": "原价 {p}", "until {d}": "截至 {d}", "Not on sale — when was the last one?": "未促销 — 上次促销是什么时候?", "low {p}": "最低 {p}",
+  "Everything on your list is on sale ♡": "清单里的全部都在促销 ♡", "Worth a look": "值得一看", "CDs at their lowest price ever, or at or under the price you said you’d pay, show up here.": "处于史低价,或不高于你心理价位的CD会显示在这里。",
+  "On sale first": "促销优先", "Cheapest first": "最便宜优先", "Sale ending soonest": "促销最先结束", "last sale {d} (−{p}%)": "上次促销 {d}(−{p}%)", "sale until {d}": "促销至 {d}", "out of stock": "缺货", "in stock": "有货",
+  "last check failed": "上次检查失败", "checked {t}": "{t}检查", "open ↗": "打开 ↗", "Unlink this store": "取消关联此商店", "← Back to the list": "← 返回清单", "Where to buy": "购买渠道",
+  "No store linked yet. Find it automatically, or paste a link from DLsite, SKiT Dolce, STELLA PLAYER or Stellaworth.": "尚未关联商店。可以自动查找,或粘贴 DLsite、SKiT Dolce、STELLA PLAYER 或 Stellaworth 的链接。",
+  "🔎 Find on stores": "🔎 在商店中查找", "↻ Check prices": "↻ 检查价格", "Paste a store link (DLsite, SKiT Dolce, STELLA PLAYER, Stellaworth)": "粘贴商店链接(DLsite、SKiT Dolce、STELLA PLAYER、Stellaworth)", "Add link": "添加链接",
+  "Price history": "价格历史", "Latest sale": "最近促销", "All-time low": "史低", "Days on sale (past year)": "过去一年促销天数", "{n} days": "{n} 天", "From dlwatcher.com — can be up to 2 days behind DLsite.": "数据来自 dlwatcher.com — 可能比 DLsite 晚最多 2 天。",
+  "Sale history comes from dlwatcher.com and covers DLsite works only. Link the DLsite page and check prices to fill it in.": "促销历史来自 dlwatcher.com,仅限 DLsite 作品。关联 DLsite 页面并检查价格即可显示。",
+  "I’d buy it at or under (¥)": "不高于此价格就买(¥)", "Open CD details": "打开CD详情", "💜 Bought it — mark as owned": "💜 已购买 — 标记为拥有", "Remove from list": "从清单移除",
+  "Checking prices… {a} of {b}": "正在检查价格… {a} / {b}", "Prices last checked {t}. They refresh by themselves when older than 12 hours.": "价格最后检查于 {t}。超过 12 小时会自动刷新。",
+  "View": "视图", "Overview": "概览", "All items": "全部", "↻ Refresh prices": "↻ 刷新价格", "Your shopping list is empty": "购物清单是空的", "Open a CD and switch on “Want to buy”, or select several CDs and use Edit selected.": "打开一张CD并开启“想买”,或选中多张CD后使用“编辑所选”。",
+  "Checking prices…": "正在检查价格…", "Couldn’t read: {s}": "无法读取:{s}", "Prices updated ♡": "价格已更新 ♡", "That link isn’t from a store the list can read (DLsite, SKiT Dolce, STELLA PLAYER, Stellaworth).": "该链接不属于可读取的商店(DLsite、SKiT Dolce、STELLA PLAYER、Stellaworth)。",
+  "Searching the stores…": "正在搜索商店…", "Pick the listing that matches to link it.": "选择匹配的商品进行关联。", "Nothing found — try pasting the link instead.": "没有找到 — 请尝试粘贴链接。", "(Couldn’t search: {s})": "(无法搜索:{s})",
+  "Marked as owned and taken off your list ♡": "已标记为拥有并从清单移除 ♡", "Removed from your shopping list": "已从购物清单移除"});
+
+el('btnShop').onclick = () => openShop();
+el('shClose').onclick = closeShop;
+el('shop').addEventListener('click', e => { if(e.target.id === 'shop') closeShop(); });
+el('shBody').addEventListener('change', e => {
+  if(e.target.id === 'shSort'){ SH.sort = e.target.value; shRender(); }
+  if(e.target.id === 'shMax' && SH.item){ DB.update(SH.item, {wantMax:toNum(e.target.value)}); shRender(); }
+});
+el('shBody').addEventListener('keydown', e => { if(e.key === 'Enter' && e.target.id === 'shLink' && SH.item){ e.preventDefault(); shAddLink(SH.item, e.target.value.trim()); } });
+el('shBody').addEventListener('click', async e => {
+  const tab = e.target.closest('#shTabs button'); if(tab){ SH.view = tab.dataset.v; shRender(); return; }
+  const open = e.target.closest('[data-open]'); if(open){ shOpenItem(open.dataset.open); return; }
+  const b = e.target.closest('[data-act]'); if(!b) return;
+  const id = SH.item, c = id && DB.byId(id);
+  switch(b.dataset.act){
+    case 'refresh': shRefresh(true); break;
+    case 'back': SH.item = null; shRender(); break;
+    case 'find': shFind(c); break;
+    case 'one': shCheckItem(id); break;
+    case 'link': shAddLink(id, el('shLink').value.trim()); break;
+    case 'pick': shAddLink(id, SH.found[+b.dataset.k].url); break;
+    case 'unlink': { const s = c.shop, offers = {...s.offers}; delete offers[b.dataset.src];
+      DB.update(id, {shop:{...s, links:s.links.filter(l => l.src !== b.dataset.src), offers}}); SH.msg = ''; shRender(); break; }
+    case 'detail': closeShop(); openModal(id); break;
+    case 'bought': DB.update(id, {owned:true, want:false}); SH.item = null; toast(i18n('Marked as owned and taken off your list ♡')); shRender(); render(); break;
+    case 'drop': DB.update(id, {want:false}); SH.item = null; toast(i18n('Removed from your shopping list')); shRender(); render(); break;
+  }
+});
+
 /* ---------- language switcher (EN ・ 日本 ・ 中文) ---------- */
 /* flips the voice actor names whenever the toggle moves them between romaji (EN) and Japanese (日本・中文) */
 function nameFlip(){
@@ -3200,6 +3637,7 @@ function setLang(l, save){
   if(el('editor').classList.contains('open')) el('eHead').textContent = i18n(ED.id ? 'Edit CD' : 'Add a CD');
   imSync(); imCount(); if(IM.items.length) imRenderList();
   selSync(); if(el('bulk').classList.contains('open')) openBulk();
+  shRender();
   if(SC.rows.length) scRender(); else if(SC.res && el('scan').classList.contains('open')) scSummary(SC.msg, SC.res);
   if(save && (was === 'en') !== (LANG === 'en')) nameFlip();
 }

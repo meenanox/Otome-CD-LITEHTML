@@ -1,6 +1,6 @@
 # Otome-CD-LITE
 
-**Current version: 0.5.7** — shown next to the logo and at the bottom of the page. If the number in your copy is
+**Current version: 0.5.8** — shown next to the logo and at the bottom of the page. If the number in your copy is
 lower than this, download the newest `index.html` again (your CDs stay in your browser, but make a Backup first).
 
 A self-hosted, single-file Otome Drama CD collection tracker. No Python, no server, no build step:
@@ -15,7 +15,7 @@ open `index.html` in a browser.
 - Everything is stored in your browser (localStorage); use **Backup / Restore** for JSON backups
 
 ## Versions
-The version lives in one line near the top of `index.html` (`var APP_VERSION = '0.5.7';`). Raise it, and the
+The version lives in one line near the top of `index.html` (`var APP_VERSION = '0.5.8';`). Raise it, and the
 "Current version" line above, every time a new `index.html` is published. Backup files also record the version
 that made them. Older copies are kept with the version in the file name, e.g. `otome-cd-database version 2026-10-29-0.5.1.html`.
 

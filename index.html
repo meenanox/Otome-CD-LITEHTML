@@ -151,6 +151,13 @@ body.selecting main{padding-bottom:110px}
 .labels-off .cover{border-radius:22px}
 .labels-off .cap{grid-template-rows:0fr;opacity:0}
 .labels-off .cap-in{padding-top:0;padding-bottom:0}   /* no leftover strip under the cover, so it sits centred in the frame */
+/* voice actor names flip (with a short neon glow) when the EN・日本・中文 toggle switches them between romaji and Japanese */
+.info .nm{display:inline-block}
+.info .nm-alt{opacity:.65}
+.info .aka{font-size:.85em;opacity:.8;font-style:italic}
+.nmflip .cap .va,.nmflip .info .nm,.nmflip .grp.vah{animation:nmflip .7s cubic-bezier(.3,.7,.3,1.15) both;transform-origin:50% 60%}
+.nmflip .cap .va{animation-delay:calc(var(--d, 0ms) + 120ms)}
+@keyframes nmflip{0%{transform:perspective(320px) rotateX(-90deg);opacity:0;text-shadow:0 0 10px var(--accent),0 0 2px #fff}55%{opacity:1;text-shadow:0 0 9px var(--accent)}100%{transform:none;opacity:1;text-shadow:none}}
 .grp{grid-column:1/-1;display:flex;align-items:center;gap:10px;margin:14px 6px -4px;font-family:var(--font-display);font-size:19px;font-weight:500;color:var(--ink)}
 .grp:first-child{margin-top:0}
 .grp::after{content:"";flex:1;height:2px;border-radius:2px;background:var(--accent-soft)}
@@ -419,6 +426,7 @@ details.more p{margin:8px 0 0;color:var(--ink-faint);font-weight:400;line-height
     <button class="pill" id="btnImportSrc" title="Import CDs from rukojiDB, HIBIKIFORUM, DLsite Girls or SKiT Dolce">⇩ Import CDs</button>
     <button class="pill" id="btnScan" title="Read the folder names of your local drama CD folders and add or link them — files are never copied or uploaded">📁 Scan folders</button>
     <button class="pill" id="btnDupes" title="Find the same CD added twice (e.g. from different sites) and merge them into one">⧉ Merge duplicates</button>
+    <button class="pill" id="btnVA" title="Update the romaji ↔ 日本語 voice actor list (with alias names) from rukojiDB and fill in missing spellings">🎙 VA names</button>
     <button class="pill" id="btnExport" title="Download your whole collection as a JSON backup file">⬇ Backup</button>
     <button class="pill" id="btnImport" title="Restore a JSON backup file">⬆ Restore</button>
     <input type="file" id="fileImport" accept=".json,application/json,text/plain" hidden>
@@ -871,7 +879,7 @@ function buildFilters(){
   const all = DB.all;
   fillSelect($('#fLabel'),  i18n('All labels'),  uniq(all.map(c => c.label)));
   const people = new Map(); all.forEach(c => c.cast.forEach(p => { const k = Names.pid(p); if(!k) return; const old = people.get(k); if(!old || (!old.ja && p.ja) || (!old.en && p.en)) people.set(k, {en:p.en || (old && old.en) || '', ja:p.ja || (old && old.ja) || ''}); }));
-  fillSelect($('#fVA'), i18n('All voice actors'), [...people].sort((a, b) => (a[1].en || a[1].ja).localeCompare(b[1].en || b[1].ja, 'ja')).map(([k, p]) => [k, p.en && p.ja ? `${p.en} / ${p.ja}` : (p.en || p.ja)]));
+  fillSelect($('#fVA'), i18n('All voice actors'), [...people].sort((a, b) => personName(a[1]).localeCompare(personName(b[1]), LANG_TAG[LANG])).map(([k, p]) => [k, personAlt(p) ? `${personName(p)} / ${personAlt(p)}` : personName(p)]));
   fillSelect($('#fSeries'), i18n('All series'),  uniq(all.map(seriesName)).map(s => [s, shownSeries(all.find(c => seriesName(c) === s))]));
   F.label = $('#fLabel').value; F.va = $('#fVA').value; F.series = $('#fSeries').value;
 }
@@ -886,7 +894,7 @@ function visible(){
     if(F.status === 'owned' && !c.owned) return false;
     if(F.status === 'disk' && !c.localFolder) return false;
     if(q){
-      const hay = [c.title, c.altTitle, c.cnTitle, c.label, c.series, c.seriesRomaji, c.seriesCn, c.pn, c.jan, c.notes, c.localFolder, ...c.cast.flatMap(p => [p.en, p.ja]), ...c.scenario].join(' ').toLowerCase();
+      const hay = [c.title, c.altTitle, c.cnTitle, c.label, c.series, c.seriesRomaji, c.seriesCn, c.pn, c.jan, c.notes, c.localFolder, ...c.cast.flatMap(p => { const m = Names.mainOf(p); return [p.en, p.ja, m && m.en, m && m.ja]; }), ...c.scenario].join(' ').toLowerCase();
       if(!hay.includes(q)) return false;
     }
     return true;
@@ -907,7 +915,7 @@ function visible(){
 const UNKNOWN_GROUP = '￿';
 const GROUPERS = {
   year:   c => [[c.release ? c.release.slice(0, 4) : UNKNOWN_GROUP, c.release ? c.release.slice(0, 4) : i18n('Unknown year')]],
-  va:     c => c.cast.length ? c.cast.map(p => [Names.pid(p) || personLabel(p), (LANG === 'ja' ? p.ja || p.en : p.en || p.ja)]) : [[UNKNOWN_GROUP, i18n('No voice actor listed')]],
+  va:     c => c.cast.length ? c.cast.map(p => [Names.pid(p) || personLabel(p), personName(p)]) : [[UNKNOWN_GROUP, i18n('No voice actor listed')]],
   series: c => [seriesName(c) ? [seriesName(c), shownSeries(c)] : [UNKNOWN_GROUP, i18n('No series')]],
   label:  c => [c.label ? [c.label, c.label] : [UNKNOWN_GROUP, i18n('No publisher')]]
 };
@@ -921,7 +929,7 @@ function render(){
   const list = visible(), grid = $('#grid');
   if(list.length && F.group){
     let i = 0;
-    grid.innerHTML = grouped(list).map(g => `<h2 class="grp">${esc(g.h)}<span class="n">${g.items.length}</span></h2>` + g.items.map(c => cardHTML(c, i++)).join('')).join('');
+    grid.innerHTML = grouped(list).map(g => `<h2 class="grp${F.group === 'va' ? ' vah' : ''}">${esc(g.h)}<span class="n">${g.items.length}</span></h2>` + g.items.map(c => cardHTML(c, i++)).join('')).join('');
   } else grid.innerHTML = list.length ? list.map(cardHTML).join('')
     : `<div class="empty"><div class="big">🫧</div><strong>${i18n('No CDs match those filters')}</strong><p>${i18n('Try clearing a filter or two.')}</p></div>`;
   const owned = DB.all.filter(c => c.owned).length;
@@ -995,7 +1003,7 @@ function catSync(box, changed){
 ['input', 'change'].forEach(t => document.addEventListener(t, e => { const b = e.target.closest && e.target.closest('.catpick'); if(b) catSync(b, e.target); }));
 function cardHTML(c, i){
   return `
-    <article class="card${SEL.ids.has(c.id) ? ' picked' : ''}" tabindex="0" data-id="${esc(c.id)}" style="animation-delay:${Math.min(i, 24) * 25}ms" aria-label="${esc(shownTitle(c))}">
+    <article class="card${SEL.ids.has(c.id) ? ' picked' : ''}" tabindex="0" data-id="${esc(c.id)}" style="--d:${Math.min(i, 24) * 25}ms;animation-delay:var(--d)" aria-label="${esc(shownTitle(c))}">
       <div class="cover">
         ${coverHTML(c)}
         <div class="ov tl">${c.sourceType ? `<span class="chip">${esc(c.sourceType)}</span>` : ''}</div>
@@ -1005,7 +1013,7 @@ function cardHTML(c, i){
       </div>
       <div class="cap"><div class="cap-in">
         <h3>${esc(shownTitle(c))}</h3>
-        <p class="va">${esc(castLabel(c) || i18n('Cast unknown'))}</p>
+        <p class="va"${castAlt(c) ? ` title="${esc(castAlt(c))}"` : ''}>${esc(castLabel(c) || i18n('Cast unknown'))}</p>
         <p class="lb">${esc([c.label, c.release ? c.release.slice(0, 4) : ''].filter(Boolean).join(' · '))}</p>
         <div class="stars-sm">${c.rating ? '♥'.repeat(c.rating) : ''}</div>
       </div></div>
@@ -1023,7 +1031,7 @@ function openModal(id){
   const info = [
     [i18n('Release'), fmtDate(c.release) + (c.releaseNote ? ` — ${c.releaseNote}` : '')],
     [i18n('Label'), c.label], [i18n('Series'), shownSeries(c)],
-    [i18n('Voice cast'), c.cast.map(p => p.en && p.ja ? `${p.en} (${p.ja})` : (p.en || p.ja)).join(', ')], [i18n('Scenario'), c.scenario.join(', ')], [i18n('Illustration'), c.illustrator],
+    [i18n('Voice cast'), c.cast.map(castHTML).join(', '), true], [i18n('Scenario'), c.scenario.join(', ')], [i18n('Illustration'), c.illustrator],
     [i18n('Category'), c.category], [i18n('Catalog no.'), c.pn], ['JAN', c.jan],
     [i18n('Local folder'), c.localFolder], [i18n('Files on disk'), c.localFolder ? localFacts(c) : '']
   ].filter(([, v]) => v && v !== '—' || false);
@@ -1034,7 +1042,7 @@ function openModal(id){
       ${seriesName(c) ? `<span class="tag">${esc(shownSeries(c))}</span>` : ''}
       ${c.label ? `<span class="tag pink">${esc(c.label)}</span>` : ''}
     </div>
-    <dl class="info">${info.map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('')}</dl>
+    <dl class="info">${info.map(([k, v, html]) => `<div><dt>${esc(k)}</dt><dd>${html ? v : esc(v)}</dd></div>`).join('')}</dl>
     <section class="sec"><h3>${i18n('Synopsis')}</h3>${shownSynopsis(c) ? `<p id="mSyn">${esc(shownSynopsis(c))}</p>${trBarHTML()}` : `<p class="muted">${i18n('No synopsis saved yet.')}</p>`}</section>
     <section class="sec"><h3>${i18n('Tracklist')}</h3>
       ${c.tracks.length ? `<ol class="tracks">${c.tracks.map(t => `<li><span class="tt">${esc(t.t)}</span><span class="dur">${esc(t.d)}</span></li>`).join('')}</ol>` : `<p class="muted">${i18n('No tracklist saved yet.')}</p>`}
@@ -1174,7 +1182,15 @@ function parsePerson(x){
   return {en, ja:ja.replace(/[\s\u3000]+/g, '')};
 }
 const personLabel = p => p.en && p.ja ? `${p.en} · ${p.ja}` : (p.en || p.ja || '');
-const castLabel = c => (c.cast || []).map(personLabel).join(', ');
+/* voice actor names follow the EN・日本・中文 toggle: romaji in EN, the Japanese name in 日本 and 中文 (Chinese readers use the kanji too) */
+const personName = p => (LANG === 'en' ? p.en || p.ja : p.ja || p.en) || '';
+const personAlt = p => { const s = personName(p); return (s === p.en ? p.ja : p.en) || ''; };
+const castLabel = c => (c.cast || []).map(personName).join(', ');
+const castAlt = c => (c.cast || []).map(personAlt).filter(Boolean).join(', ');
+function castHTML(p){
+  const alt = personAlt(p), main = Names.mainOf(p);
+  return `<span class="nm">${esc(personName(p))}</span>${alt ? ` <span class="nm-alt">(${esc(alt)})</span>` : ''}${main ? ` <span class="aka">${esc(i18n('alias of {n}', {n:personName(main)}))}</span>` : ''}`;
+}
 const seriesName = c => c.series || c.seriesRomaji || '';
 /* card/detail title follows the 日本・EN toggle: Japanese original in ja mode, romaji in en mode */
 /* titles, series and synopsis follow the EN・日本・中文 toggle; 中文 falls back to the romaji/English data when no Chinese is saved */
@@ -1188,14 +1204,105 @@ const parseCast = s => String(s || '').split(/[\n,;、]/).map(x => x.trim()).fil
 const NAME_SEED = {
   va:[['Kimura Ryouhei','木村良平'],['Furukawa Makoto','古川慎'],['Midorikawa Hikaru','緑川光'],['Kobayashi Hirotaka','古林裕貴'],
       ['Satou Takuya','佐藤拓也'],['Kakihara Tetsuya','柿原徹也'],['Saitou Souma','斉藤壮馬'],['Morikubo Shoutarou','森久保祥太郎'],
-      ['Maeno Tomoaki','前野智昭'],['Miki Shinichirou','三木眞一郎'],['Nakata Jouji','中田譲治'],['Toriumi Kousuke','鳥海浩輔']],
+      ['Maeno Tomoaki','前野智昭'],['Miki Shinichirou','三木眞一郎'],['Nakata Jouji','中田譲治'],['Toriumi Kousuke','鳥海浩輔'],
+      ['Hoshi Souichirou','保志総一朗'],['Hatano Wataru','羽多野渉'],['Seki Toshihiko','関俊彦']],   // mixed up on rukoji's index, so set here
   series:[['Tenbushuu ni Iyasare','天部衆に癒されCD'],['DIABOLIK LOVERS','DIABOLIK LOVERS'],['Obey Me!ASMR','Obey Me! ASMR'],['linJewelry Kiss','linJewelry Kiss']]
 };
-/* Built-in pairs + pairs learned whenever you save a CD that has both spellings. */
+/* rukojiDB's Voice Actors Index (rukoji.com/va/), built in so it works offline: [romaji, 日本語, [[alias romaji, alias 日本語], …]].
+   "🎙 VA names" (and a quiet check every two weeks) downloads the current list over it — setting 'vaIndex'. */
+const VA_SEED = [
+  ["Abe Atsushi","阿部敦",[["Teratake Jun","寺竹順"],["Kannagi Hakana","神凪儚"]]],["Amasaki Kouhei","天﨑滉平"],["Asanuma Shintarou","浅沼晋太郎"],
+  ["Asari Ryouta","浅利遼太",[["Iju Hiro","伊集ひろ"]]],["Azakami Youhei","阿座上洋平"],["Ban Taito","坂泰斗",[["Fugu Rintarou","河豚倫太郎"]]],
+  ["Chiba Isshin","千葉一伸",[["Houdentei Gatsushin","宝殿亭ガツ芯"]]],["Chiba Susumu","千葉進歩"],["Eguchi Takuya","江口拓也"],["Enoki Junya","榎木淳弥",[["Matsutake Yatarou","まつたけ弥太郎"]]],
+  ["Fujiwara Yuuki","藤原祐規",[["Margarine Tengu","マーガリン天狗"],["Asuno Shou","明日野将"],["Kaneda Akira","金田亮"]]],
+  ["Fukamachi Toshinari","深町寿成",[["Do Re Mi Fa So La O","ドレミファソラ夫"],["Hachiouji Takao","八王子タカオ"]]],["Fukuhara Katsumi","福原かつみ",[["Hitoe Hosome","一重細目"]]],
+  ["Fukusato Tatsunori","福里達典",[["Sukima Cherry","スキマチェリー"]]],["Fukushima Jun","福島潤",[["Sakurai Masato","櫻井真人"]]],["Fukuyama Jun","福山潤",[["Houdentei Rappa","ほうでん亭らっぱ"]]],
+  ["Furukawa Makoto","古川慎",[["Tetrapot Noboru","テトラポット登"]]],["Gotou Keisuke","後藤啓介",[["Oonabara Wataru","大海原渉"]]],["Hagi Michihiko","萩道彦",[["Bombaye","本場伊江"]]],
+  ["Hama Kento","濱健人",[["Yoruno Kazuo","夜乃かずお"]]],["Hamada Kenji","浜田賢二"],["Hamano Daiki","濱野大輝",[["Sendo Renado","千渡レナド"]]],
+  ["Hanada Hikaru","花田光",[["Oiri-hana/Oily Hana","オイリーはな"]]],["Hanae Natsuki","花江夏樹",[["Peroperonchino","ペロペロンチーノ"]]],["Hashiba Rei","羽柴礼"],["Hayami Shou","速水奨"],
+  ["Hayashi Yuu","林勇",[["Hayakawa Yuuga","早川優雅"]]],["Hino Satoshi","日野聡",[["Yajiuma Konjou","野次馬根性"]]],
+  ["Hirakawa Daisuke","平川大輔",[["Hirai Tatsuya","平井達矢"],["Yamada Kouhachi","山田コーハチ"]]],["Hisakawa Aya","久川綾"],["Hiyama Nobuyuki","檜山修之"],
+  ["Horie Kazuma","堀江一眞",[["Sumeragi Hayato","スメラギ隼人"]]],["Horie Shun","堀江瞬"],["Horiuchi Ken’yuu","堀内賢雄"],["Hose Yuuichi","帆世雄一",[["Max★Marla","まっくす★まぁらぁ"]]],
+  ["Hosoya Yoshimasa","細谷佳正"],["Ichijou Hirame","一条ひらめ"],["Ichikawa Aoi","市川蒼"],["Iguchi Yuuichi","井口祐一",[["Aoi Yuuma","蒼井夕真"]]],["Imai Fumiya","今井文也"],
+  ["Inoue Kazuhiko","井上和彦",[["Maximilian Nagisa","マクシミリアン渚"]]],["Inoue Takara","井上宝",[["Amakawa Yuusei","天河雄成"]]],["Ishida Ryuusei","石田流星",[["Shimotsuki Kanji","霜月寛治"]]],
+  ["Ishii Kazutaka","石井一貴",[["Katou Itsuki","かとういつき"],["Katou Kazuki","加藤一樹"]]],["Ishii Makoto","石井真",[["Nishijima Kotofu","西島古都夫"]]],["Ishikawa Hideo","石川英郎"],
+  ["Ishikawa Kaito","石川界人"],["Ishiya Haruki","石谷春貴",[["Ii Kinniku","井伊筋肉"]]],["Itou Eiji","伊藤栄次"],["Itou Kentarou","伊藤健太郎",[["Healthy Tarou","ヘルシー太郎"]]],
+  ["Itou Kento","伊東健人",[["Nimaigai Muru","二枚貝ムール"],["Toshikazu Shou","利一翔"]]],["Iwanaka Mutsuki","岩中睦樹",[["Koitsuda Renya","恋津田蓮也"]]],
+  ["Iwasaki Ryouta","岩崎諒太",[["","紫薔咲狂夜"]]],["Kageura Daisuke","景浦大輔",[["Torasawa Nekosuke","虎沢猫助"]]],["Kaida Yuki","甲斐田ゆき"],["Kaito Tasuku","海渡翼"],["Kaji Yuuki","梶裕貴"],
+  ["Kajikawa Shouhei","梶川翔平",[["Honma Kaina","本間かいな"]]],["Kajiwara Gakuto","梶原岳人"],["Kakehashi Atsushi","梯篤司",[["Satou Taka","佐藤タカ"]]],
+  ["Kakihara Tetsuya","柿原徹也",[["Kaiou Raku","魁皇楽"]]],["Kamio Shinichirou","神尾晋一郎",[["GO TO BED","後藤寝床"]]],["Kamiya Hiroshi","神谷浩史"],["Kanemasa Ikuto","兼政郁人",[["","金剛山寿一"]]],
+  ["Kanna Nobutoshi","神奈延年"],["Kasama Jun","笠間淳",[["Ichinose Subaru","一之瀬昴"]]],["Katou Masayuki","加藤将之",[["Chasuke","茶介"]]],
+  ["Kawada Shinji","川田紳司",[["Wasshoi Tarou","ワッショイ太郎"]]],["Kawahara Yoshihisa","川原慶久",[["Hatoman Gunsou","鳩マン軍曹"]]],
+  ["Kawamura Takuo","かわむら拓央",[["Kawamura Takuo","川村拓央"],["Namerikawa Kikutarou","滑川菊太郎"]]],["Kawanishi Kengo","河西健吾",[["Shishamo","ししゃも"]]],
+  ["Kawano Taketoshi","川野剛稔",[["Nishikido Tomohisa","錦戸智久"]]],["Kawashima Reiji","川島零士"],["Kijima Ryuuichi","木島隆一",[["Sakuragawa Haruhito","桜川春仁"]]],
+  ["Kimura Ryouhei","木村良平"],["Kimura Taihi","木村太飛",[["Kiyomi Ikutarou","清美育太朗"]]],["Kisaichi Atsushi","私市淳",[["Kagami Rui","嘉神塁"]]],
+  ["Kishio Daisuke","岸尾だいすけ",[["Ryuusenhoudouin Zanjibaru","竜仙鳳堂院斬慈刃琉"],["Dan Mitsuo","ダンミツオ"]]],
+  ["Kitayama Kyousuke","北山恭祐",[["Shinsen Ryoku","深川緑"],["Irakusa Netoru","刺草ネトル"]]],["Kiyosato Takaya","清里孝也",[["Yagami Sen","八神仙"]]],["Kobayashi Chiaki","小林千晃"],
+  ["Kobayashi Yuusuke","小林裕介",[["Yaiba Ryuu","刃琉"]]],["Komada Wataru","駒田航"],["Komatsu Shouhei","小松昌平",[["Sarutobi Souji","猿飛総司"]]],["Kondou Takashi","近藤隆"],
+  ["Konishi Katsuyuki","小西克幸"],["Kosugi Juurouta","小杉十郎太"],["Kousaka Atsushi","高坂篤志",[["Mondou Ash","主水Ash"]]],["Koyasu Kouki","子安光樹"],["Koyasu Takehito","子安武人"],
+  ["Kumagai Kentarou","熊谷健太郎",[["Fuyuno Kumaniku","冬ノ熊肉"]]],["Kuroda Takaya","黒田崇矢",[["Kurose Taka","黒瀬鷹"]]],["Kuze Shuichi","久瀬秋一",[["Shibamoto Taiji","芝元泰滋"]]],
+  ["Maeda Seiji","前田誠二"],["Maeda Takeshi","前田剛",[["Renaissance Yamada","ルネッサンス山田"]]],["Maeno Tomoaki","前野智昭",[["Fuwa Mitsuhide","不破光秀"],["Sakura Hiroshi","桜ひろし"]]],
+  ["Majima Junji","間島淳司",[["Sugakiya","須賀紀哉"]]],["Makino Hideki","牧野秀紀",[["Miraku Akira","三楽章"]]],["Mamiya Yasuhiro","間宮康弘",[["Shimauma Danshaku","縞馬男爵"]]],
+  ["Masuda Toshiki","増田俊樹",[["Hiroyama Kazushige","広山和重"]]],["Matsuda Kenichirou","松田健一郎",[["Hayakawa Rinta","早川凜太"]]],
+  ["Matsumoto Yasunori","松本保典",[["Kataoka Daijirou","片岡大二郎"]]],["Matsuoka Youhei","松岡洋平"],["Midorikawa Hikaru","緑川光"],["Mitsuhashi Wataru","三橋渡"],
+  ["Mitsutomi Takao","光富崇雄",[["Rin Seirin","凛星凛"]]],["Miura Hiroaki","三浦祥朗"],["Miyano Mamoru","宮野真守"],["Miyase Naoya","宮瀬尚也",[["Shirakami Kanade","白上奏"]]],
+  ["Miyashita Eiji","宮下栄治",[["Horikawa Shinobu","堀川忍"]]],["Mizunaka Masaaki","水中雅章",[["Miyabi Shou","宮尾章"]]],["Mizushima Daichuu","水島大宙",[["Kijima Uta","木島宇太"]]],
+  ["Morikawa Toshiyuki","森川智之",[["Houdenteigatsu","ほうでん亭ガツ"],["Inugami Mikado","犬神帝"]]],["Morikubo Shoutarou","森久保祥太郎",[["Andalucia","アンダルシア"]]],["Morita Masakazu","森田成一"],
+  ["Murakami Satoru","村上聡",[["Uitoki Cherry","初時チェリー"]]],["Murakami Yoshiki","村上喜紀"],["Murase Ayumu","村瀬歩",[["Yoshimura Cartman","吉村カートマン"]]],
+  ["Murata Taishi","村田太志",[["Murano Sumibito","村野住人"]]],["Muro Genki","室元気",[["Hiruumi Daikichi","昼海大吉"]]],["Nakagawa Keiichi","中川慶一",[["Kamikawa Hajime","上河創"]]],
+  ["Nakai Kazuya","中井和哉"],["Nakajima Yoshiki","中島ヨシキ",[["Nimaigai Hokki","二枚貝ほっき"]]],["Nakamura Shuugo","仲村宗悟",[["Anda Gigou","庵田技剛"]]],["Nakamura Yuuichi","中村悠一"],
+  ["Nakazawa Masatomo","中澤まさとも",[["Sawa Manaka","佐和真中"]]],["Namikawa Daisuke","浪川大輔"],["Narita Ken","成田剣",[["Aoshima Yaiba","青島刃"]]],
+  ["Nishi Kensuke","西健亮",[["Kazune","和音"]]],["Nogami Shou","野上翔",[["Yumachi Kakeru","湯町駆"]]],["Nojima Hirofumi","野島裕史",[["Kashiwagi Homare","柏木誉"]]],["Nojima Kenji","野島健児"],
+  ["Nomiya Kazunori","野宮一範",[["Yagami Daisuke","八神大輔"]]],["Nomura Kenji","乃村健次",[["Blacky","舞幸運"]]],["Oda Hisafumi","小田久史",[["Hayate Jin","ハヤテ迅"]]],
+  ["Ogihara Hideki","荻原秀樹",[["Koike Takezou","小池竹蔵"]]],["Okano Kousuke","岡野浩介",[["Hishi Masaru","菱勝"]]],["Okitsu Kazuyuki","興津和幸",[["Yotsuya Cider","四ツ谷サイダー"]]],
+  ["Ono Daisuke","小野大輔"],["Ono Kenshou","小野賢章"],["Ono Tomohiro","大野智敬",[["Irodori Kazuya","彩和矢"]]],["Ono Yuuki","小野友樹",[["Hiiragi Santa","柊三太"]]],
+  ["Oohashi Kenichirou","大橋賢一郎",[["KENN",""]]],["Oohashi Takamasa","大橋隆昌",[["Nakazawa Ayumu","中澤アユム"]]],["Ooi Marie","大井麻利衣"],
+  ["Ookawa Hayata","大川隼汰",[["Tominaga Shuhei","富永修平"]]],["Ookawa Tooru","大川透"],["Oosaka Ryouta","逢坂良太",[["Marinokouji Reon","万里小路麗音"]]],
+  ["Ooshita Kouta","大下孝太",[["One Night Love","一夜愛"]]],["Oosuka Jun","大須賀純",[["Kasumi Shu","香純秋"]]],["Ootani Yuuki","大谷祐貴",[["Mie Kanade","三重奏"]]],["Saitou Souma","斉藤壮馬"],
+  ["Sakai Koudai","酒井広大",[["Kanabe Eito","金部影人"]]],["Sakakihara Yuuki","榊原優希"],["Sakata Shougo","坂田将吾"],["Sakurai Tooru","井トオル",[["Watake Tetsu","我武テツ"]]],
+  ["Sasada Takayuki","笹田貴之"],["Satou Gen","佐藤元"],["Satou Takuya","佐藤拓也",[["Domon Atsushi","土門熱"]]],["Sawashiro Chiharu","沢城千春"],["Seki Tomokazu","関智一"],
+  ["Shibuya Satoi","渋谷慧"],["Shimono Hiro","下野紘",[["Baiki Ruto","刃衣斬人"]]],["Shingaki Tarusuke","新垣樽助",[["Girigi Lee","切木Lee"],["Minobe Satoru","ミノベサトル"]]],
+  ["Shioya Fumiyoshi","汐谷文康",[["Haiba Aoi","灰羽蒼"]]],["Shirai Yuusuke","白井悠介",[["Kuroi Isamu","黒井勇"]]],["Shiraishi Minoru","白石稔",[["Ichigo Milk","いちごみるく"]]],
+  ["Shiraishi Ryouko","白石涼子"],["Shirakawa Shuusaku","白川周作",[["Ninomiya Yuu","二ノ宮憂"]]],["Shirokuma Hiroshi","白熊寛嗣",[["Totsuka Kazuya","戸塚和也"]]],["Someya Toshiyuki","染谷俊之"],
+  ["Sugiyama Noriaki","杉山紀彰",[["Noriyuki","紀之"]]],["Suwabe Junichi","諏訪部順一"],["Suzuki Chihiro","鈴木千尋",[["Shihara Haruka","紫原遥"]]],["Suzuki Ryouta","鈴木崚汰"],
+  ["Suzuki Tatsuhisa","鈴木達央",[["","月山岳"]]],["Suzuki Yuuto","鈴木裕斗",[["Asagi Yuu","あさぎ夕"]]],["Suzumura Kenichi","鈴村健一"],
+  ["Tachibana Shinnosuke","立花慎之介",[["Sumeragi Mikado","皇帝"]]],["Tadokoro Hinata","田所陽向",[["Tokoro Ahiijo","所アヒージョ"]]],["Takahashi Hidenori","高橋英則",[["Kuki Masaru","久喜大"]]],
+  ["Takahashi Hiroki","高橋広樹",[["Okino Yasuhiro","沖野靖広"]]],["Takahashi Kenji","高橋研二",[["Jou Takashi","丈隆志"]]],["Takahashi Naozumi","高橋直純"],
+  ["Takahashi Shinya","高橋伸也",[["Honta Keigo","本多啓吾"]]],["Takanashi Kengo","高梨謙吾",[["Ootori Yuuji","大鳥遊二"]]],["Takatsuka Tomohito","高塚智人"],
+  ["Takeuchi Ken","武内健",[["Murakami Tatsuya","村上たつや"]]],["Takeuchi Ryouta","竹内良太",[["Higeuchi Waruta","髭内悪太"]]],["Takeuchi Shunsuke","武内駿輔"],
+  ["Takumi Yasuaki","内匠靖明",[["Kazenohiki Hajime","風之弾はじめ"]]],["Tamaru Atsushi","田丸篤志",[["Amano Haru","天野晴"],["Amemiya Takayuki","雨宮孝之"]]],
+  ["Tanaka Shoujirou","田中翔二郎",[["O Sikorsky","O・シコルスキー"]]],["Taniyama Kishou","谷山紀章",[["Sugisaki Kazuya","杉崎和哉"]]],["Terashima Junta","寺島惇太",[["Itsuka Tenhou","五日天峰"]]],
+  ["Terashima Takuma","寺島拓篤",[["Mirokuin Takama","御勒院鷹磨"]]],["Toki Shunichi","土岐隼一",[["Haru Danji","春男児"]]],["Toriumi Kousuke","鳥海浩輔",[["Sakiware Spoon","先割れスプーン"]]],
+  ["Tsuboi Tomohiro","坪井智浩",[["Takatori Rei","鷹取玲"]]],["Uchida Yuuma","内田雄馬"],["Uemura Yuuto","上村祐翔"],["Umeda Shuuichirou","梅田修一朗",[["Marshmallow Yakitaro","マシュマロ焼太郎"]]],
+  ["Umehara Yuuichirou","梅原裕一郎"],["Ura Kazuki","浦和希"],["Watanabe Hiroshi","渡辺ヒロシ"],["Yamaguchi Kappei","山口勝平"],["Yamaguchi Tomohiro","山口智広"],
+  ["Yamamoto Kanehira","山本兼平",[["Munakata Jin","胸肩腎"]]],["Yamanaka Masahiro","山中真尋",[["Kawamura Masato","河村眞人"]]],["Yamanaka Masayuki","やまなか正之",[["Nikaisen Ataru","二回戦中"]]],
+  ["Yamashita Daiki","山下大輝"],["Yamashita Kazuya","山下和也"],["Yamashita Seiichirou","山下誠一郎",[["Tsuyamaro","つやまろ"],["","宮本太"]]],["Yamaya Yoshitaka","山谷祥生",[["","山田婆馬父"]]],
+  ["Yamazaki Isao","山崎功",[["Prof. Shiryuu","Prof.紫龍"]]],["Yanagi Kouhei","柳晃平"],["Yashiro Taku","八代拓",[["Hiruma Mahiru","昼間真昼"]]],
+  ["Yasumoto Hiroki","安元洋貴",[["Ono Bakudan","斧爆弾"]]],["Yonaga Tsubasa","代永翼",[["Yuuki Takuto","悠輝タクト"]]],["Yoshino Hiroyuki","吉野裕行"],
+  ["Zenzai Tatsuya","善財達也",[["Kuzai Tsubasa","九財翼"]]]
+];
+/* Built-in pairs + the rukoji list + pairs learned whenever you save a CD that has both spellings. */
 const Names = {
-  key: s => String(s || '').toLowerCase().replace(/[\s\u3000.・]+/g, ''),
+  /* romaji matching ignores case, spaces, macrons, long vowels and name order: Satō Takuya = Satou Takuya = Takuya Sato */
+  key: s => String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').split(/[\s\u3000.・]+/).filter(Boolean)
+    .map(w => w.replace(/ou|oo/g, 'o').replace(/uu/g, 'u')).sort().join(''),
   flat: s => String(s || '').replace(/[\s\u3000]+/g, ''),
-  pairs(kind){ return [...(DB.setting(kind + 'Pairs') || []), ...NAME_SEED[kind]]; },
+  index(){ const s = DB.setting('vaIndex'); return s && Array.isArray(s.list) && s.list.length ? s.list : VA_SEED; },
+  pairs(kind){
+    if(kind !== 'va') return [...(DB.setting(kind + 'Pairs') || []), ...NAME_SEED[kind]];
+    return [...(DB.setting('vaPairs') || []), ...NAME_SEED.va, ...this.index().flatMap(([en, ja, aka]) => [[en, ja], ...(aka || [])]).filter(p => p[0] && p[1])];
+  },
+  /* the main name when p is one of a voice actor's alias names (Tetrapot Noboru → Furukawa Makoto), else null */
+  mainOf(p){
+    const src = this.index();
+    if(this._aliSrc !== src){
+      const m = new Map();
+      /* an "alias" with the same romaji is only another spelling of the main name (かわむら拓央 / 川村拓央) */
+      src.forEach(([en, ja, aka]) => (aka || []).forEach(([ae, aj]) => { if(ae && this.key(ae) === this.key(en)) return; if(ae) m.set(this.key(ae), {en, ja}); if(aj) m.set(this.flat(aj), {en, ja}); }));
+      this._ali = m; this._aliSrc = src;
+    }
+    return (p.en && this._ali.get(this.key(p.en))) || (p.ja && this._ali.get(this.flat(p.ja))) || null;
+  },
   toJa(kind, en){ const k = this.key(en); const p = k && this.pairs(kind).find(p => this.key(p[0]) === k); return p ? p[1] : ''; },
   toEn(kind, ja){ const j = this.flat(ja); const p = j && this.pairs(kind).find(p => this.flat(p[1]) === j); return p ? p[0] : ''; },
   learn(kind, en, ja){
@@ -1212,6 +1319,45 @@ const Names = {
   },
   learnFrom(c){ (c.cast || []).forEach(p => this.learn('va', p.en, p.ja)); this.learn('series', c.seriesRomaji, c.series); }
 };
+/* rukoji.com/va/ → [[romaji, 日本語, aliases?], …]: one "Romaji (日本語)" paragraph per voice actor, their alias names in the list right
+   after it (or on an "Also known as:" line). A Japanese name listed under two different romaji names is a typo on one of them, so both go. */
+function vaParse(html){
+  const split = t => {
+    t = t.replace(/\s+/g, ' ').trim(); const m = t.match(/^(.*?)\s*[（(]\s*(.*?)\s*[）)]$/);
+    const [en, inner] = m ? [m[1], m[2]] : hasCJK(t) ? ['', t] : [t, ''];
+    const ja = inner.split(/\s*[\/／,、]\s*/).map(Names.flat).filter(hasCJK);
+    return [en.trim(), ja[0] || '', ja.slice(1)];
+  };
+  const list = [];
+  htmlDoc(html).querySelectorAll('p').forEach(p => {
+    const t = p.textContent, aka = /^\s*also known as\s*:/i.test(t);
+    if(!/[（(].*[）)]\s*$/.test(t) || !hasCJK(t)) return;
+    const [en, ja, more] = split(t.replace(/^\s*also known as\s*:\s*/i, ''));
+    if(aka){ const last = list[list.length - 1]; if(last) (last[2] = last[2] || []).push([en, ja]); return; }
+    if(!en || !ja) return;
+    const ul = p.nextElementSibling, al = more.map(j => [en, j]);
+    if(ul && ul.tagName === 'UL') ul.querySelectorAll('li').forEach(li => { const [ae, aj] = split(li.textContent); if(ae || aj) al.push([ae, aj]); });
+    list.push(al.length ? [en, ja, al] : [en, ja]);
+  });
+  const owners = new Map(); list.forEach(([en, ja]) => owners.set(ja, (owners.get(ja) || new Set()).add(Names.key(en))));
+  return list.filter(([, ja]) => owners.get(ja).size < 2);
+}
+/* Downloads rukoji.com/va/ and fills in missing spellings across the shelf. Quiet unless asked (manual) or something got filled in. */
+const castBlanks = () => DB.all.reduce((n, c) => n + c.cast.filter(p => !p.en || !p.ja).length, 0);
+async function vaSync(manual){
+  const btn = el('btnVA'); if(manual) btn.disabled = true;
+  try{
+    const [pg] = await Rukoji.api('pages?slug=va&_fields=content');
+    if(!pg) throw new Error(i18n('page not found'));
+    const list = vaParse(pg.content.rendered);
+    if(list.length < 20) throw new Error(i18n('the list looks empty — the page may have changed'));
+    DB.setting('vaIndex', {at:Date.now(), list});
+    const before = castBlanks(); DB.all.forEach(c => Names.fillCD(c)); const filled = before - castBlanks(); DB.touch();
+    buildFilters(); render(); if(openId) openModal(openId);
+    if(manual || filled) toast(i18n('Voice actor list updated — {n} names; {f} missing spellings filled in', {n:list.length, f:filled}));
+  }catch(e){ if(manual) toast(i18n('Couldn’t update the voice actor list — {e}', {e:e.message})); }
+  finally{ if(manual) btn.disabled = false; }
+}
 /* Normalises metadata from any source: cast → {en, ja}; series → Japanese / romaji slots. */
 function normMeta(m){
   const o = {...m};
@@ -2893,7 +3039,9 @@ el('scGo').onclick = scApply;
   F.group = DB.setting('group') || ''; $('#fGroup').value = F.group;
   DB.all.forEach(c => Names.fillCD(c)); DB.touch();
   buildFilters(); render();
+  const vi = DB.setting('vaIndex'); if(!vi || !(Date.now() - vi.at < 14 * 864e5)) vaSync(false);
 })();
+el('btnVA').onclick = () => vaSync(true);
 
 /* ---------- theme switcher ---------- */
 (function(){
@@ -3023,9 +3171,21 @@ Object.assign(I18N_ZH, {"Translate from": "源语言", "Translate to": "目标�
   "Saved as the 中文 synopsis.": "已保存为中文简介。", "Translation failed — {e}": "翻译失败 — {e}", "English": "英语", "Japanese": "日语", "Chinese (Simplified)": "简体中文",
   "Chinese (Traditional)": "繁体中文", "Korean": "韩语", "Spanish": "西班牙语", "French": "法语", "German": "德语", "Italian": "意大利语", "Portuguese": "葡萄牙语", "Russian": "俄语",
   "Thai": "泰语", "Vietnamese": "越南语", "Indonesian": "印尼语", "Filipino": "菲律宾语"});
+Object.assign(I18N_JA, {"🎙 VA names": "🎙 声優名", "Update the romaji ↔ 日本語 voice actor list (with alias names) from rukojiDB and fill in missing spellings": "rukojiDBの声優名リスト（ローマ字 ↔ 日本語・別名義付き）を更新して、足りない表記を補完します",
+  "alias of {n}": "{n}の別名義", "Voice actor list updated — {n} names; {f} missing spellings filled in": "声優名リストを更新しました — {n}名・{f}件の表記を補完",
+  "Couldn’t update the voice actor list — {e}": "声優名リストを更新できませんでした — {e}", "page not found": "ページが見つかりません", "the list looks empty — the page may have changed": "リストが空です — ページが変わった可能性があります"});
+Object.assign(I18N_ZH, {"🎙 VA names": "🎙 声优名", "Update the romaji ↔ 日本語 voice actor list (with alias names) from rukojiDB and fill in missing spellings": "从 rukojiDB 更新声优名单（罗马字 ↔ 日文，含别名），并补全缺少的写法",
+  "alias of {n}": "{n} 的别名", "Voice actor list updated — {n} names; {f} missing spellings filled in": "声优名单已更新 — {n} 位，补全了 {f} 处写法",
+  "Couldn’t update the voice actor list — {e}": "无法更新声优名单 — {e}", "page not found": "未找到页面", "the list looks empty — the page may have changed": "名单为空 — 页面可能已更改"});
 
 /* ---------- language switcher (EN ・ 日本 ・ 中文) ---------- */
+/* flips the voice actor names whenever the toggle moves them between romaji (EN) and Japanese (日本・中文) */
+function nameFlip(){
+  const b = document.body; b.classList.remove('nmflip'); void b.offsetWidth; b.classList.add('nmflip');
+  clearTimeout(nameFlip._t); nameFlip._t = setTimeout(() => b.classList.remove('nmflip'), 1500);
+}
 function setLang(l, save){
+  const was = LANG;
   LANG = I18N[l] ? l : 'en';
   if(save){ try{ localStorage.setItem('otomeCdLang', LANG); }catch(e){} }
   document.querySelectorAll('.langs button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.l === LANG)));
@@ -3035,6 +3195,7 @@ function setLang(l, save){
   imSync(); imCount(); if(IM.items.length) imRenderList();
   selSync(); if(el('bulk').classList.contains('open')) openBulk();
   if(SC.rows.length) scRender(); else if(SC.res && el('scan').classList.contains('open')) scSummary(SC.msg, SC.res);
+  if(save && (was === 'en') !== (LANG === 'en')) nameFlip();
 }
 document.querySelectorAll('.langs button').forEach(b => b.addEventListener('click', () => setLang(b.dataset.l, true)));
 setLang(LANG, false);

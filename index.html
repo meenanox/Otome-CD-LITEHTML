@@ -10,7 +10,7 @@
 <script>
 /* APP VERSION — the one place to change it. Shown next to the logo, in the footer and saved into backups.
    Bump it whenever a new index.html goes up, so people who re-download can tell which copy they have. */
-var APP_VERSION = '0.5.8';
+var APP_VERSION = '0.5.9';
 /* apply the saved theme before first paint (no flash) */
 try{ var _th = localStorage.getItem('otomeCdTheme'); if(_th) document.documentElement.setAttribute('data-theme', _th); }catch(e){}
 </script>
@@ -2832,7 +2832,7 @@ function scTree(files, dirPaths){
   };
   get('');
   dirPaths.forEach(get);
-  files.forEach(f => { if(f.path.includes('/')) get(upDir(f.path)).files.push({name:f.path.split('/').pop(), size:f.size || 0}); });
+  files.forEach(f => { if(f.path.includes('/')) get(upDir(f.path)).files.push({name:f.path.split('/').pop(), size:f.size || 0, dir:upDir(f.path)}); });
   return dirs;
 }
 function scDeep(d){
@@ -2852,16 +2852,38 @@ function scPickCDs(mode){
   SC.root = base || (top.length === 1 ? top[0] : '');
   const hasFiles = p => scDeep(D.get(p)).length > 0;
   if(mode === 'flat') return kids(base).filter(hasFiles).map(p => ({path:p, series:''}));
+  if(mode === 'series' && base && kids(base).length && kids(base).every(k => scIsCD(D.get(k)))) return kids(base).map(p => ({path:p, series:D.get(base).name}));   // the picked folder is itself the series
   if(mode === 'series') return kids(base).flatMap(s => { const k = kids(s).filter(hasFiles); return k.length ? k.map(p => ({path:p, series:D.get(s).name})) : hasFiles(s) ? [{path:s, series:''}] : []; });
   const out = [];
   const walk = p => { if(p && scIsCD(D.get(p))) out.push({path:p, series:''}); else kids(p).forEach(walk); };
   walk(base);
-  return out;
+  return scNameSeries(out, base);
+}
+/* the folder a volume sits in names its series: ALICE=ALICE / Vol.1 … → series "ALICE=ALICE".
+   A parent below the picked folder always counts; the picked folder itself counts when all its CDs look like volumes. */
+const VOL_NAME = /vol(?:ume)?\.?\s*\d|第\s*\d+\s*巻|巻|#\s*\d|\b(?:no|ep|case)\.?\s*\d|^\s*\d{1,2}[\s._-]/i;
+function scNameSeries(list, base){
+  return list.map(x => {
+    if(x.series) return x;
+    const par = upDir(x.path); if(!par) return x;
+    if(par !== base) return {...x, series:SC.dirs.get(par).name};
+    const sib = list.filter(y => upDir(y.path) === par);
+    return sib.length >= 2 && sib.every(y => VOL_NAME.test(SC.dirs.get(y.path).name)) ? {...x, series:SC.dirs.get(par).name} : x;
+  });
+}
+/* track titles from the audio file names: "01 - 朝の挨拶.flac" → "朝の挨拶"; bare numbers / "Track 01" give nothing */
+const trackTitle = n => String(n).replace(/\.[^./]+$/, '').replace(/^\s*(?:(?:track|trk|tr|トラック)[\s._-]*)?\d{1,3}(?=[\s._\-–—)\]】.]|$)[\s._\-–—)\]】.]*/i, '').replace(/[_]+/g, ' ').replace(/\s+/g, ' ').trim();
+function scTracks(audio){
+  const nat = (a, b) => a.localeCompare(b, 'ja', {numeric:true});
+  const t = [...audio].sort((a, b) => nat(a.dir || '', b.dir || '') || nat(a.name, b.name)).map(f => trackTitle(f.name));
+  const real = t.filter(x => x && !/^(?:track|トラック)\s*\d*$/i.test(x));
+  return real.length && real.length >= t.length / 2 ? t.map(x => ({t:x || '—', d:''})) : [];
 }
 function scStats(d){
   const all = scDeep(d), audio = all.filter(f => AUDIO_EXT.test(extOf(f.name))), packs = all.filter(f => PACK_EXT.test(extOf(f.name)));
   const subs = [...d.kids].map(k => SC.dirs.get(k).name);
   return {
+    tracks:scTracks(audio),
     audio:audio.length, packs:packs.length, size:all.reduce((s, f) => s + f.size, 0),
     formats:[...new Set(audio.map(f => extOf(f.name).toUpperCase()))].sort(),
     scans:subs.some(n => /^(scans?|bk|booklet|ブックレット|スキャン)$/i.test(n)) || all.filter(f => IMG_EXT.test(extOf(f.name))).length >= 4,
@@ -2889,6 +2911,7 @@ function scParse(raw){
   const addCast = n => { n = n.replace(/^\s*CV\s*[.:]?\s*/i, '').trim(); if(!n) return; const p = parsePerson(hasCJK(n) ? n.replace(/\s+/g, '') : n); if(p.en || p.ja) o.cast.push(Names.fillPerson(p)); };
   if(!take(/[\[(【]\s*CV\s*[.:]?\s*([^\])】]+)[\])】]/i, m => { m[1].split(/[、,\/&・]|\s{2,}/).forEach(addCast); })){
     cvNames(s).forEach(addCast);
+    s = s.replace(/[(（]?\bCV\s*[.:．：]?\s*[^\s）),、,/]+(?:[\s　]+[぀-ヿ㐀-鿿]{1,3}(?![぀-ヿ㐀-鿿]))?[)）]?/gi, ' ');   // the whole CV tag, incl. a stray closing bracket
     take(/\bCV\s*[.:]\s*([A-Za-z][A-Za-z'-]+(?:\s[A-Za-z][A-Za-z'-]+)?)/i, m => { addCast(m[1]); });
     s = s.replace(CV_TAG, ' ');
   }
@@ -2938,7 +2961,11 @@ function scBuild(){
   const found = scPickCDs(el('scMode').value);
   SC.rows = found.map(({path, series}) => {
     const d = SC.dirs.get(path), p = scParse(d.name), st = scStats(d);
-    if(series) p[hasCJK(series) ? 'series' : 'seriesRomaji'] = scParse(series).title;
+    if(series){
+      const sn = scParse(series).title;
+      p[hasCJK(sn) ? 'series' : 'seriesRomaji'] = sn;
+      if(sn && !dupTitle(p.title).includes(dupTitle(sn))){ p.title = sn + ' ' + p.title; p.altTitle = hasCJK(p.title) ? p.title : ''; }   // "Vol.1 黒うさぎ" in "ALICE=ALICE" → "ALICE=ALICE Vol.1 黒うさぎ"
+    }
     const mt = scMatch(path, p);
     return {path, p, st, guess:scGuess(p, st), ...mt, on:mt.kind !== 'maybe'};
   });
@@ -2964,6 +2991,7 @@ function scFacts(r){
   if(st.discs > 1) f.push(i18n('{n} discs', {n:st.discs}));
   f.push(fmtSize(st.size));
   if(st.scans) f.push(i18n('scans'));
+  if(st.tracks.length) f.push(i18n(st.tracks.length === 1 ? '1 track name' : '{n} track names', {n:st.tracks.length}));
   [p.rj, p.pn, p.release, p.label, p.seriesRomaji || p.series].forEach(x => x && f.push(x));
   if(p.cast.length) f.push('CV: ' + p.cast.map(x => x.ja || x.en).join(', '));
   if(r.guess) f.push(r.guess);
@@ -2997,11 +3025,11 @@ function scCount(){
 
 /* ---- 5. applying: links / new entries; existing data is only ever filled where blank ---- */
 const scLocal = r => ({localFolder:r.path, localRoot:SC.root, localFiles:r.st.audio, localSize:r.st.size, localFormats:r.st.formats.join(', '), localSeen:new Date().toLocaleDateString('sv')});   // 'sv' = YYYY-MM-DD in local time
-const scMeta = r => ({title:r.p.title, altTitle:r.p.altTitle, release:r.p.release, label:r.p.label, pn:r.p.pn || r.p.rj, cast:r.p.cast, series:r.p.series || '', seriesRomaji:r.p.seriesRomaji || ''});
+const scMeta = r => ({title:r.p.title, altTitle:r.p.altTitle, release:r.p.release, label:r.p.label, pn:r.p.pn || r.p.rj, cast:r.p.cast, series:r.p.series || '', seriesRomaji:r.p.seriesRomaji || '', tracks:r.st.tracks});
 function scLinkTo(id, r, meta){
   const c = DB.byId(id); if(!c) return;
   const patch = scLocal(r), f = cdFields(normMeta(meta));
-  ['release', 'label', 'pn', 'cast', 'series', 'seriesRomaji', 'altTitle'].forEach(k => { if(isEmpty(c[k]) && !isEmpty(f[k])) patch[k] = f[k]; });
+  ['release', 'label', 'pn', 'cast', 'series', 'seriesRomaji', 'altTitle', 'tracks'].forEach(k => { if(isEmpty(c[k]) && !isEmpty(f[k])) patch[k] = f[k]; });
   if(!c.sourceType && r.guess) patch.sourceType = r.guess;
   if(el('scOwned').checked) patch.owned = true;
   DB.update(id, patch); Names.fillCD(DB.byId(id));

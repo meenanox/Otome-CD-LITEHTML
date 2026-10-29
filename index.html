@@ -1204,12 +1204,16 @@ const parseCast = s => String(s || '').split(/[\n,;、]/).map(x => x.trim()).fil
 const NAME_SEED = {
   va:[['Kimura Ryouhei','木村良平'],['Furukawa Makoto','古川慎'],['Midorikawa Hikaru','緑川光'],['Kobayashi Hirotaka','古林裕貴'],
       ['Satou Takuya','佐藤拓也'],['Kakihara Tetsuya','柿原徹也'],['Saitou Souma','斉藤壮馬'],['Morikubo Shoutarou','森久保祥太郎'],
-      ['Maeno Tomoaki','前野智昭'],['Miki Shinichirou','三木眞一郎'],['Nakata Jouji','中田譲治'],['Toriumi Kousuke','鳥海浩輔'],
-      ['Hoshi Souichirou','保志総一朗'],['Hatano Wataru','羽多野渉'],['Seki Toshihiko','関俊彦']],   // mixed up on rukoji's index, so set here
+      ['Maeno Tomoaki','前野智昭'],['Miki Shinichirou','三木眞一郎'],['Nakata Jouji','中田譲治'],['Toriumi Kousuke','鳥海浩輔']],
   series:[['Tenbushuu ni Iyasare','天部衆に癒されCD'],['DIABOLIK LOVERS','DIABOLIK LOVERS'],['Obey Me!ASMR','Obey Me! ASMR'],['linJewelry Kiss','linJewelry Kiss']]
 };
 /* rukojiDB's Voice Actors Index (rukoji.com/va/), built in so it works offline: [romaji, 日本語, [[alias romaji, alias 日本語], …]].
    "🎙 VA names" (and a quiet check every two weeks) downloads the current list over it — setting 'vaIndex'. */
+/* typos on rukoji's index, fixed every time it's read: rukoji romaji → [romaji, 日本語]. A changed romaji is kept as another spelling. */
+const VA_FIX = {
+  'Miki Shinichirou':['Miki Shinichirou','三木眞一郎'], 'Seki Toshihiko':['Seki Toshihiko','関俊彦'],   // listed with 保志総一朗 / 羽多野渉
+  'Sakurai Tooru':['Sakurai Tooru','櫻井トオル'], 'Mizushima Daichuu':['Mizushima Takahiro','水島大宙']
+};
 const VA_SEED = [
   ["Abe Atsushi","阿部敦",[["Teratake Jun","寺竹順"],["Kannagi Hakana","神凪儚"]]],["Amasaki Kouhei","天﨑滉平"],["Asanuma Shintarou","浅沼晋太郎"],
   ["Asari Ryouta","浅利遼太",[["Iju Hiro","伊集ひろ"]]],["Azakami Youhei","阿座上洋平"],["Ban Taito","坂泰斗",[["Fugu Rintarou","河豚倫太郎"]]],
@@ -1219,20 +1223,20 @@ const VA_SEED = [
   ["Fukusato Tatsunori","福里達典",[["Sukima Cherry","スキマチェリー"]]],["Fukushima Jun","福島潤",[["Sakurai Masato","櫻井真人"]]],["Fukuyama Jun","福山潤",[["Houdentei Rappa","ほうでん亭らっぱ"]]],
   ["Furukawa Makoto","古川慎",[["Tetrapot Noboru","テトラポット登"]]],["Gotou Keisuke","後藤啓介",[["Oonabara Wataru","大海原渉"]]],["Hagi Michihiko","萩道彦",[["Bombaye","本場伊江"]]],
   ["Hama Kento","濱健人",[["Yoruno Kazuo","夜乃かずお"]]],["Hamada Kenji","浜田賢二"],["Hamano Daiki","濱野大輝",[["Sendo Renado","千渡レナド"]]],
-  ["Hanada Hikaru","花田光",[["Oiri-hana/Oily Hana","オイリーはな"]]],["Hanae Natsuki","花江夏樹",[["Peroperonchino","ペロペロンチーノ"]]],["Hashiba Rei","羽柴礼"],["Hayami Shou","速水奨"],
-  ["Hayashi Yuu","林勇",[["Hayakawa Yuuga","早川優雅"]]],["Hino Satoshi","日野聡",[["Yajiuma Konjou","野次馬根性"]]],
+  ["Hanada Hikaru","花田光",[["Oiri-hana/Oily Hana","オイリーはな"]]],["Hanae Natsuki","花江夏樹",[["Peroperonchino","ペロペロンチーノ"]]],["Hashiba Rei","羽柴礼"],["Hatano Wataru","羽多野渉"],
+  ["Hayami Shou","速水奨"],["Hayashi Yuu","林勇",[["Hayakawa Yuuga","早川優雅"]]],["Hino Satoshi","日野聡",[["Yajiuma Konjou","野次馬根性"]]],
   ["Hirakawa Daisuke","平川大輔",[["Hirai Tatsuya","平井達矢"],["Yamada Kouhachi","山田コーハチ"]]],["Hisakawa Aya","久川綾"],["Hiyama Nobuyuki","檜山修之"],
   ["Horie Kazuma","堀江一眞",[["Sumeragi Hayato","スメラギ隼人"]]],["Horie Shun","堀江瞬"],["Horiuchi Ken’yuu","堀内賢雄"],["Hose Yuuichi","帆世雄一",[["Max★Marla","まっくす★まぁらぁ"]]],
-  ["Hosoya Yoshimasa","細谷佳正"],["Ichijou Hirame","一条ひらめ"],["Ichikawa Aoi","市川蒼"],["Iguchi Yuuichi","井口祐一",[["Aoi Yuuma","蒼井夕真"]]],["Imai Fumiya","今井文也"],
-  ["Inoue Kazuhiko","井上和彦",[["Maximilian Nagisa","マクシミリアン渚"]]],["Inoue Takara","井上宝",[["Amakawa Yuusei","天河雄成"]]],["Ishida Ryuusei","石田流星",[["Shimotsuki Kanji","霜月寛治"]]],
-  ["Ishii Kazutaka","石井一貴",[["Katou Itsuki","かとういつき"],["Katou Kazuki","加藤一樹"]]],["Ishii Makoto","石井真",[["Nishijima Kotofu","西島古都夫"]]],["Ishikawa Hideo","石川英郎"],
-  ["Ishikawa Kaito","石川界人"],["Ishiya Haruki","石谷春貴",[["Ii Kinniku","井伊筋肉"]]],["Itou Eiji","伊藤栄次"],["Itou Kentarou","伊藤健太郎",[["Healthy Tarou","ヘルシー太郎"]]],
-  ["Itou Kento","伊東健人",[["Nimaigai Muru","二枚貝ムール"],["Toshikazu Shou","利一翔"]]],["Iwanaka Mutsuki","岩中睦樹",[["Koitsuda Renya","恋津田蓮也"]]],
-  ["Iwasaki Ryouta","岩崎諒太",[["","紫薔咲狂夜"]]],["Kageura Daisuke","景浦大輔",[["Torasawa Nekosuke","虎沢猫助"]]],["Kaida Yuki","甲斐田ゆき"],["Kaito Tasuku","海渡翼"],["Kaji Yuuki","梶裕貴"],
-  ["Kajikawa Shouhei","梶川翔平",[["Honma Kaina","本間かいな"]]],["Kajiwara Gakuto","梶原岳人"],["Kakehashi Atsushi","梯篤司",[["Satou Taka","佐藤タカ"]]],
-  ["Kakihara Tetsuya","柿原徹也",[["Kaiou Raku","魁皇楽"]]],["Kamio Shinichirou","神尾晋一郎",[["GO TO BED","後藤寝床"]]],["Kamiya Hiroshi","神谷浩史"],["Kanemasa Ikuto","兼政郁人",[["","金剛山寿一"]]],
-  ["Kanna Nobutoshi","神奈延年"],["Kasama Jun","笠間淳",[["Ichinose Subaru","一之瀬昴"]]],["Katou Masayuki","加藤将之",[["Chasuke","茶介"]]],
-  ["Kawada Shinji","川田紳司",[["Wasshoi Tarou","ワッショイ太郎"]]],["Kawahara Yoshihisa","川原慶久",[["Hatoman Gunsou","鳩マン軍曹"]]],
+  ["Hoshi Souichirou","保志総一朗"],["Hosoya Yoshimasa","細谷佳正"],["Ichijou Hirame","一条ひらめ"],["Ichikawa Aoi","市川蒼"],["Iguchi Yuuichi","井口祐一",[["Aoi Yuuma","蒼井夕真"]]],
+  ["Imai Fumiya","今井文也"],["Inoue Kazuhiko","井上和彦",[["Maximilian Nagisa","マクシミリアン渚"]]],["Inoue Takara","井上宝",[["Amakawa Yuusei","天河雄成"]]],
+  ["Ishida Ryuusei","石田流星",[["Shimotsuki Kanji","霜月寛治"]]],["Ishii Kazutaka","石井一貴",[["Katou Itsuki","かとういつき"],["Katou Kazuki","加藤一樹"]]],
+  ["Ishii Makoto","石井真",[["Nishijima Kotofu","西島古都夫"]]],["Ishikawa Hideo","石川英郎"],["Ishikawa Kaito","石川界人"],["Ishiya Haruki","石谷春貴",[["Ii Kinniku","井伊筋肉"]]],
+  ["Itou Eiji","伊藤栄次"],["Itou Kentarou","伊藤健太郎",[["Healthy Tarou","ヘルシー太郎"]]],["Itou Kento","伊東健人",[["Nimaigai Muru","二枚貝ムール"],["Toshikazu Shou","利一翔"]]],
+  ["Iwanaka Mutsuki","岩中睦樹",[["Koitsuda Renya","恋津田蓮也"]]],["Iwasaki Ryouta","岩崎諒太",[["","紫薔咲狂夜"]]],["Kageura Daisuke","景浦大輔",[["Torasawa Nekosuke","虎沢猫助"]]],
+  ["Kaida Yuki","甲斐田ゆき"],["Kaito Tasuku","海渡翼"],["Kaji Yuuki","梶裕貴"],["Kajikawa Shouhei","梶川翔平",[["Honma Kaina","本間かいな"]]],["Kajiwara Gakuto","梶原岳人"],
+  ["Kakehashi Atsushi","梯篤司",[["Satou Taka","佐藤タカ"]]],["Kakihara Tetsuya","柿原徹也",[["Kaiou Raku","魁皇楽"]]],["Kamio Shinichirou","神尾晋一郎",[["GO TO BED","後藤寝床"]]],
+  ["Kamiya Hiroshi","神谷浩史"],["Kanemasa Ikuto","兼政郁人",[["","金剛山寿一"]]],["Kanna Nobutoshi","神奈延年"],["Kasama Jun","笠間淳",[["Ichinose Subaru","一之瀬昴"]]],
+  ["Katou Masayuki","加藤将之",[["Chasuke","茶介"]]],["Kawada Shinji","川田紳司",[["Wasshoi Tarou","ワッショイ太郎"]]],["Kawahara Yoshihisa","川原慶久",[["Hatoman Gunsou","鳩マン軍曹"]]],
   ["Kawamura Takuo","かわむら拓央",[["Kawamura Takuo","川村拓央"],["Namerikawa Kikutarou","滑川菊太郎"]]],["Kawanishi Kengo","河西健吾",[["Shishamo","ししゃも"]]],
   ["Kawano Taketoshi","川野剛稔",[["Nishikido Tomohisa","錦戸智久"]]],["Kawashima Reiji","川島零士"],["Kijima Ryuuichi","木島隆一",[["Sakuragawa Haruhito","桜川春仁"]]],
   ["Kimura Ryouhei","木村良平"],["Kimura Taihi","木村太飛",[["Kiyomi Ikutarou","清美育太朗"]]],["Kisaichi Atsushi","私市淳",[["Kagami Rui","嘉神塁"]]],
@@ -1244,24 +1248,25 @@ const VA_SEED = [
   ["Maeda Seiji","前田誠二"],["Maeda Takeshi","前田剛",[["Renaissance Yamada","ルネッサンス山田"]]],["Maeno Tomoaki","前野智昭",[["Fuwa Mitsuhide","不破光秀"],["Sakura Hiroshi","桜ひろし"]]],
   ["Majima Junji","間島淳司",[["Sugakiya","須賀紀哉"]]],["Makino Hideki","牧野秀紀",[["Miraku Akira","三楽章"]]],["Mamiya Yasuhiro","間宮康弘",[["Shimauma Danshaku","縞馬男爵"]]],
   ["Masuda Toshiki","増田俊樹",[["Hiroyama Kazushige","広山和重"]]],["Matsuda Kenichirou","松田健一郎",[["Hayakawa Rinta","早川凜太"]]],
-  ["Matsumoto Yasunori","松本保典",[["Kataoka Daijirou","片岡大二郎"]]],["Matsuoka Youhei","松岡洋平"],["Midorikawa Hikaru","緑川光"],["Mitsuhashi Wataru","三橋渡"],
-  ["Mitsutomi Takao","光富崇雄",[["Rin Seirin","凛星凛"]]],["Miura Hiroaki","三浦祥朗"],["Miyano Mamoru","宮野真守"],["Miyase Naoya","宮瀬尚也",[["Shirakami Kanade","白上奏"]]],
-  ["Miyashita Eiji","宮下栄治",[["Horikawa Shinobu","堀川忍"]]],["Mizunaka Masaaki","水中雅章",[["Miyabi Shou","宮尾章"]]],["Mizushima Daichuu","水島大宙",[["Kijima Uta","木島宇太"]]],
-  ["Morikawa Toshiyuki","森川智之",[["Houdenteigatsu","ほうでん亭ガツ"],["Inugami Mikado","犬神帝"]]],["Morikubo Shoutarou","森久保祥太郎",[["Andalucia","アンダルシア"]]],["Morita Masakazu","森田成一"],
-  ["Murakami Satoru","村上聡",[["Uitoki Cherry","初時チェリー"]]],["Murakami Yoshiki","村上喜紀"],["Murase Ayumu","村瀬歩",[["Yoshimura Cartman","吉村カートマン"]]],
-  ["Murata Taishi","村田太志",[["Murano Sumibito","村野住人"]]],["Muro Genki","室元気",[["Hiruumi Daikichi","昼海大吉"]]],["Nakagawa Keiichi","中川慶一",[["Kamikawa Hajime","上河創"]]],
-  ["Nakai Kazuya","中井和哉"],["Nakajima Yoshiki","中島ヨシキ",[["Nimaigai Hokki","二枚貝ほっき"]]],["Nakamura Shuugo","仲村宗悟",[["Anda Gigou","庵田技剛"]]],["Nakamura Yuuichi","中村悠一"],
-  ["Nakazawa Masatomo","中澤まさとも",[["Sawa Manaka","佐和真中"]]],["Namikawa Daisuke","浪川大輔"],["Narita Ken","成田剣",[["Aoshima Yaiba","青島刃"]]],
-  ["Nishi Kensuke","西健亮",[["Kazune","和音"]]],["Nogami Shou","野上翔",[["Yumachi Kakeru","湯町駆"]]],["Nojima Hirofumi","野島裕史",[["Kashiwagi Homare","柏木誉"]]],["Nojima Kenji","野島健児"],
-  ["Nomiya Kazunori","野宮一範",[["Yagami Daisuke","八神大輔"]]],["Nomura Kenji","乃村健次",[["Blacky","舞幸運"]]],["Oda Hisafumi","小田久史",[["Hayate Jin","ハヤテ迅"]]],
-  ["Ogihara Hideki","荻原秀樹",[["Koike Takezou","小池竹蔵"]]],["Okano Kousuke","岡野浩介",[["Hishi Masaru","菱勝"]]],["Okitsu Kazuyuki","興津和幸",[["Yotsuya Cider","四ツ谷サイダー"]]],
-  ["Ono Daisuke","小野大輔"],["Ono Kenshou","小野賢章"],["Ono Tomohiro","大野智敬",[["Irodori Kazuya","彩和矢"]]],["Ono Yuuki","小野友樹",[["Hiiragi Santa","柊三太"]]],
-  ["Oohashi Kenichirou","大橋賢一郎",[["KENN",""]]],["Oohashi Takamasa","大橋隆昌",[["Nakazawa Ayumu","中澤アユム"]]],["Ooi Marie","大井麻利衣"],
-  ["Ookawa Hayata","大川隼汰",[["Tominaga Shuhei","富永修平"]]],["Ookawa Tooru","大川透"],["Oosaka Ryouta","逢坂良太",[["Marinokouji Reon","万里小路麗音"]]],
-  ["Ooshita Kouta","大下孝太",[["One Night Love","一夜愛"]]],["Oosuka Jun","大須賀純",[["Kasumi Shu","香純秋"]]],["Ootani Yuuki","大谷祐貴",[["Mie Kanade","三重奏"]]],["Saitou Souma","斉藤壮馬"],
-  ["Sakai Koudai","酒井広大",[["Kanabe Eito","金部影人"]]],["Sakakihara Yuuki","榊原優希"],["Sakata Shougo","坂田将吾"],["Sakurai Tooru","井トオル",[["Watake Tetsu","我武テツ"]]],
-  ["Sasada Takayuki","笹田貴之"],["Satou Gen","佐藤元"],["Satou Takuya","佐藤拓也",[["Domon Atsushi","土門熱"]]],["Sawashiro Chiharu","沢城千春"],["Seki Tomokazu","関智一"],
-  ["Shibuya Satoi","渋谷慧"],["Shimono Hiro","下野紘",[["Baiki Ruto","刃衣斬人"]]],["Shingaki Tarusuke","新垣樽助",[["Girigi Lee","切木Lee"],["Minobe Satoru","ミノベサトル"]]],
+  ["Matsumoto Yasunori","松本保典",[["Kataoka Daijirou","片岡大二郎"]]],["Matsuoka Youhei","松岡洋平"],["Midorikawa Hikaru","緑川光"],["Miki Shinichirou","三木眞一郎"],
+  ["Mitsuhashi Wataru","三橋渡"],["Mitsutomi Takao","光富崇雄",[["Rin Seirin","凛星凛"]]],["Miura Hiroaki","三浦祥朗"],["Miyano Mamoru","宮野真守"],
+  ["Miyase Naoya","宮瀬尚也",[["Shirakami Kanade","白上奏"]]],["Miyashita Eiji","宮下栄治",[["Horikawa Shinobu","堀川忍"]]],["Mizunaka Masaaki","水中雅章",[["Miyabi Shou","宮尾章"]]],
+  ["Mizushima Takahiro","水島大宙",[["Kijima Uta","木島宇太"],["Mizushima Daichuu","水島大宙"]]],["Morikawa Toshiyuki","森川智之",[["Houdenteigatsu","ほうでん亭ガツ"],["Inugami Mikado","犬神帝"]]],
+  ["Morikubo Shoutarou","森久保祥太郎",[["Andalucia","アンダルシア"]]],["Morita Masakazu","森田成一"],["Murakami Satoru","村上聡",[["Uitoki Cherry","初時チェリー"]]],["Murakami Yoshiki","村上喜紀"],
+  ["Murase Ayumu","村瀬歩",[["Yoshimura Cartman","吉村カートマン"]]],["Murata Taishi","村田太志",[["Murano Sumibito","村野住人"]]],["Muro Genki","室元気",[["Hiruumi Daikichi","昼海大吉"]]],
+  ["Nakagawa Keiichi","中川慶一",[["Kamikawa Hajime","上河創"]]],["Nakai Kazuya","中井和哉"],["Nakajima Yoshiki","中島ヨシキ",[["Nimaigai Hokki","二枚貝ほっき"]]],
+  ["Nakamura Shuugo","仲村宗悟",[["Anda Gigou","庵田技剛"]]],["Nakamura Yuuichi","中村悠一"],["Nakazawa Masatomo","中澤まさとも",[["Sawa Manaka","佐和真中"]]],["Namikawa Daisuke","浪川大輔"],
+  ["Narita Ken","成田剣",[["Aoshima Yaiba","青島刃"]]],["Nishi Kensuke","西健亮",[["Kazune","和音"]]],["Nogami Shou","野上翔",[["Yumachi Kakeru","湯町駆"]]],
+  ["Nojima Hirofumi","野島裕史",[["Kashiwagi Homare","柏木誉"]]],["Nojima Kenji","野島健児"],["Nomiya Kazunori","野宮一範",[["Yagami Daisuke","八神大輔"]]],
+  ["Nomura Kenji","乃村健次",[["Blacky","舞幸運"]]],["Oda Hisafumi","小田久史",[["Hayate Jin","ハヤテ迅"]]],["Ogihara Hideki","荻原秀樹",[["Koike Takezou","小池竹蔵"]]],
+  ["Okano Kousuke","岡野浩介",[["Hishi Masaru","菱勝"]]],["Okitsu Kazuyuki","興津和幸",[["Yotsuya Cider","四ツ谷サイダー"]]],["Ono Daisuke","小野大輔"],["Ono Kenshou","小野賢章"],
+  ["Ono Tomohiro","大野智敬",[["Irodori Kazuya","彩和矢"]]],["Ono Yuuki","小野友樹",[["Hiiragi Santa","柊三太"]]],["Oohashi Kenichirou","大橋賢一郎",[["KENN",""]]],
+  ["Oohashi Takamasa","大橋隆昌",[["Nakazawa Ayumu","中澤アユム"]]],["Ooi Marie","大井麻利衣"],["Ookawa Hayata","大川隼汰",[["Tominaga Shuhei","富永修平"]]],["Ookawa Tooru","大川透"],
+  ["Oosaka Ryouta","逢坂良太",[["Marinokouji Reon","万里小路麗音"]]],["Ooshita Kouta","大下孝太",[["One Night Love","一夜愛"]]],["Oosuka Jun","大須賀純",[["Kasumi Shu","香純秋"]]],
+  ["Ootani Yuuki","大谷祐貴",[["Mie Kanade","三重奏"]]],["Saitou Souma","斉藤壮馬"],["Sakai Koudai","酒井広大",[["Kanabe Eito","金部影人"]]],["Sakakihara Yuuki","榊原優希"],
+  ["Sakata Shougo","坂田将吾"],["Sakurai Tooru","櫻井トオル",[["Watake Tetsu","我武テツ"]]],["Sasada Takayuki","笹田貴之"],["Satou Gen","佐藤元"],
+  ["Satou Takuya","佐藤拓也",[["Domon Atsushi","土門熱"]]],["Sawashiro Chiharu","沢城千春"],["Seki Tomokazu","関智一"],["Seki Toshihiko","関俊彦"],["Shibuya Satoi","渋谷慧"],
+  ["Shimono Hiro","下野紘",[["Baiki Ruto","刃衣斬人"]]],["Shingaki Tarusuke","新垣樽助",[["Girigi Lee","切木Lee"],["Minobe Satoru","ミノベサトル"]]],
   ["Shioya Fumiyoshi","汐谷文康",[["Haiba Aoi","灰羽蒼"]]],["Shirai Yuusuke","白井悠介",[["Kuroi Isamu","黒井勇"]]],["Shiraishi Minoru","白石稔",[["Ichigo Milk","いちごみるく"]]],
   ["Shiraishi Ryouko","白石涼子"],["Shirakawa Shuusaku","白川周作",[["Ninomiya Yuu","二ノ宮憂"]]],["Shirokuma Hiroshi","白熊寛嗣",[["Totsuka Kazuya","戸塚和也"]]],["Someya Toshiyuki","染谷俊之"],
   ["Sugiyama Noriaki","杉山紀彰",[["Noriyuki","紀之"]]],["Suwabe Junichi","諏訪部順一"],["Suzuki Chihiro","鈴木千尋",[["Shihara Haruka","紫原遥"]]],["Suzuki Ryouta","鈴木崚汰"],
@@ -1287,7 +1292,7 @@ const Names = {
   key: s => String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').split(/[\s\u3000.・]+/).filter(Boolean)
     .map(w => w.replace(/ou|oo/g, 'o').replace(/uu/g, 'u')).sort().join(''),
   flat: s => String(s || '').replace(/[\s\u3000]+/g, ''),
-  index(){ const s = DB.setting('vaIndex'); return s && Array.isArray(s.list) && s.list.length ? s.list : VA_SEED; },
+  index(){ const s = DB.setting('vaIndex'); return s && s.v === 2 && Array.isArray(s.list) && s.list.length ? s.list : VA_SEED; },
   pairs(kind){
     if(kind !== 'va') return [...(DB.setting(kind + 'Pairs') || []), ...NAME_SEED[kind]];
     return [...(DB.setting('vaPairs') || []), ...NAME_SEED.va, ...this.index().flatMap(([en, ja, aka]) => [[en, ja], ...(aka || [])]).filter(p => p[0] && p[1])];
@@ -1297,8 +1302,8 @@ const Names = {
     const src = this.index();
     if(this._aliSrc !== src){
       const m = new Map();
-      /* an "alias" with the same romaji is only another spelling of the main name (かわむら拓央 / 川村拓央) */
-      src.forEach(([en, ja, aka]) => (aka || []).forEach(([ae, aj]) => { if(ae && this.key(ae) === this.key(en)) return; if(ae) m.set(this.key(ae), {en, ja}); if(aj) m.set(this.flat(aj), {en, ja}); }));
+      /* an "alias" with the same romaji or the same 日本語 is only another spelling of the main name (かわむら拓央 / 川村拓央) */
+      src.forEach(([en, ja, aka]) => (aka || []).forEach(([ae, aj]) => { if((ae && this.key(ae) === this.key(en)) || (aj && this.flat(aj) === ja)) return; if(ae) m.set(this.key(ae), {en, ja}); if(aj) m.set(this.flat(aj), {en, ja}); }));
       this._ali = m; this._aliSrc = src;
     }
     return (p.en && this._ali.get(this.key(p.en))) || (p.ja && this._ali.get(this.flat(p.ja))) || null;
@@ -1339,6 +1344,7 @@ function vaParse(html){
     if(ul && ul.tagName === 'UL') ul.querySelectorAll('li').forEach(li => { const [ae, aj] = split(li.textContent); if(ae || aj) al.push([ae, aj]); });
     list.push(al.length ? [en, ja, al] : [en, ja]);
   });
+  list.forEach(e => { const f = VA_FIX[e[0]]; if(!f) return; if(Names.key(f[0]) !== Names.key(e[0])) (e[2] = e[2] || []).push([e[0], f[1]]); e[0] = f[0]; e[1] = f[1]; });
   const owners = new Map(); list.forEach(([en, ja]) => owners.set(ja, (owners.get(ja) || new Set()).add(Names.key(en))));
   return list.filter(([, ja]) => owners.get(ja).size < 2);
 }
@@ -1351,7 +1357,7 @@ async function vaSync(manual){
     if(!pg) throw new Error(i18n('page not found'));
     const list = vaParse(pg.content.rendered);
     if(list.length < 20) throw new Error(i18n('the list looks empty — the page may have changed'));
-    DB.setting('vaIndex', {at:Date.now(), list});
+    DB.setting('vaIndex', {at:Date.now(), v:2, list});
     const before = castBlanks(); DB.all.forEach(c => Names.fillCD(c)); const filled = before - castBlanks(); DB.touch();
     buildFilters(); render(); if(openId) openModal(openId);
     if(manual || filled) toast(i18n('Voice actor list updated — {n} names; {f} missing spellings filled in', {n:list.length, f:filled}));
@@ -3039,7 +3045,7 @@ el('scGo').onclick = scApply;
   F.group = DB.setting('group') || ''; $('#fGroup').value = F.group;
   DB.all.forEach(c => Names.fillCD(c)); DB.touch();
   buildFilters(); render();
-  const vi = DB.setting('vaIndex'); if(!vi || !(Date.now() - vi.at < 14 * 864e5)) vaSync(false);
+  const vi = DB.setting('vaIndex'); if(!vi || vi.v !== 2 || !(Date.now() - vi.at < 14 * 864e5)) vaSync(false);
 })();
 el('btnVA').onclick = () => vaSync(true);
 

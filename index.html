@@ -8,6 +8,9 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500&family=Quicksand:wght@400;500&family=Noto+Sans+JP:wght@400;500&display=swap" rel="stylesheet">
 <script>
+/* APP VERSION — the one place to change it. Shown next to the logo, in the footer and saved into backups.
+   Bump it whenever a new index.html goes up, so people who re-download can tell which copy they have. */
+var APP_VERSION = '0.5.5';
 /* apply the saved theme before first paint (no flash) */
 try{ var _th = localStorage.getItem('otomeCdTheme'); if(_th) document.documentElement.setAttribute('data-theme', _th); }catch(e){}
 </script>
@@ -57,6 +60,7 @@ button{cursor:pointer}
 .brand{display:flex;align-items:center;gap:12px;margin-right:auto}
 .brand-label{display:block;height:68px;aspect-ratio:650/195;margin:-6px 0 -6px -6px;background:var(--label) no-repeat center/contain;transition:transform .3s var(--spring)}
 .brand-label:hover{transform:rotate(-2deg) scale(1.04)}
+.ver{align-self:flex-end;margin:0 0 6px -8px;font-size:12px;color:var(--ink-soft);background:var(--accent-faint);border-radius:999px;padding:2px 8px;white-space:nowrap}
 :root,[data-theme="lavender"]{--label:url("labels/otome-cd-header-lavender.png")}
 [data-theme="ocean"]{--label:url("labels/otome-cd-header-ocean.png")}
 [data-theme="midnight"]{--label:url("labels/otome-cd-header-midnight.png")}
@@ -498,6 +502,7 @@ details.more p{margin:8px 0 0;color:var(--ink-faint);font-weight:400;line-height
     <div class="brand">
       <div class="brand-label" role="img" aria-label="Otome CD Shelf"></div>
       <h1>Otome CD Shelf</h1>
+      <span class="ver" id="appVer" title="App version — compare it with the newest index.html on GitHub"></span>
     </div>
     <div class="langs" role="group" aria-label="Language">
       <button data-l="en" aria-pressed="true" title="English">EN</button><span class="dot">・</span><button data-l="ja" aria-pressed="false" title="日本語">日本</button><span class="dot">・</span><button data-l="zh" aria-pressed="false" title="简体中文">中文</button>
@@ -579,7 +584,7 @@ details.more p{margin:8px 0 0;color:var(--ink-faint);font-weight:400;line-height
   <div class="meta"><span id="count"></span><span>Click a jacket for details ♡ <button class="pill sm" id="btnSelect" aria-pressed="false" title="Select several CDs to edit them together (or Ctrl/⌘-click and Shift-click jackets)">☑ Select</button></span></div>
   <section class="grid" id="grid" aria-live="polite"></section>
 </main>
-<footer>Sample entries &amp; jacket images from <a href="https://rukoji.com/" style="color:inherit">rukojiDB</a> — all artwork belongs to its respective labels &amp; artists. Your notes and ratings live only in this browser.</footer>
+<footer>Sample entries &amp; jacket images from <a href="https://rukoji.com/" style="color:inherit">rukojiDB</a> — all artwork belongs to its respective labels &amp; artists. Your notes and ratings live only in this browser.<br><span id="appVerFoot"></span></footer>
 
 <div class="backdrop" id="modal" aria-hidden="true">
   <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="mTitle">
@@ -813,7 +818,7 @@ Object.assign(I18N_ZH, {"Search by title on every site": "在所有网站按标�
 const I18N = {ja:I18N_JA, zh:I18N_ZH}, LANG_TAG = {en:'en', ja:'ja', zh:'zh-CN'};
 let LANG = 'en'; try{ const l = localStorage.getItem('otomeCdLang'); LANG = I18N[l] ? l : 'en'; }catch(e){}
 const i18n = (k, v) => { let o = (I18N[LANG] && I18N[LANG][k]) || k; if(v) o = o.replace(/\{(\w+)\}/g, (m, n) => v[n] != null ? v[n] : m); return o; };
-const NOT_STATIC = '#shBody,#shCount,#fCatPick,#scList,#scStatus,#scGo,#btnSelect,#selCount,#bHead,#bList,#bGo,#dupList,#dupGo,#cmpTable,#cmpHits,#cmpStatus,#cmpSub,#cmpApply,#grid,#mBody,#mPanel,#imList,#toast,#count,#statTotal,#statOwned,#eHead,#imStatus,#imGo,#fLabel,#fVA,#fSeries,script,style';
+const NOT_STATIC = '#appVer,#appVerFoot,#shBody,#shCount,#fCatPick,#scList,#scStatus,#scGo,#btnSelect,#selCount,#bHead,#bList,#bGo,#dupList,#dupGo,#cmpTable,#cmpHits,#cmpStatus,#cmpSub,#cmpApply,#grid,#mBody,#mPanel,#imList,#toast,#count,#statTotal,#statOwned,#eHead,#imStatus,#imGo,#fLabel,#fVA,#fSeries,script,style';
 const NOT_ATTR = '#shBody,#scList,#bList,#cmpTable,#cmpHits,#grid,#mBody,#mPanel,#imList';
 function applyStaticLang(){
   const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT), nodes = [];
@@ -832,6 +837,8 @@ function applyStaticLang(){
     for(const a in e.__attrs) e.setAttribute(a, i18n(e.__attrs[a]));
   });
   const h = document.querySelector('.brand h1'); if(h) h.textContent = I18N[LANG] ? I18N[LANG].brand : 'Otome CD Shelf';
+  document.getElementById('appVer').textContent = 'v' + APP_VERSION;
+  document.getElementById('appVerFoot').textContent = (I18N[LANG] ? I18N[LANG].brand : 'Otome CD Shelf') + ' · v' + APP_VERSION;
   document.documentElement.lang = LANG_TAG[LANG];
   document.title = I18N[LANG] ? I18N[LANG].brand : 'Otome CD Shelf';
 }
@@ -899,7 +906,7 @@ const Store = {
   save(data){
     try{ localStorage.setItem(this.KEY, JSON.stringify(data)); return true; }catch(e){ return false; }
   },
-  exportBlob(data){ return new Blob([JSON.stringify({app:'otome-cd-shelf', version:1, exportedAt:new Date().toISOString(), cds:data.cds, settings:data.settings}, null, 2)], {type:'application/json'}); },
+  exportBlob(data){ return new Blob([JSON.stringify({app:'otome-cd-shelf', version:1, appVersion:APP_VERSION, exportedAt:new Date().toISOString(), cds:data.cds, settings:data.settings}, null, 2)], {type:'application/json'}); },
   parseImport(text){
     const d = JSON.parse(text);
     const cds = Array.isArray(d) ? d : d.cds;

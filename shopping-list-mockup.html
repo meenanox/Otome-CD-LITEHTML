@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shopping List Mockup</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500&family=Quicksand:wght@400;500;600&family=Noto+Sans+JP:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* MOCKUP ONLY — sample data, nothing is fetched. Theme tokens copied from index.html. */
+:root{
+  --shadow:0 10px 30px -12px rgba(var(--shadow-rgb),.35);
+  --spring:cubic-bezier(.34,1.56,.64,1);
+  --font:'Quicksand','Noto Sans JP',system-ui,sans-serif;
+  --font-display:'Fredoka','Quicksand','Noto Sans JP',system-ui,sans-serif;
+  --sale:236,72,153; --low:16,185,129; --soon:249,115,22;
+}
+:root,[data-theme="lavender"]{--bg:#FFFFFF;--card:#FFFFFF;--surface:#FFFFFF;--surface-rgb:255,255,255;--accent:#A855F7;--accent-2:#C084FC;--accent-soft:#E9D5FF;--accent-faint:#F5ECFF;--ink:#7E22CE;--ink-2:#6B21A8;--ink-soft:#9A5BD0;--ink-faint:#B99BDB;--pink-soft:#FDE4F1;--pink-ink:#B0357A;--ok:#15803d;--shadow-rgb:126,34,206;--b1:rgba(196,181,253,.65);--b2:rgba(251,207,232,.77);--b5:rgba(186,230,253,.68)}
+[data-theme="ocean"]{--bg:#FFFFFF;--card:#FFFFFF;--surface:#FFFFFF;--surface-rgb:255,255,255;--accent:#2F86E0;--accent-2:#24BFB0;--accent-soft:#CFE6F8;--accent-faint:#EAF5FD;--ink:#0B4F7C;--ink-2:#0A4468;--ink-soft:#3B7BA6;--ink-faint:#86B2CC;--pink-soft:#DCF6F2;--pink-ink:#0F766E;--ok:#0F766E;--shadow-rgb:11,79,124;--b1:rgba(147,197,253,.65);--b2:rgba(153,246,228,.65);--b5:rgba(165,243,252,.7)}
+[data-theme="midnight"]{--bg:#130F1E;--card:#1F1830;--surface:#1F1830;--surface-rgb:31,24,48;--accent:#A855F7;--accent-2:#C084FC;--accent-soft:#3D2D5E;--accent-faint:#2B2142;--ink:#E6D6FB;--ink-2:#D9C5F5;--ink-soft:#B79BE0;--ink-faint:#8570AD;--pink-soft:#3A2145;--pink-ink:#F5B8DC;--ok:#6EE7B7;--shadow-rgb:0,0,0;--b1:rgba(126,60,220,.38);--b2:rgba(190,60,150,.26);--b5:rgba(60,90,200,.26);color-scheme:dark}
+[data-theme="sepia"]{--bg:#F7F1E8;--card:#FFFBF4;--surface:#FFFBF4;--surface-rgb:255,251,244;--accent:#A67C5B;--accent-2:#CBA881;--accent-soft:#E9DBCA;--accent-faint:#F4EBDD;--ink:#5A4434;--ink-2:#4B3829;--ink-soft:#8A6F5A;--ink-faint:#B3A08D;--pink-soft:#F5E5E0;--pink-ink:#8C4F45;--ok:#5E7A4A;--shadow-rgb:92,68,51;--b1:rgba(222,196,160,.55);--b2:rgba(228,190,180,.50);--b5:rgba(205,185,165,.50)}
+[data-theme="midnight"] .box,[data-theme="midnight"] .gcard{border-color:rgba(216,180,254,.4);box-shadow:0 0 0 1px rgba(216,180,254,.1),0 0 22px -8px rgba(192,132,252,.55)}
+
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;font-family:var(--font);color:var(--ink);background-color:var(--bg);
+  background-image:radial-gradient(38% 32% at 8% 12%,var(--b1),transparent 70%),radial-gradient(30% 28% at 92% 8%,var(--b2),transparent 70%),radial-gradient(36% 34% at 50% 90%,var(--b5),transparent 70%);background-attachment:fixed}
+button,select{font:inherit;color:inherit;cursor:pointer}
+h1,h2,h3{font-family:var(--font-display);font-weight:500;margin:0}
+.wrap{max-width:1180px;margin:0 auto;padding:18px 16px 60px}
+
+/* header + tabs */
+.top{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-bottom:6px}
+.top h1{font-size:26px;margin-right:auto}
+.note{font-size:12.5px;color:var(--ink-soft);margin:0 0 16px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 18px;padding:5px;background:rgba(var(--surface-rgb),.75);border:2px solid var(--accent-soft);border-radius:999px;width:max-content;max-width:100%}
+.tabs button{border:0;background:transparent;border-radius:999px;padding:7px 14px;font-size:13.5px;color:var(--ink-soft)}
+.tabs button.on{background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#fff}
+.themes{display:flex;gap:6px}
+.themes button{width:24px;height:24px;border-radius:50%;border:2px solid var(--accent-soft);padding:0}
+.themes button.on{outline:2px solid var(--accent);outline-offset:2px}
+.pill-btn{border:2px solid var(--accent-soft);background:var(--surface);border-radius:999px;padding:7px 14px;font-size:13px;color:var(--ink)}
+.pill-btn.main{background:linear-gradient(135deg,var(--accent),var(--accent-2));border-color:transparent;color:#fff}
+.view{display:none}.view.on{display:block;animation:pop .35s var(--spring)}
+@keyframes pop{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+.box{background:var(--card);border:2px solid var(--accent-faint);border-radius:22px;box-shadow:var(--shadow);padding:16px}
+.sec-h{display:flex;align-items:center;gap:10px;margin:22px 4px 10px;font-family:var(--font-display);font-size:18px}
+.sec-h::after{content:"";flex:1;height:2px;border-radius:2px;background:var(--accent-soft)}
+.sec-h .n{font-family:var(--font);font-size:12px;background:var(--accent-soft);border-radius:999px;padding:2px 9px;order:1}
+
+/* placeholder covers (no real jackets in a mockup) */
+.cv{position:relative;flex:none;border-radius:14px;overflow:hidden;display:grid;place-items:center;color:#fff;font-family:var(--font-display);text-align:center;line-height:1.1}
+.cv b{font-size:1.6em;font-weight:500}
+
+/* price bits */
+.price{font-family:var(--font-display);font-size:17px;font-weight:500;color:var(--ink)}
+.was{font-size:12px;color:var(--ink-faint);text-decoration:line-through;margin-left:5px}
+.muted{color:var(--ink-faint);font-size:12px}
+.src{display:inline-block;font-size:11px;border-radius:999px;padding:2px 8px;background:var(--accent-faint);color:var(--ink-soft);white-space:nowrap}
+.src.oos{opacity:.5;text-decoration:line-through}
+.tag{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;border-radius:999px;padding:2px 9px;white-space:nowrap;font-weight:600}
+.tag.sale{color:rgb(var(--sale));background:rgba(var(--sale),.12)}
+.tag.low{color:rgb(var(--low));background:rgba(var(--low),.13)}
+.tag.soon{color:rgb(var(--soon));background:rgba(var(--soon),.13)}
+.tag.under{color:var(--ok);background:rgba(var(--low),.1);border:1px dashed currentColor}
+/* neon sale badge on covers, same idea as the listening ring */
+.neon{position:absolute;top:8px;left:8px;padding:3px 8px;border-radius:999px;font:600 12px var(--font);color:#fff;
+  border:1.5px solid rgb(var(--sale));background:rgba(20,8,30,.45);-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px);
+  box-shadow:inset 0 0 5px 1px rgba(var(--sale),.8),0 0 4px 1px rgb(var(--sale)),0 0 12px 2px rgba(var(--sale),.55);animation:glow 2.6s ease-in-out infinite}
+.neon.low{--sale:var(--low)}
+@keyframes glow{50%{box-shadow:inset 0 0 5px 1px rgba(var(--sale),.6),0 0 2px 1px rgb(var(--sale)),0 0 7px 1px rgba(var(--sale),.35)}}
+@media (prefers-reduced-motion:reduce){.neon{animation:none}}
+
+/* ---------- OVERVIEW ---------- */
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+.tile{padding:14px 16px}
+.tile .k{font-size:12.5px;color:var(--ink-soft)}
+.tile .v{font-family:var(--font-display);font-size:28px;font-weight:500;margin-top:2px}
+.tile .s{font-size:12px;color:var(--ink-faint);margin-top:2px}
+.tile.hot{border-color:rgba(var(--sale),.45)}
+.tile.hot .v{color:rgb(var(--sale))}
+.strip{display:flex;gap:12px;overflow-x:auto;padding:4px 2px 10px;scroll-snap-type:x mandatory}
+.mini{flex:0 0 150px;scroll-snap-align:start}
+.mini .cv{width:150px;height:150px;font-size:13px}
+.mini .t{font-size:13px;margin:8px 2px 2px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.mini .p{margin:0 2px}
+.ov-cols{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:760px){.ov-cols{grid-template-columns:1fr}}
+.li{display:flex;gap:10px;align-items:center;padding:8px 4px;border-bottom:1.5px solid var(--accent-faint)}
+.li:last-child{border-bottom:0}
+.li .cv{width:44px;height:44px;font-size:9px;border-radius:10px}
+.li .mid{flex:1;min-width:0}
+.li .mid .t{font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.li .r{text-align:right;flex:none}
+
+/* ---------- A: TABLE ---------- */
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px;min-width:860px}
+th{text-align:left;font-weight:500;color:var(--ink-soft);font-size:12px;padding:8px 10px;border-bottom:2px solid var(--accent-soft);white-space:nowrap}
+th.sortable{cursor:pointer}th.sortable::after{content:" ↕";opacity:.5}
+td{padding:9px 10px;border-bottom:1.5px solid var(--accent-faint);vertical-align:middle}
+tr:hover td{background:var(--accent-faint)}
+td .cv{width:46px;height:46px;font-size:9px;border-radius:10px}
+td.t{min-width:200px}td.t .va{font-size:12px;color:var(--accent)}
+tfoot td{font-weight:500;border-bottom:0}
+
+/* ---------- B: CARDS ---------- */
+.ggrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:18px}
+.gcard{background:var(--card);border:2px solid var(--accent-faint);border-radius:26px;padding:10px;box-shadow:var(--shadow);transition:transform .3s var(--spring)}
+.gcard:hover{transform:translateY(-4px)}
+.gcard .cv{width:100%;aspect-ratio:1;font-size:15px;border-radius:20px}
+.gcard .want{position:absolute;top:8px;right:8px;width:32px;height:32px;border-radius:50%;background:rgba(var(--surface-rgb),.92);display:grid;place-items:center;font-size:15px}
+.gcard h3{font-family:var(--font);font-weight:400;font-size:14px;margin:10px 4px 0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.gcard .va{font-size:12px;color:var(--accent);margin:4px 4px 0}
+.gcard .pr{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px;margin:8px 4px 0}
+.gcard .meta{display:flex;flex-wrap:wrap;gap:5px;margin:7px 4px 2px}
+
+/* ---------- C: ROWS ---------- */
+.row{display:grid;grid-template-columns:60px 1fr auto;gap:12px;align-items:center;padding:10px 12px;border-radius:18px;cursor:pointer}
+.row:hover{background:var(--accent-faint)}
+.row .cv{width:60px;height:60px;font-size:10px}
+.row .t{font-size:14px}.row .va{font-size:12px;color:var(--accent);margin-top:2px}
+.row .tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:5px}
+.row .r{text-align:right}
+.stores{display:none;margin:0 12px 10px 84px;padding:10px 14px;border:2px dashed var(--accent-soft);border-radius:16px;font-size:13px}
+.row.open + .stores{display:block}
+.stores .s{display:grid;grid-template-columns:130px 90px 1fr auto;gap:10px;align-items:center;padding:5px 0}
+.stores .s.best .price{color:rgb(var(--sale))}
+@media (max-width:600px){.stores{margin-left:12px}.stores .s{grid-template-columns:1fr auto}}
+
+/* ---------- D: IN THE APP ---------- */
+.inapp{display:grid;grid-template-columns:220px 1fr;gap:24px;align-items:start}
+@media (max-width:760px){.inapp{grid-template-columns:1fr}}
+.panel h4{font-family:var(--font-display);font-weight:500;font-size:15px;margin:0 0 10px}
+.wtoggle{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.wtoggle button{border:2px solid var(--accent-soft);background:var(--surface);border-radius:999px;padding:6px 14px;font-size:13px}
+.wtoggle button.on{background:var(--pink-soft);border-color:rgb(var(--sale));color:var(--pink-ink)}
+.hist{display:flex;align-items:flex-end;gap:3px;height:70px;margin:8px 0 4px}
+.hist i{flex:1;border-radius:4px 4px 0 0;background:var(--accent-soft)}
+.hist i.s{background:rgba(var(--sale),.6)}
+.hist i.lo{background:rgb(var(--low))}
+.field{display:flex;align-items:center;gap:10px;margin-top:12px;font-size:13px}
+.field input{width:110px;border:2px solid var(--accent-soft);border-radius:12px;padding:6px 10px;background:var(--surface);color:var(--ink);font:inherit}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <h1>🛍️ Shopping list — layout mockup</h1>
+    <div class="themes" id="themes"></div>
+  </div>
+  <p class="note">Sample data only, nothing is fetched. Prices are in yen; "checked" times come from the last Refresh. Prices and sales only ever appear inside the shopping list, never on the collection screen. Pokédora is left out until the site is back.</p>
+
+  <div class="tabs" id="tabs">
+    <button data-v="ov" class="on">Overview</button>
+    <button data-v="a">A · Table</button>
+    <button data-v="b">B · Cards</button>
+    <button data-v="c">C · Compare rows</button>
+    <button data-v="d">Collection vs shopping list</button>
+  </div>
+
+  <section class="view on" id="v-ov"></section>
+  <section class="view" id="v-a"></section>
+  <section class="view" id="v-b"></section>
+  <section class="view" id="v-c"></section>
+  <section class="view" id="v-d"></section>
+</div>
+
+<script>
+const TODAY = new Date('2026-10-29');
+const yen = n => '¥' + n.toLocaleString('en-US');
+const fmt = d => { const x = new Date(d); return (x.getMonth() + 1) + '/' + x.getDate(); };
+const days = d => Math.round((new Date(d) - TODAY) / 864e5);
+const $ = s => document.querySelector(s);
+
+/* invented sample CDs — p = per-store prices, last/low = dlwatcher, target = optional price you'd pay */
+const W = [
+  {t:'Moonlit Butler Vol.2 ～Silver Tea Time～', va:'Hikaru Mizuno', g:['#A855F7','#F472B6'], ini:'MB',
+   p:[{src:'DLsite', price:770, list:1100, pct:30, ends:'2026-11-02'}, {src:'SKiT Dolce', price:2750, list:2750, stock:true}],
+   last:{price:770, pct:30, from:'2026-10-23', to:'2026-11-02'}, low:{price:550, pct:50, from:'2025-12-20', to:'2026-01-05'}, target:700, checked:'2h ago'},
+  {t:'Kemonomimi Café — Shift 3', va:'Ren Asagiri', g:['#2F86E0','#24BFB0'], ini:'KC',
+   p:[{src:'DLsite', price:1320, list:1320, pct:0}],
+   last:{price:990, pct:25, from:'2026-09-18', to:'2026-09-28'}, low:{price:660, pct:50, from:'2025-08-01', to:'2025-08-15'}, checked:'2h ago'},
+  {t:'Yandere Librarian no Kanshi Nisshi', va:'Sou Kurose', g:['#BE185D','#7E22CE'], ini:'YL',
+   p:[{src:'DLsite', price:495, list:990, pct:50, ends:'2026-10-31'}, {src:'STELLA PLAYER', price:880, list:990, pct:11}],
+   last:{price:495, pct:50, from:'2026-10-20', to:'2026-10-31'}, low:{price:495, pct:50, from:'2026-10-20', to:'2026-10-31'}, checked:'2h ago'},
+  {t:'Starlight Drama CD "Aoi Hoshi no Uta" Limited Ed.', va:'Itsuki Hanamura, Kei Tachibana', g:['#0B4F7C','#86B2CC'], ini:'SL',
+   p:[{src:'SKiT Dolce', price:3080, list:3850, pct:20, stock:true}, {src:'Stellaworth', price:3300, list:3850, pct:14, stock:false}],
+   checked:'5h ago'},
+  {t:'Oni no Yome-iri Vol.1', va:'Gaku Sendou', g:['#A67C5B','#DDAFA6'], ini:'ON',
+   p:[{src:'DLsite', price:1100, list:1100, pct:0}, {src:'STELLA PLAYER', price:1100, list:1100, pct:0}],
+   last:{price:880, pct:20, from:'2026-07-03', to:'2026-07-16'}, low:{price:770, pct:30, from:'2026-03-01', to:'2026-03-12'}, target:800, checked:'2h ago'},
+  {t:'Sleep With Me, Senpai ～Overnight Train～', va:'Yuu Akiba', g:['#6B21A8','#C084FC'], ini:'SW',
+   p:[{src:'DLsite', price:924, list:1320, pct:30, ends:'2026-11-12'}],
+   last:{price:924, pct:30, from:'2026-10-29', to:'2026-11-12'}, low:{price:660, pct:50, from:'2025-12-26', to:'2026-01-08'}, checked:'2h ago'},
+  {t:'Kizuna Records Season 2 Box', va:'Tomoya Kai, Shun Miyako', g:['#15803d','#24BFB0'], ini:'KR',
+   p:[{src:'Stellaworth', price:6600, list:6600, pct:0, stock:true}], checked:'yesterday'},
+  {t:'Haunted Inn Okami-san', va:'Ryo Kiritani', g:['#F97316','#F472B6'], ini:'HI',
+   p:[{src:'DLsite', price:1540, list:1540, pct:0}],
+   last:{price:1232, pct:20, from:'2026-05-02', to:'2026-05-14'}, low:{price:1078, pct:30, from:'2025-11-20', to:'2025-12-02'}, checked:'2h ago'},
+];
+
+/* derived: cheapest in-stock offer, sale state */
+W.forEach(c => {
+  const live = c.p.filter(o => o.stock !== false);
+  c.best = (live.length ? live : c.p).reduce((a, b) => b.price < a.price ? b : a);
+  c.onSale = c.best.pct > 0;
+  c.atLow = c.low && c.best.price <= c.low.price;
+  c.underTarget = c.target && c.best.price <= c.target;
+  c.endsIn = c.best.ends ? days(c.best.ends) : null;
+});
+
+const cover = (c, cls = '') => `<div class="cv ${cls}" style="background:linear-gradient(135deg,${c.g[0]},${c.g[1]})"><span><b>${c.ini}</b></span></div>`;
+const tags = c => [
+  c.onSale && `<span class="tag sale">−${c.best.pct}%</span>`,
+  c.endsIn != null && c.endsIn <= 4 && `<span class="tag soon">⏳ ends ${c.endsIn <= 0 ? 'today' : 'in ' + c.endsIn + 'd'}</span>`,
+  c.atLow && `<span class="tag low">★ lowest ever</span>`,
+  c.underTarget && `<span class="tag under">≤ your ${yen(c.target)}</span>`,
+].filter(Boolean).join('');
+const lastSale = c => c.last ? (c.onSale && c.last.price === c.best.price ? 'now' : `${yen(c.last.price)} (−${c.last.pct}%) · ${fmt(c.last.from)}–${fmt(c.last.to)}`) : '<span class="muted">no history</span>';
+const lowest = c => c.low ? `${yen(c.low.price)} <span class="muted">(−${c.low.pct}%) ${new Date(c.low.from).getFullYear()}</span>` : '<span class="muted">—</span>';
+const priceHTML = c => `<span class="price">${yen(c.best.price)}</span>${c.onSale ? `<span class="was">${yen(c.best.list)}</span>` : ''}`;
+
+/* ---------- Overview ---------- */
+function overview(){
+  const sale = W.filter(c => c.onSale).sort((a, b) => b.best.pct - a.best.pct);
+  const soon = W.filter(c => c.endsIn != null).sort((a, b) => a.endsIn - b.endsIn);
+  const full = W.filter(c => !c.onSale);
+  const total = W.reduce((s, c) => s + c.best.price, 0), totalList = W.reduce((s, c) => s + c.best.list, 0);
+  $('#v-ov').innerHTML = `
+    <div class="tiles">
+      <div class="box tile"><div class="k">Wanted</div><div class="v">${W.length}</div><div class="s">across ${new Set(W.flatMap(c => c.p.map(o => o.src))).size} stores</div></div>
+      <div class="box tile hot"><div class="k">On sale now</div><div class="v">${sale.length}</div><div class="s">save ${yen(sale.reduce((s, c) => s + c.best.list - c.best.price, 0))} if you buy them</div></div>
+      <div class="box tile"><div class="k">Ending soon</div><div class="v">${soon.filter(c => c.endsIn <= 4).length}</div><div class="s">${soon[0] ? 'next: ' + soon[0].t.split(' ').slice(0, 2).join(' ') + ', ' + fmt(soon[0].best.ends) : ''}</div></div>
+      <div class="box tile"><div class="k">Buy everything today</div><div class="v">${yen(total)}</div><div class="s">${yen(totalList)} at full price</div></div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;margin:14px 2px 0;flex-wrap:wrap">
+      <button class="pill-btn main">↻ Refresh prices</button><span class="muted">Last checked 2h ago · DLsite, dlwatcher, SKiT Dolce, STELLA PLAYER, Stellaworth</span>
+    </div>
+
+    <div class="sec-h">On sale now <span class="n">${sale.length}</span></div>
+    <div class="strip">${sale.map(c => `
+      <div class="mini"><div style="position:relative">${cover(c)}<span class="neon ${c.atLow ? 'low' : ''}">−${c.best.pct}%</span></div>
+        <div class="t">${c.t}</div><div class="p">${priceHTML(c)}</div>
+        <div style="display:flex;gap:4px;flex-wrap:wrap;margin:5px 2px 0">${c.endsIn != null ? `<span class="tag soon">until ${fmt(c.best.ends)}</span>` : ''}${c.atLow ? '<span class="tag low">★ lowest</span>' : ''}<span class="src">${c.best.src}</span></div>
+      </div>`).join('')}</div>
+
+    <div class="ov-cols">
+      <div class="box"><div class="sec-h" style="margin-top:0">Not on sale — when was the last one? <span class="n">${full.length}</span></div>
+        ${full.map(c => `<div class="li">${cover(c)}<div class="mid"><div class="t">${c.t}</div><div class="muted">${c.last ? 'Last sale ' + lastSale(c) : 'No sale history (physical CD)'}</div></div>
+          <div class="r"><div class="price" style="font-size:15px">${yen(c.best.price)}</div><div class="muted">low ${c.low ? yen(c.low.price) : '—'}</div></div></div>`).join('')}
+      </div>
+      <div class="box"><div class="sec-h" style="margin-top:0">Worth a look <span class="n">${W.filter(c => c.atLow || c.underTarget).length}</span></div>
+        ${W.filter(c => c.atLow || c.underTarget).map(c => `<div class="li">${cover(c)}<div class="mid"><div class="t">${c.t}</div><div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:3px">${tags(c)}</div></div>
+          <div class="r">${priceHTML(c)}</div></div>`).join('')}
+        <p class="muted" style="margin:10px 4px 0">Shows items at their all-time low (dlwatcher) or under the price you said you'd pay.</p>
+      </div>
+    </div>`;
+}
+
+/* ---------- A: table ---------- */
+function table(){
+  $('#v-a').innerHTML = `<div class="box tbl-wrap"><table>
+    <thead><tr><th></th><th class="sortable">Title</th><th class="sortable">Best now</th><th>Store</th><th class="sortable">Discount</th><th class="sortable">Sale ends</th><th>Last sale</th><th>All-time low</th><th>Checked</th></tr></thead>
+    <tbody>${W.map(c => `<tr>
+      <td>${cover(c)}</td>
+      <td class="t">${c.t}<div class="va">${c.va}</div></td>
+      <td style="white-space:nowrap">${priceHTML(c)}</td>
+      <td>${c.p.map(o => `<span class="src ${o.stock === false ? 'oos' : ''}" title="${yen(o.price)}">${o.src}</span>`).join(' ')}</td>
+      <td>${c.onSale ? `<span class="tag sale">−${c.best.pct}%</span>` : '<span class="muted">—</span>'}</td>
+      <td>${c.endsIn != null ? `<span class="${c.endsIn <= 4 ? 'tag soon' : ''}">${fmt(c.best.ends)}</span>` : '<span class="muted">—</span>'}</td>
+      <td style="white-space:nowrap">${lastSale(c)}</td>
+      <td style="white-space:nowrap">${lowest(c)}${c.atLow ? ' <span class="tag low">★</span>' : ''}</td>
+      <td class="muted">${c.checked}</td></tr>`).join('')}</tbody>
+    <tfoot><tr><td></td><td>Total (${W.length})</td><td>${yen(W.reduce((s, c) => s + c.best.price, 0))}</td><td colspan="6" class="muted">full price ${yen(W.reduce((s, c) => s + c.best.list, 0))}</td></tr></tfoot>
+  </table></div>
+  <p class="muted" style="margin:10px 4px">Dense and sortable — good for a long list on desktop; scrolls sideways on phones.</p>`;
+}
+
+/* ---------- B: cards ---------- */
+function cards(){
+  const sorted = [...W].sort((a, b) => (b.onSale - a.onSale) || (b.best.pct - a.best.pct));
+  $('#v-b').innerHTML = `<div class="ggrid">${sorted.map(c => `
+    <div class="gcard"><div style="position:relative">${cover(c)}${c.onSale ? `<span class="neon ${c.atLow ? 'low' : ''}">−${c.best.pct}%</span>` : ''}<span class="want">🛍️</span></div>
+      <h3>${c.t}</h3><div class="va">${c.va}</div>
+      <div class="pr">${priceHTML(c)}<span class="src" style="margin-left:auto">${c.best.src}</span></div>
+      <div class="meta">${tags(c) || `<span class="muted">${c.last ? 'last sale ' + fmt(c.last.from) + ' (−' + c.last.pct + '%)' : 'no sale history'}</span>`}</div>
+    </div>`).join('')}</div>
+  <p class="muted" style="margin:12px 4px">Looks like the main shelf; sale items float to the front. Easiest to scan on a phone.</p>`;
+}
+
+/* ---------- C: compare rows ---------- */
+function rows(){
+  $('#v-c').innerHTML = `<div class="box">${W.map((c, i) => `
+    <div class="row ${i === 0 ? 'open' : ''}" data-i="${i}">${cover(c)}
+      <div><div class="t">${c.t}</div><div class="va">${c.va}</div><div class="tags">${tags(c)}<span class="muted">${c.p.length} store${c.p.length > 1 ? 's' : ''} ▾</span></div></div>
+      <div class="r">${priceHTML(c)}<div class="muted">${c.best.src}</div></div></div>
+    <div class="stores">${[...c.p].sort((a, b) => a.price - b.price).map(o => `
+      <div class="s ${o === c.best ? 'best' : ''}"><span>${o.src}${o === c.best ? ' ✓' : ''}</span><span class="price" style="font-size:14px">${yen(o.price)}</span>
+        <span class="muted">${o.pct ? '−' + o.pct + '% from ' + yen(o.list) : 'full price'}${o.ends ? ' · until ' + fmt(o.ends) : ''}${o.stock === false ? ' · out of stock' : o.stock ? ' · in stock' : ''}</span>
+        <a class="src" href="#" onclick="return false">open ↗</a></div>`).join('')}
+      ${c.low ? `<div class="s"><span>dlwatcher</span><span class="price" style="font-size:14px">${yen(c.low.price)}</span><span class="muted">all-time low · ${fmt(c.low.from)}–${fmt(c.low.to)} ${new Date(c.low.from).getFullYear()}</span><span></span></div>` : ''}
+    </div>`).join('')}</div>
+  <p class="muted" style="margin:10px 4px">Click a row to compare every store side by side — handy when one CD is on DLsite and also sold physically.</p>`;
+  $('#v-c').onclick = e => { const r = e.target.closest('.row'); if(r) r.classList.toggle('open'); };
+}
+
+/* ---------- D: in the app ---------- */
+function inapp(){
+  const c = W[0];
+  const bars = [1100,1100,990,1100,935,935,1100,550,550,1100,990,1100,935,770];
+  $('#v-d').innerHTML = `
+    <div class="sec-h" style="margin-top:0">Collection screen — no prices here</div>
+    <div class="inapp">
+    <div><div class="gcard"><div style="position:relative">${cover(c)}<span class="want" title="On your shopping list">🛍️</span></div>
+      <h3>${c.t}</h3><div class="va">${c.va}</div></div>
+      <p class="muted" style="margin:10px 4px">Shelf card stays as it is today. The only addition is a small 🛍️ in place of the 💜 owned heart, so you can tell a CD is on your list. No sale badge, no price.</p></div>
+    <div class="box panel">
+      <h4>Detail panel</h4>
+      <div class="wtoggle"><button class="on">🛍️ Want to buy</button><button>💜 Owned</button></div>
+      <p class="muted" style="margin:0 0 12px">Just the toggle. Prices, stores and history live in the shopping list.</p>
+      <button class="pill-btn">Open in shopping list →</button>
+    </div></div>
+
+    <div class="sec-h">Shopping list — item detail</div>
+    <div class="inapp">
+    <div><div class="gcard"><div style="position:relative">${cover(c)}<span class="neon">−30%</span></div>
+      <h3>${c.t}</h3><div class="va">${c.va}</div><div class="pr">${priceHTML(c)}</div></div>
+      <p class="muted" style="margin:10px 4px">Inside the shopping list only: neon sale pill (green = lowest price ever) and the current price.</p></div>
+    <div class="box panel">
+      <h4>Where to buy</h4>
+      ${c.p.map(o => `<div class="li" style="padding:6px 0"><div class="mid"><span class="src">${o.src}</span> <span class="muted">${o.stock ? 'in stock' : ''}${o.ends ? 'sale until ' + fmt(o.ends) : ''}</span></div>
+        <div class="r"><span class="price" style="font-size:15px">${yen(o.price)}</span>${o.pct ? `<span class="was">${yen(o.list)}</span> <span class="tag sale">−${o.pct}%</span>` : ''}</div></div>`).join('')}
+      <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap"><button class="pill-btn">＋ Link another store</button><button class="pill-btn">↻ Refresh</button></div>
+      <h4 style="margin-top:18px">Price history <span class="muted">(dlwatcher)</span></h4>
+      <div class="hist">${bars.map((v, i) => `<i class="${v === 550 ? 'lo' : v < 1100 ? 's' : ''}" style="height:${v / 1100 * 100}%" title="${yen(v)}"></i>`).join('')}</div>
+      <div class="muted">Last sale ${lastSale(c)} · All-time low ${yen(c.low.price)} (−${c.low.pct}%) ${fmt(c.low.from)}–${fmt(c.low.to)} · on sale ~261 days a year</div>
+      <div class="field">Tell me when it's at or under <input value="${yen(c.target)}"></div>
+    </div></div>`;
+}
+
+overview(); table(); cards(); rows(); inapp();
+
+$('#tabs').onclick = e => { const b = e.target.closest('button'); if(!b) return;
+  document.querySelectorAll('#tabs button').forEach(x => x.classList.toggle('on', x === b));
+  document.querySelectorAll('.view').forEach(v => v.classList.toggle('on', v.id === 'v-' + b.dataset.v)); };
+const TH = {lavender:'#A855F7', ocean:'#2F86E0', midnight:'#1F1830', sepia:'#A67C5B'};
+$('#themes').innerHTML = Object.entries(TH).map(([k, c]) => `<button data-t="${k}" title="${k}" style="background:${c}" class="${k === 'lavender' ? 'on' : ''}"></button>`).join('');
+$('#themes').onclick = e => { const b = e.target.closest('button'); if(!b) return;
+  document.documentElement.setAttribute('data-theme', b.dataset.t);
+  document.querySelectorAll('#themes button').forEach(x => x.classList.toggle('on', x === b)); };
+</script>
+</body>
+</html>

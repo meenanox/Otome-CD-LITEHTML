@@ -10,7 +10,7 @@
 <script>
 /* APP VERSION — the one place to change it. Shown next to the logo, in the footer and saved into backups.
    Bump it whenever a new index.html goes up, so people who re-download can tell which copy they have. */
-var APP_VERSION = '0.6.0';
+var APP_VERSION = '0.6.1';
 /* apply the saved theme before first paint (no flash) */
 try{ var _th = localStorage.getItem('otomeCdTheme'); if(_th) document.documentElement.setAttribute('data-theme', _th); }catch(e){}
 </script>
@@ -305,6 +305,21 @@ textarea.in{resize:vertical;font-weight:500;line-height:1.5}
 .in:focus{border-color:var(--accent-2);box-shadow:0 0 0 4px rgba(var(--accent2-rgb),.2)}
 #editor{z-index:60}
 .sheet.ed{grid-template-columns:320px 1fr}
+.backdrop.cvf{z-index:55}
+.cv-form{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.cv-form .in{flex:1 1 220px;width:auto}
+.cv-grid{margin-top:16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px}
+.cv-tile{position:relative;padding:0;border:2px solid var(--accent-soft);border-radius:16px;background:var(--accent-faint);aspect-ratio:1;overflow:hidden;cursor:pointer}
+.cv-tile img{width:100%;height:100%;object-fit:contain;display:block}
+.cv-tile:hover,.cv-tile.on{border-color:var(--accent)}
+.cv-tile.on{box-shadow:0 0 0 3px var(--accent-soft)}
+.cv-tile .cv-site{position:absolute;left:0;right:0;bottom:0;padding:2px 8px;font-size:11px;color:#fff;background:rgba(0,0,0,.55);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cv-more{text-align:center;margin-top:14px}
+.cv-pick{display:flex;gap:16px;margin-top:16px;padding:14px;border-radius:24px;background:var(--accent-faint)}
+.cv-pick img{width:200px;height:200px;object-fit:contain;border-radius:16px;background:var(--surface);flex:none}
+.cv-info{display:flex;flex-direction:column;gap:8px;min-width:0}
+.cv-info .pill{align-self:flex-start;margin-top:auto}
+@media (max-width:600px){.cv-pick{flex-direction:column}.cv-pick img{width:100%;height:auto;aspect-ratio:1}}
 .lookup{background:rgba(var(--surface-rgb),.75);border-radius:28px;padding:16px;margin:0 0 22px;box-shadow:inset 0 0 0 2px var(--accent-soft)}
 .lookup h3{margin:0 0 10px;font-family:var(--font-display);font-size:16px;font-weight:500}
 .lrow{display:flex;gap:10px}
@@ -614,6 +629,7 @@ details.more p{margin:8px 0 0;color:var(--ink-faint);font-weight:400;line-height
         <div class="btnrow">
           <button type="button" class="pill sm" id="eUpload">Upload image</button>
           <button type="button" class="pill sm" id="eClearCover">Clear</button>
+          <button type="button" class="pill sm" id="eFindCover">Find online…</button>
         </div>
         <input type="file" id="eFile" accept="image/*" hidden>
       </div>
@@ -651,6 +667,29 @@ details.more p{margin:8px 0 0;color:var(--ink-faint);font-weight:400;line-height
           <button type="submit" class="pill primary">Save CD</button>
         </div>
       </form>
+    </div>
+  </div>
+</div>
+<div class="backdrop cvf" id="coverFind" aria-hidden="true">
+  <div class="sheet im" role="dialog" aria-modal="true" aria-labelledby="cvHead">
+    <button class="close" id="cvClose" aria-label="Close">✕</button>
+    <div class="body">
+      <h2 id="cvHead">Find cover online</h2>
+      <p class="alt">Searches Amazon JP, BOOKOFF, Suruga-ya, SKITDOLCE and Yahoo! JAPAN images. Japanese titles work best. Nothing is changed until you pick an image and press Use this cover.</p>
+      <form id="cvForm" class="cv-form">
+        <input class="in" id="cvQ" placeholder="Title, series + volume, or catalogue number" autocomplete="off">
+        <select class="sel" id="cvSrc">
+          <option value="all">All sources</option>
+          <option value="amazon">Amazon JP</option>
+          <option value="bookoff">BOOKOFF</option>
+          <option value="surugaya">Suruga-ya</option>
+          <option value="skitdolce">SKITDOLCE</option>
+          <option value="yahoo">Yahoo! JAPAN Images</option>
+        </select>
+        <button class="pill primary" type="submit">Search</button>
+      </form>
+      <div id="cvPick"></div>
+      <div id="cvOut"></div>
     </div>
   </div>
 </div>
@@ -1279,7 +1318,8 @@ $('#modal').addEventListener('click', e => { if(e.target.id === 'modal') closeMo
 $('#mClose').onclick = closeModal;
 document.addEventListener('keydown', e => {
   if(e.key !== 'Escape') return;
-  if($('#shop').classList.contains('open')){ if(SH.item){ SH.item = null; shRender(); } else closeShop(); }
+  if($('#coverFind').classList.contains('open')) closeCoverFind();
+  else if($('#shop').classList.contains('open')){ if(SH.item){ SH.item = null; shRender(); } else closeShop(); }
   else if($('#compare').classList.contains('open')) closeCompare();
   else if($('#scan').classList.contains('open')) closeScan();
   else if($('#bulk').classList.contains('open')) closeBulk();
@@ -2318,6 +2358,150 @@ el('eFile').onchange = async e => {
   catch(err){ toast(i18n('Couldn’t read that image')); }
 };
 el('eClearCover').onclick = () => { el('fCover').value = ''; ED.coverData = ''; paintCover(); };
+
+/* ---- Find cover online: shop listings + Yahoo! JAPAN images. The user picks; nothing is saved until Save. ---- */
+const CVF = { q:'', src:'all', page:0, results:[], pick:-1, busy:false, done:false, seq:0 };
+const httpUrl = u => /^https?:\/\//i.test(u || '') ? u : '';
+const cvDoc = h => new DOMParser().parseFromString(h, 'text/html');
+const cvGet = (url, check) => Net.text(url, check).then(r => r.text);
+const CV_SOURCES = {
+  async yahoo(q, page){
+    const html = await cvGet('https://search.yahoo.co.jp/image/search?p=' + encodeURIComponent(q) + (page > 1 ? '&b=' + ((page - 1) * 20 + 1) : ''), t => t.includes('__NEXT_DATA__'));
+    const m = html.match(/<script id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/);
+    if(!m) throw new Error('Yahoo! JAPAN image search changed its page layout.');
+    const out = [], walk = o => {
+      if(Array.isArray(o)) return o.forEach(walk);
+      if(!o || typeof o !== 'object') return;
+      if(o.original && typeof o.original === 'object' && httpUrl(o.original.url)) out.push({
+        image:o.original.url, thumb:(o.thumbnail || {}).url || o.original.url, title:o.title || '',
+        site:o.refererName || o.refererDomain || o.domain || 'Yahoo!', page:o.refererUrl || '', w:o.original.width, h:o.original.height });
+      Object.values(o).forEach(walk);
+    };
+    walk(JSON.parse(m[1]));
+    return out;
+  },
+  async amazon(q, page){
+    const html = await cvGet('https://www.amazon.co.jp/s?k=' + encodeURIComponent(q) + (page > 1 ? '&page=' + page : ''));
+    if(!html.includes('s-search-result')) throw new Error('blocked the lookup (bot check) — use Yahoo! JAPAN or the other shops.');
+    const out = [];
+    cvDoc(html).querySelectorAll('div[data-component-type="s-search-result"]').forEach(it => {
+      const asin = it.getAttribute('data-asin'), img = it.querySelector('img.s-image'), src = img && img.getAttribute('src');
+      if(!asin || !src) return;
+      const h2 = it.querySelector('h2');
+      out.push({image:src.replace(/\._[^/]*_(?=\.\w+$)/, ''), thumb:src, title:(h2 ? h2.textContent : img.alt || '').replace(/\s+/g, ' ').trim(), site:'Amazon JP', page:'https://www.amazon.co.jp/dp/' + asin});
+    });
+    return out;
+  },
+  async bookoff(q, page){
+    const html = await cvGet('https://shopping.bookoff.co.jp/search/keyword/' + encodeURIComponent(q.replace(/\//g, ' ')) + (page > 1 ? '?p=' + page : ''));
+    const out = [];
+    cvDoc(html).querySelectorAll('#items_field .productItem').forEach(it => {
+      const a = it.querySelector('a.productItem__image'), img = it.querySelector('a.productItem__image img'), src = img && img.getAttribute('src');
+      if(!a || !src || !src.includes('/goodsimages/')) return;
+      const t = it.querySelector('.productItem__title');
+      out.push({image:src, thumb:src.replace(/\/LL\/(\d+\/\d+)LL\./, '/M/$1M.'), title:(t ? t.textContent : img.alt || '').replace(/\s+/g, ' ').trim(), site:'BOOKOFF', page:absUrl(a.getAttribute('href'), 'https://shopping.bookoff.co.jp')});
+    });
+    return out;
+  },
+  async surugaya(q, page){
+    const html = await cvGet('https://www.suruga-ya.jp/search?category=4&searchbox=1&search_word=' + encodeURIComponent(q) + (page > 1 ? '&page=' + page : ''));
+    if(/Just a moment|cf-browser-verification/i.test(html)) throw new Error('blocked the lookup (Cloudflare check) — use Yahoo! JAPAN or the other shops.');
+    const out = [];
+    cvDoc(html).querySelectorAll('div.item').forEach(it => {
+      const img = it.querySelector('.photo_box img'), link = it.querySelector('.title a') || it.querySelector('.photo_box a');
+      const m = ((img && img.getAttribute('src')) || '').match(/shinaban=(\w+)/);
+      if(!m || !link) return;
+      const photo = 'https://www.suruga-ya.jp/database/photo.php?shinaban=' + m[1] + '&size=', n = it.querySelector('.product-name');
+      out.push({image:photo + 'l', thumb:photo + 'm', title:n ? n.textContent.replace(/\s+/g, ' ').trim() : '', site:'駿河屋', page:absUrl(link.getAttribute('href'), 'https://www.suruga-ya.jp').split('?')[0]});
+    });
+    return out;
+  },
+  async skitdolce(q, page){
+    /* SKITDOLCE matches each word literally and writes ！ where titles have !, so brackets/punctuation are dropped */
+    const words = q.replace(/[「」『』【】()（）\[\]!！?？・:：/]/g, ' ').split(/\s+/).filter(Boolean).join(' ');
+    const html = await cvGet('https://skitdolce.jp/item_list.html?SEARCH_MAX_ROW_LIST=50&keyword=' + encodeURIComponent(words) + (page > 1 ? '&request=page&next_page=' + page : ''));
+    const out = [];
+    cvDoc(html).querySelectorAll('li.p-item').forEach(it => {
+      const a = it.querySelector('.p-item-image a'), img = it.querySelector('.p-item-image img'), src = img && img.getAttribute('src');
+      if(!a || !src || !src.includes('/itemimage/')) return;
+      const u = absUrl(src, 'https://skitdolce.jp');
+      out.push({image:u, thumb:u, title:img.alt || '', site:'SKITDOLCE', page:absUrl(a.getAttribute('href'), 'https://skitdolce.jp')});
+    });
+    return out;
+  }
+};
+const cvKey = u => { const m = u.match(/\/images\/I\/([\w%+-]+?)(?:\.|%2B|$)/); return m ? 'amz:' + m[1] : u; };   // same Amazon picture at another size counts once
+const CVF_NAME = {amazon:'Amazon JP', bookoff:'BOOKOFF', surugaya:'Suruga-ya', skitdolce:'SKITDOLCE', yahoo:'Yahoo! JAPAN'};
+function cvImg(src, fallback){ return `<img src="${esc(httpUrl(src))}" alt="" referrerpolicy="no-referrer" data-fallback="${esc(httpUrl(fallback))}">`; }
+function cvRenderOut(){
+  const rs = CVF.results;
+  el('cvOut').innerHTML = !rs.length ? `<p class="alt">${i18n('No images found. Try a shorter title, the series name plus volume, or the catalogue number.')}</p>` :
+    `<div class="cv-grid">${rs.map((r, i) => `<button type="button" class="cv-tile ${i === CVF.pick ? 'on' : ''}" data-pick="${i}" title="${esc(r.title)}">${cvImg(r.thumb, r.image)}<span class="cv-site">${esc(r.site)}</span></button>`).join('')}</div>
+     ${CVF.done ? '' : `<div class="cv-more"><button type="button" class="pill" data-more>${i18n('More results')}</button></div>`}`;
+}
+function cvRenderPick(){
+  const r = CVF.results[CVF.pick];
+  el('cvPick').innerHTML = !r ? '' : `<div class="cv-pick">${cvImg(r.image, r.thumb)}<div class="cv-info"><b>${esc(r.title)}</b>
+    <span class="alt">${esc(r.site)}${r.w ? ` · ${r.w}×${r.h}` : ''}</span>
+    ${httpUrl(r.page) ? `<a href="${esc(r.page)}" target="_blank" rel="noopener noreferrer">${i18n('Open the page to check ↗')}</a>` : ''}
+    <button type="button" class="pill primary" data-use>${i18n('Use this cover')}</button></div></div>`;
+}
+async function cvRun(more){
+  if(CVF.busy) return;
+  const q = el('cvQ').value.trim(); if(!q) return;
+  if(!more){ Object.assign(CVF, {q, src:el('cvSrc').value, page:0, results:[], pick:-1, done:false}); cvRenderPick(); el('cvOut').innerHTML = `<p class="alt">${spin}${i18n('Searching…')}</p>`; }
+  CVF.busy = true; const seq = ++CVF.seq, page = CVF.page + 1;
+  const keys = CVF.src === 'all' ? Object.keys(CV_SOURCES) : [CVF.src];
+  const res = await Promise.allSettled(keys.map(k => CV_SOURCES[k](CVF.q, page)));
+  if(seq !== CVF.seq) return;
+  const seen = new Set(CVF.results.map(r => cvKey(r.image))), errs = [], fresh = [];
+  res.forEach((r, i) => {
+    if(r.status === 'rejected'){ errs.push(CVF_NAME[keys[i]] + ': ' + (r.reason && r.reason.message || r.reason)); return; }
+    for(const x of r.value){ const k = cvKey(x.image); if(!seen.has(k) && httpUrl(x.image)){ seen.add(k); fresh.push(x); } }
+  });
+  if(errs.length) toast(errs.join(' · '));         // one shop failing doesn't stop the rest
+  CVF.results.push(...fresh); CVF.page = page; CVF.done = !fresh.length; CVF.busy = false;
+  cvRenderOut();
+}
+function openCoverFind(){
+  Object.assign(CVF, {results:[], pick:-1});
+  el('cvQ').value = el('fAlt').value.trim() || el('fTitle').value.trim();       // Japanese titles find the shop listings
+  try{ el('cvSrc').value = localStorage.getItem('otome-cv-src') || 'all'; }catch(e){}
+  el('cvPick').innerHTML = ''; el('cvOut').innerHTML = '';
+  const m = el('coverFind'); m.classList.add('open'); m.setAttribute('aria-hidden', 'false');
+  cvRun();
+}
+function closeCoverFind(){ CVF.seq++; CVF.busy = false; const m = el('coverFind'); m.classList.remove('open'); m.setAttribute('aria-hidden', 'true'); }
+el('eFindCover').onclick = openCoverFind;
+el('cvClose').onclick = closeCoverFind;
+el('coverFind').addEventListener('mousedown', e => { if(e.target.id === 'coverFind') closeCoverFind(); });
+el('cvForm').onsubmit = e => { e.preventDefault(); cvRun(); };
+el('cvSrc').onchange = e => { try{ localStorage.setItem('otome-cv-src', e.target.value); }catch(err){} cvRun(); };
+/* an image that won't load tries its other size once, then its tile is hidden */
+el('coverFind').addEventListener('error', e => {
+  const img = e.target; if(img.tagName !== 'IMG') return;
+  if(img.dataset.fallback){ img.src = img.dataset.fallback; img.dataset.fallback = ''; }
+  else{ const t = img.closest('.cv-tile'); if(t) t.hidden = true; }
+}, true);
+el('coverFind').addEventListener('click', async e => {
+  const tile = e.target.closest('[data-pick]');
+  if(tile){
+    CVF.pick = +tile.dataset.pick;
+    document.querySelectorAll('#cvOut .cv-tile').forEach(t => t.classList.toggle('on', t === tile));
+    cvRenderPick(); el('cvPick').scrollIntoView({behavior:'smooth', block:'nearest'});
+    return;
+  }
+  const more = e.target.closest('[data-more]');
+  if(more){ more.disabled = true; more.textContent = i18n('Loading…'); return cvRun(true); }
+  const use = e.target.closest('[data-use]'), r = CVF.results[CVF.pick];
+  if(!use || !r) return;
+  use.disabled = true; use.innerHTML = spin + i18n('Saving…');
+  let data = '';
+  for(const u of [r.image, r.thumb]){ try{ data = await Covers.toData(await Net.blob(u)); break; }catch(err){} }
+  /* a site that blocks copying still lets the picture display, so keep its address and fetch the copy later */
+  ED.coverData = data; el('fCover').value = r.image; paintCover();
+  closeCoverFind(); toast(i18n(data ? 'Cover picked — press Save to keep it ♡' : 'Cover linked (couldn’t copy it) — press Save to keep it ♡'));
+});
 
 el('eForm').onsubmit = ev => {
   ev.preventDefault();

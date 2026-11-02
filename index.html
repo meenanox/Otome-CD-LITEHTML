@@ -10,7 +10,7 @@
 <script>
 /* APP VERSION — the one place to change it. Shown next to the logo, in the footer and saved into backups.
    Bump it whenever a new index.html goes up, so people who re-download can tell which copy they have. */
-var APP_VERSION = '0.6.1';
+var APP_VERSION = '0.6.2';
 /* apply the saved theme before first paint (no flash) */
 try{ var _th = localStorage.getItem('otomeCdTheme'); if(_th) document.documentElement.setAttribute('data-theme', _th); }catch(e){}
 </script>
@@ -2433,11 +2433,27 @@ const CV_SOURCES = {
 const cvKey = u => { const m = u.match(/\/images\/I\/([\w%+-]+?)(?:\.|%2B|$)/); return m ? 'amz:' + m[1] : u; };   // same Amazon picture at another size counts once
 const CVF_NAME = {amazon:'Amazon JP', bookoff:'BOOKOFF', surugaya:'Suruga-ya', skitdolce:'SKITDOLCE', yahoo:'Yahoo! JAPAN'};
 function cvImg(src, fallback){ return `<img src="${esc(httpUrl(src))}" alt="" referrerpolicy="no-referrer" data-fallback="${esc(httpUrl(fallback))}">`; }
+/* Relevance: share of the search's character pairs found in the result's title (works for Japanese, which has no spaces),
+   halved when the title lacks a volume number the search has. Only good matches are listed; the rest sit behind a button. */
+const cvBigrams = s => { const t = searchNorm(s).replace(/ /g, ''), o = new Set(); for(let i = 0; i < t.length - 1; i++) o.add(t.slice(i, i + 2)); return o; };
+function cvScore(r){
+  if(r.score != null) return r.score;
+  const qb = CVF.qb || (CVF.qb = cvBigrams(CVF.q)), tb = cvBigrams(r.title + ' ' + r.site);
+  let hit = 0; qb.forEach(b => { if(tb.has(b)) hit++; });
+  let s = qb.size ? hit / qb.size : 0;
+  const nums = CVF.nums || (CVF.nums = (searchNorm(CVF.q).match(/\d+/g) || []).map(n => String(+n)));
+  const tn = (searchNorm(r.title).match(/\d+/g) || []).map(n => String(+n));
+  if(nums.length && !nums.every(n => tn.includes(n))) s *= .5;
+  return r.score = s;
+}
+const CV_MIN = .45, CV_PAGE = 8;
 function cvRenderOut(){
-  const rs = CVF.results;
+  const rs = CVF.results, good = rs.filter(r => cvScore(r) >= CV_MIN);
+  const list = CVF.weak ? rs : good.length >= 4 ? good : rs.slice(0, 6);     // too few good matches: still show the best few
+  const shown = list.slice(0, CVF.limit), hidden = list.length - shown.length, weak = CVF.weak ? 0 : rs.length - list.length;
   el('cvOut').innerHTML = !rs.length ? `<p class="alt">${i18n('No images found. Try a shorter title, the series name plus volume, or the catalogue number.')}</p>` :
-    `<div class="cv-grid">${rs.map((r, i) => `<button type="button" class="cv-tile ${i === CVF.pick ? 'on' : ''}" data-pick="${i}" title="${esc(r.title)}">${cvImg(r.thumb, r.image)}<span class="cv-site">${esc(r.site)}</span></button>`).join('')}</div>
-     ${CVF.done ? '' : `<div class="cv-more"><button type="button" class="pill" data-more>${i18n('More results')}</button></div>`}`;
+    `<div class="cv-grid">${shown.map(r => { const i = rs.indexOf(r); return `<button type="button" class="cv-tile ${i === CVF.pick ? 'on' : ''}" data-pick="${i}" title="${esc(r.title)}">${cvImg(r.thumb, r.image)}<span class="cv-site">${esc(r.site)}</span></button>`; }).join('')}</div>
+     <div class="cv-more">${hidden ? `<button type="button" class="pill" data-show>${i18n('Show {n} more', {n:hidden})}</button> ` : ''}${!hidden && weak > 0 ? `<button type="button" class="pill" data-weak>${i18n('Show {n} weaker matches', {n:weak})}</button> ` : ''}${!hidden && !weak && !CVF.done ? `<button type="button" class="pill" data-more>${i18n('Search for more')}</button>` : ''}</div>`;
 }
 function cvRenderPick(){
   const r = CVF.results[CVF.pick];
@@ -2449,7 +2465,7 @@ function cvRenderPick(){
 async function cvRun(more){
   if(CVF.busy) return;
   const q = el('cvQ').value.trim(); if(!q) return;
-  if(!more){ Object.assign(CVF, {q, src:el('cvSrc').value, page:0, results:[], pick:-1, done:false}); cvRenderPick(); el('cvOut').innerHTML = `<p class="alt">${spin}${i18n('Searching…')}</p>`; }
+  if(!more){ Object.assign(CVF, {q, src:el('cvSrc').value, page:0, results:[], pick:-1, done:false, limit:CV_PAGE, weak:false, qb:null, nums:null}); cvRenderPick(); el('cvOut').innerHTML = `<p class="alt">${spin}${i18n('Searching…')}</p>`; }
   CVF.busy = true; const seq = ++CVF.seq, page = CVF.page + 1;
   const keys = CVF.src === 'all' ? Object.keys(CV_SOURCES) : [CVF.src];
   const res = await Promise.allSettled(keys.map(k => CV_SOURCES[k](CVF.q, page)));
@@ -2460,7 +2476,11 @@ async function cvRun(more){
     for(const x of r.value){ const k = cvKey(x.image); if(!seen.has(k) && httpUrl(x.image)){ seen.add(k); fresh.push(x); } }
   });
   if(errs.length) toast(errs.join(' · '));         // one shop failing doesn't stop the rest
+  const picked = CVF.results[CVF.pick];
   CVF.results.push(...fresh); CVF.page = page; CVF.done = !fresh.length; CVF.busy = false;
+  CVF.results.sort((a, b) => cvScore(b) - cvScore(a));         // best matches first (stable, so shops stay ahead of images on ties)
+  CVF.pick = picked ? CVF.results.indexOf(picked) : -1;
+  if(more) CVF.limit += CV_PAGE;
   cvRenderOut();
 }
 function openCoverFind(){
@@ -2491,6 +2511,8 @@ el('coverFind').addEventListener('click', async e => {
     cvRenderPick(); el('cvPick').scrollIntoView({behavior:'smooth', block:'nearest'});
     return;
   }
+  if(e.target.closest('[data-show]')){ CVF.limit += CV_PAGE; return cvRenderOut(); }
+  if(e.target.closest('[data-weak]')){ CVF.weak = true; return cvRenderOut(); }
   const more = e.target.closest('[data-more]');
   if(more){ more.disabled = true; more.textContent = i18n('Loading…'); return cvRun(true); }
   const use = e.target.closest('[data-use]'), r = CVF.results[CVF.pick];

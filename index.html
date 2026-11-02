@@ -10,7 +10,7 @@
 <script>
 /* APP VERSION — the one place to change it. Shown next to the logo, in the footer and saved into backups.
    Bump it whenever a new index.html goes up, so people who re-download can tell which copy they have. */
-var APP_VERSION = '0.8';
+var APP_VERSION = '0.8a';
 /* CUSTOM THEME — three picked colours (main, accent, background) in, the full variable set out. Lives up here so it can run before first paint. */
 var OtomeTheme = (function(){
   var HEX = /^#[0-9a-f]{6}$/i, KEY = 'otomeCdCustomTheme', keys = [];
@@ -571,6 +571,15 @@ details.more p{margin:8px 0 0;color:var(--ink-faint);font-weight:400;line-height
 .sh-item{display:grid;grid-template-columns:240px 1fr;gap:26px;align-items:start}
 .sh-item > div{min-width:0}
 @media (max-width:760px){.sh-item{grid-template-columns:minmax(0,1fr)}.sh-item > div:first-child{max-width:260px}}
+/* 19. print / share shelf — the page itself is styled by SHR_CSS (also used for the downloaded file) */
+@media print{
+  body.printing-shr > *:not(#shr){display:none!important}
+  body.printing-shr #shr{position:static!important;display:block!important;opacity:1!important;visibility:visible!important;background:none!important;overflow:visible!important;padding:0!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+  body.printing-shr #shr .sheet{display:block!important;transform:none!important;box-shadow:none!important;width:auto!important;max-width:none!important;max-height:none!important;overflow:visible!important;border:0!important;background:#fff!important}
+  body.printing-shr #shr .close,body.printing-shr #shr .shr-ctl{display:none!important}
+  body.printing-shr #shr .body{padding:0!important}
+  body.printing-shr .shr-sheet{padding:0!important}
+}
 /* 18. backlog roulette + mood tags */
 .tagblock{margin:12px 0 4px}.tagblock label{display:block;font-size:13px;margin-bottom:6px}
 .tagedit{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
@@ -684,6 +693,7 @@ details.more p{margin:8px 0 0;color:var(--ink-faint);font-weight:400;line-height
     </button>
     <button class="pill primary" id="btnAdd" title="Add a CD by hand">＋ Add CD</button>
     <button class="pill primary" id="btnShop" title="CDs you want to buy, with current prices and sales"><span>🛍️ Shopping list</span><span class="shn" id="shCount" hidden></span></button>
+    <button class="pill" id="btnShare" title="Make a printable or shareable page of your shelf or wishlist">🖨 Share shelf</button>
     <button class="pill primary" id="btnRou" title="Can't decide what to listen to? Draws an unlistened CD, filtered by mood, length or favorite seiyuu">🎲 Pick for me</button>
     <button class="pill primary" id="btnRel" title="Upcoming and new drama CDs from the publishers you follow">📅 Releases</button>
     <button class="pill primary" id="btnHub" title="Your voice actors and series: how many CDs you have of each, favorites, and what's still missing">🎤 Seiyuu &amp; series</button>
@@ -1052,6 +1062,35 @@ details.more p{margin:8px 0 0;color:var(--ink-faint);font-weight:400;line-height
     </div>
   </div>
 </div>
+<div class="backdrop" id="shr" aria-hidden="true">
+  <div class="sheet im" role="dialog" aria-modal="true" aria-labelledby="shrHead">
+    <button class="close" id="shrClose" aria-label="Close">✕</button>
+    <div class="body">
+      <div class="shr-ctl">
+        <h2 id="shrHead">Print or share your shelf</h2>
+        <p class="alt">Makes a clean page of your jackets — print it, save it as a web page, or copy it as text for a post. Prices, notes and file locations are never included.</p>
+        <div class="hb-bar">
+          <select class="sel" id="shrScope" aria-label="Which CDs"></select>
+          <select class="sel" id="shrLayout" aria-label="Layout"></select>
+          <input class="in" id="shrTitle" autocomplete="off" aria-label="Page title" maxlength="80">
+        </div>
+        <div class="hb-bar">
+          <label class="check"><input type="checkbox" id="shrNames" checked> Titles</label>
+          <label class="check"><input type="checkbox" id="shrCast" checked> Voice actors</label>
+          <label class="check"><input type="checkbox" id="shrRate"> Ratings</label>
+          <label class="check"><input type="checkbox" id="shrOwn"> Mark the ones I own</label>
+        </div>
+        <div class="hb-bar">
+          <button type="button" class="pill primary" id="shrPrint">🖨 Print</button>
+          <button type="button" class="pill" id="shrFile">⬇ Save as web page</button>
+          <button type="button" class="pill" id="shrCopy">📋 Copy as text</button>
+        </div>
+        <div class="lstatus" id="shrCount" role="status"></div>
+      </div>
+      <div id="shrSheet"></div>
+    </div>
+  </div>
+</div>
 <div class="backdrop ask" id="ask" aria-hidden="true">
   <div class="sheet ask" role="alertdialog" aria-modal="true" aria-describedby="askMsg">
     <div class="body">
@@ -1087,6 +1126,9 @@ Object.assign(I18N_ZH, {"Release calendar": "发售日历", "📅 Releases": "�
 /* 18. Backlog roulette */
 Object.assign(I18N_JA, {"Mood tags": "ムードタグ", "Mood tags (comma-separated)": "ムードタグ（カンマ区切り）", "add a tag…": "タグを追加…", "🎲 Pick for me": "🎲 おまかせ", "Pick something for me": "おまかせで選ぶ", "Draws one CD you haven’t started listening to. Add mood tags (cozy, angsty, sleep…) to a CD in its detail panel to filter by them.": "まだ聴き始めていないCDを1枚選びます。CDの詳細でムードタグ（癒し・切ない・睡眠…）を付けると、絞り込みに使えます。", "Only CDs I own": "持っているCDのみ", "🎲 Pick": "🎲 選ぶ", "Any mood": "すべてのムード", "Any length": "すべての長さ", "Short — under 30 min": "短め — 30分未満", "Medium — 30 to 60 min": "普通 — 30〜60分", "Long — over 60 min": "長め — 60分以上", "Any voice actor": "すべての声優", "My favorite seiyuu": "お気に入りの声優", "{n} CD matches": "{n}枚が該当", "{n} CDs match": "{n}枚が該当", "Nothing fits those filters — loosen one of them.": "条件に合うCDがありません。条件をゆるめてください。", "{h} h {m} min": "{h}時間{m}分", "{m} min": "{m}分", "▶ Start listening": "▶ 聴き始める", "Open details": "詳細を開く", "🎲 Another one": "🎲 もう一度", "Enjoy! Marked as “Listening to” ♡": "楽しんで！「視聴中」にしました ♡"});
 Object.assign(I18N_ZH, {"Mood tags": "心情标签", "Mood tags (comma-separated)": "心情标签（逗号分隔）", "add a tag…": "添加标签…", "🎲 Pick for me": "🎲 帮我选", "Pick something for me": "帮我选一张", "Draws one CD you haven’t started listening to. Add mood tags (cozy, angsty, sleep…) to a CD in its detail panel to filter by them.": "从还没开始听的CD中抽一张。在CD详情里添加心情标签（治愈、虐心、助眠…）即可用来筛选。", "Only CDs I own": "仅限我拥有的CD", "🎲 Pick": "🎲 抽取", "Any mood": "任意心情", "Any length": "任意时长", "Short — under 30 min": "较短 — 30分钟以内", "Medium — 30 to 60 min": "中等 — 30到60分钟", "Long — over 60 min": "较长 — 60分钟以上", "Any voice actor": "任意声优", "My favorite seiyuu": "我收藏的声优", "{n} CD matches": "{n} 张符合", "{n} CDs match": "{n} 张符合", "Nothing fits those filters — loosen one of them.": "没有符合条件的CD，请放宽条件。", "{h} h {m} min": "{h}小时{m}分钟", "{m} min": "{m}分钟", "▶ Start listening": "▶ 开始听", "Open details": "打开详情", "🎲 Another one": "🎲 再抽一次", "Enjoy! Marked as “Listening to” ♡": "听得愉快！已标记为“正在听” ♡"});
+/* 19. Print / share shelf */
+Object.assign(I18N_JA, {"🖨 Share shelf": "🖨 本棚を共有", "Make a printable or shareable page of your shelf or wishlist": "本棚やほしい物リストを印刷・共有用のページにします", "Print or share your shelf": "本棚を印刷・共有", "Makes a clean page of your jackets — print it, save it as a web page, or copy it as text for a post. Prices, notes and file locations are never included.": "ジャケットをきれいなページにまとめます。印刷、Webページとして保存、投稿用のテキストコピーができます。価格・メモ・ファイルの場所は含まれません。", "What’s on screen now (current filters)": "今の表示内容（現在の絞り込み）", "Every CD": "すべてのCD", "Owned CDs": "持っているCD", "My wishlist": "ほしい物リスト", "Favorites": "お気に入り", "Jacket grid": "ジャケット一覧", "List with details": "詳細つきリスト", "Titles": "タイトル", "Voice actors": "声優", "Ratings": "評価", "Mark the ones I own": "持っているものに印をつける", "🖨 Print": "🖨 印刷", "⬇ Save as web page": "⬇ Webページとして保存", "📋 Copy as text": "📋 テキストをコピー", "My drama CD shelf": "わたしのドラマCD本棚", "My drama CD wishlist": "わたしのドラマCDほしい物リスト", "No CDs to show for that choice.": "この条件に合うCDはありません。", "Saved — open it in any browser or send it to a friend ♡": "保存しました。どのブラウザでも開けて、友だちにも送れます ♡", "Copied — paste it into your post ♡": "コピーしました。投稿に貼り付けてください ♡", "Select the text and copy it": "テキストを選択してコピーしてください"});
+Object.assign(I18N_ZH, {"🖨 Share shelf": "🖨 分享书架", "Make a printable or shareable page of your shelf or wishlist": "把书架或愿望清单做成可打印、可分享的页面", "Print or share your shelf": "打印或分享书架", "Makes a clean page of your jackets — print it, save it as a web page, or copy it as text for a post. Prices, notes and file locations are never included.": "把封面整理成一个干净的页面——可打印、保存为网页，或复制为文字发帖。不会包含价格、笔记和文件位置。", "What’s on screen now (current filters)": "当前屏幕显示的内容（当前筛选）", "Every CD": "所有CD", "Owned CDs": "已拥有的CD", "My wishlist": "我的愿望清单", "Favorites": "收藏", "Jacket grid": "封面网格", "List with details": "带详情的列表", "Titles": "标题", "Voice actors": "声优", "Ratings": "评分", "Mark the ones I own": "标出我已拥有的", "🖨 Print": "🖨 打印", "⬇ Save as web page": "⬇ 保存为网页", "📋 Copy as text": "📋 复制为文字", "My drama CD shelf": "我的广播剧CD书架", "My drama CD wishlist": "我的广播剧CD愿望清单", "No CDs to show for that choice.": "该选项下没有可显示的CD。", "Saved — open it in any browser or send it to a friend ♡": "已保存——可用任何浏览器打开，也可发给朋友 ♡", "Copied — paste it into your post ♡": "已复制——粘贴到你的帖子里吧 ♡", "Select the text and copy it": "请选中文字并复制"});
 const I18N = {ja:I18N_JA, zh:I18N_ZH}, LANG_TAG = {en:'en', ja:'ja', zh:'zh-CN'};
 let LANG = 'en'; try{ const l = localStorage.getItem('otomeCdLang'); LANG = I18N[l] ? l : 'en'; }catch(e){}
 const i18n = (k, v) => { let o = (I18N[LANG] && I18N[LANG][k]) || k; if(v) o = o.replace(/\{(\w+)\}/g, (m, n) => v[n] != null ? v[n] : m); return o; };
@@ -1563,6 +1605,7 @@ $('#mClose').onclick = closeModal;
 document.addEventListener('keydown', e => {
   if(e.key !== 'Escape') return;
   if($('#coverFind').classList.contains('open')) closeCoverFind();
+  else if($('#shr').classList.contains('open')) closeShr();
   else if($('#rou').classList.contains('open')) closeRou();
   else if($('#rel').classList.contains('open')) closeRel();
   else if($('#hub').classList.contains('open')) closeHub();
@@ -4764,6 +4807,88 @@ el('rouOut').addEventListener('click', e => {
   else { DB.update(id, {listen:'listening'}); render(); toast(i18n('Enjoy! Marked as “Listening to” ♡')); rouCount(); el('rouOut').innerHTML = ''; ROU.cur = null; }
 });
 
+/* =====================================================================
+   19. PRINT / SHARE SHELF — one clean page built from the shelf (or wishlist); printed, saved as a stand-alone .html, or copied as text.
+   Never includes prices, notes or local file paths. Setting: shrCfg.
+   ===================================================================== */
+const SHR_CSS = `.shr-sheet{font-family:system-ui,'Noto Sans JP','Hiragino Sans','Yu Gothic UI',sans-serif;color:#2b2540;background:#fff;padding:24px;border-radius:18px;line-height:1.35}
+.shr-sheet h1{margin:0 0 4px;font-size:24px}.shr-sheet .shr-sub{color:#7a7096;font-size:13px;margin:0 0 18px}
+.shr-sheet .shr-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:14px}
+.shr-sheet .shr-item{break-inside:avoid;font-size:11.5px}.shr-sheet .shr-item .cv{position:relative;aspect-ratio:1;border-radius:10px;overflow:hidden;background:#ece8f7;display:grid;place-items:center;font-size:24px}
+.shr-sheet .shr-item img{width:100%;height:100%;object-fit:cover;display:block}
+.shr-sheet .shr-item .own{position:absolute;top:4px;right:4px;background:#3f9e6e;color:#fff;border-radius:999px;font-size:11px;padding:0 6px;line-height:18px}
+.shr-sheet .shr-item b{display:block;margin-top:5px;font-weight:600}.shr-sheet .shr-item span{display:block;color:#7a7096}
+.shr-sheet .shr-list{width:100%;border-collapse:collapse;font-size:13px}.shr-sheet .shr-list td{padding:6px 8px;border-bottom:1px solid #e7e2f5;vertical-align:top}
+.shr-sheet .shr-list tr{break-inside:avoid}.shr-sheet .shr-list img{width:44px;height:44px;object-fit:cover;border-radius:6px;display:block}.shr-sheet .shr-list .m{color:#7a7096;font-size:12px}`;
+document.head.appendChild(Object.assign(document.createElement('style'), {textContent:SHR_CSS}));
+const SHR_SCOPES = [['view', 'What’s on screen now (current filters)'], ['all', 'Every CD'], ['owned', 'Owned CDs'], ['want', 'My wishlist'], ['fav', 'Favorites']];
+const SHR_LAYOUTS = [['grid', 'Jacket grid'], ['list', 'List with details']];
+const shrCfg = () => ({scope:'view', layout:'grid', title:'', names:true, cast:true, rate:false, own:false, ...(DB.setting('shrCfg') || {})});
+function shrRead(){
+  const c = {scope:el('shrScope').value, layout:el('shrLayout').value, title:el('shrTitle').value, names:el('shrNames').checked, cast:el('shrCast').checked, rate:el('shrRate').checked, own:el('shrOwn').checked};
+  DB.setting('shrCfg', c); return c;
+}
+function shrCDs(c){
+  const byTitle = (a, b) => shownTitle(a).localeCompare(shownTitle(b), LANG_TAG[LANG]);
+  if(c.scope === 'view') return visible();
+  return DB.all.filter(x => c.scope === 'all' || (c.scope === 'owned' && x.owned) || (c.scope === 'want' && x.want) || (c.scope === 'fav' && x.fav)).sort(byTitle);
+}
+const shrTitle = c => c.title.trim() || i18n(c.scope === 'want' ? 'My drama CD wishlist' : 'My drama CD shelf');
+/* the page body (also the downloaded file's body); covers use the saved copy if there is one, else the web address */
+function shrBuild(c, list){
+  const src = x => x.coverData || x.cover || '';
+  const sub = esc(i18n(list.length === 1 ? '{n} CD' : '{n} CDs', {n:list.length}) + ' · ' + new Date().toLocaleDateString(LANG_TAG[LANG], {year:'numeric', month:'long', day:'numeric'}));
+  const cv = x => src(x) ? `<img src="${esc(src(x))}" alt="" loading="lazy" referrerpolicy="no-referrer">` : '💿';
+  const meta = x => [x.label, x.release ? x.release.slice(0, 4) : ''].filter(Boolean).join(' · ');
+  const body = c.layout === 'list'
+    ? `<table class="shr-list">${list.map(x => `<tr><td style="width:56px"><div>${cv(x)}</div></td><td><b>${esc(shownTitle(x))}</b>${c.own && x.owned ? ' ✓' : ''}${c.rate && x.rating ? ' <span class="m">' + '♥'.repeat(x.rating) + '</span>' : ''}<div class="m">${esc([c.cast ? castLabel(x) : '', meta(x), seriesName(x) ? shownSeries(x) : ''].filter(Boolean).join(' · '))}</div></td></tr>`).join('')}</table>`
+    : `<div class="shr-grid">${list.map(x => `<div class="shr-item"><div class="cv">${cv(x)}${c.own && x.owned ? '<i class="own">✓</i>' : ''}</div>${c.names ? `<b>${esc(shownTitle(x))}</b>` : ''}${c.cast && castLabel(x) ? `<span>${esc(castLabel(x))}</span>` : ''}${c.rate && x.rating ? `<span>${'♥'.repeat(x.rating)}</span>` : ''}</div>`).join('')}</div>`;
+  return `<section class="shr-sheet"><h1>${esc(shrTitle(c))}</h1><p class="shr-sub">${sub}</p>${body}</section>`;
+}
+function shrText(c, list){
+  return [shrTitle(c) + ' (' + list.length + ')', '', ...list.map(x => '• ' + shownTitle(x) + (c.cast && castLabel(x) ? ' — ' + castLabel(x) : '') + (meta2(x) ? ' (' + meta2(x) + ')' : '') + (c.rate && x.rating ? ' ' + '♥'.repeat(x.rating) : '') + (c.own && x.owned ? ' ✓' : ''))].join('\n');
+  function meta2(x){ return [x.label, x.release ? x.release.slice(0, 4) : ''].filter(Boolean).join(', '); }
+}
+function shrSetup(){
+  const c = shrCfg();
+  el('shrScope').innerHTML = SHR_SCOPES.map(([v, t]) => `<option value="${v}">${esc(i18n(t))}</option>`).join(''); el('shrScope').value = c.scope;
+  el('shrLayout').innerHTML = SHR_LAYOUTS.map(([v, t]) => `<option value="${v}">${esc(i18n(t))}</option>`).join(''); el('shrLayout').value = c.layout;
+  el('shrTitle').value = c.title; el('shrTitle').placeholder = i18n('My drama CD shelf');
+  ['Names', 'Cast', 'Rate', 'Own'].forEach(k => { el('shr' + k).checked = c[k.toLowerCase()]; });
+  shrRender();
+}
+function shrRender(){
+  const c = shrRead(), list = shrCDs(c);
+  el('shrNames').disabled = c.layout === 'list';
+  el('shrCount').textContent = i18n(list.length === 1 ? '{n} CD' : '{n} CDs', {n:list.length});
+  el('shrSheet').innerHTML = list.length ? shrBuild(c, list) : `<p class="muted">${i18n('No CDs to show for that choice.')}</p>`;
+  ['shrPrint', 'shrFile', 'shrCopy'].forEach(id => { el(id).disabled = !list.length; });
+}
+function shrOpen(){ const m = el('shr'); m.classList.add('open'); m.setAttribute('aria-hidden', 'false'); document.body.style.overflow = 'hidden'; shrSetup(); }
+function closeShr(){ const m = el('shr'); m.classList.remove('open'); m.setAttribute('aria-hidden', 'true'); document.body.style.overflow = ''; document.body.classList.remove('printing-shr'); }
+el('btnShare').onclick = shrOpen;
+el('shrClose').onclick = closeShr;
+el('shr').addEventListener('mousedown', e => { if(e.target === el('shr')) closeShr(); });
+el('shr').addEventListener('change', e => { if(/^shr(Scope|Layout|Names|Cast|Rate|Own)$/.test(e.target.id)) shrRender(); });
+el('shrTitle').addEventListener('input', shrRender);
+el('shrPrint').onclick = () => {
+  document.body.classList.add('printing-shr');
+  const done = () => { document.body.classList.remove('printing-shr'); window.removeEventListener('afterprint', done); };
+  window.addEventListener('afterprint', done); setTimeout(() => window.print(), 50);
+};
+el('shrFile').onclick = () => {
+  const c = shrRead(), list = shrCDs(c);
+  const html = `<!doctype html><html lang="${LANG_TAG[LANG]}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(shrTitle(c))}</title><style>body{margin:0;padding:18px;background:#f6f3fc}${SHR_CSS}.shr-sheet{max-width:1100px;margin:0 auto}@media print{body{padding:0;background:#fff}.shr-sheet{padding:0}}</style></head><body>${shrBuild(c, list)}</body></html>`;
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([html], {type:'text/html'}));
+  a.download = 'otome-cd-shelf-' + new Date().toISOString().slice(0, 10) + '.html'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  toast(i18n('Saved — open it in any browser or send it to a friend ♡'));
+};
+el('shrCopy').onclick = async () => {
+  const c = shrRead(), text = shrText(c, shrCDs(c));
+  try{ await navigator.clipboard.writeText(text); toast(i18n('Copied — paste it into your post ♡')); }
+  catch(e){ el('shrSheet').innerHTML = `<textarea class="in" rows="12" style="width:100%" readonly>${esc(text)}</textarea>`; el('shrSheet').firstChild.select(); toast(i18n('Select the text and copy it')); }
+};
+
 /* ---------- language switcher (EN ・ 日本 ・ 中文) ---------- */
 /* flips the voice actor names whenever the toggle moves them between romaji (EN) and Japanese (日本・中文) */
 function nameFlip(){
@@ -4780,7 +4905,7 @@ function setLang(l, save){
   if(el('editor').classList.contains('open')) el('eHead').textContent = i18n(ED.id ? 'Edit CD' : 'Add a CD');
   imSync(); imCount(); if(IM.items.length) imRenderList();
   selSync(); if(el('bulk').classList.contains('open')) openBulk();
-  shRender(); if(el('hub').classList.contains('open')) hubRender(); if(el('rel').classList.contains('open')) relRender(); if(el('rou').classList.contains('open')) rouSetup();
+  shRender(); if(el('hub').classList.contains('open')) hubRender(); if(el('rel').classList.contains('open')) relRender(); if(el('rou').classList.contains('open')) rouSetup(); if(el('shr').classList.contains('open')) shrSetup();
   if(SC.rows.length) scRender(); else if(SC.res && el('scan').classList.contains('open')) scSummary(SC.msg, SC.res);
   if(save && (was === 'en') !== (LANG === 'en')) nameFlip();
 }

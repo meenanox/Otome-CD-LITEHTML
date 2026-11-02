@@ -1,6 +1,6 @@
 # Otome-CD-LITE
 
-**Current version: 0.9.0** — shown next to the logo and at the bottom of the page. If the number in your copy is
+**Current version: 0.7c** — shown next to the logo and at the bottom of the page. If the number in your copy is
 lower than this, download the newest `index.html` again (your CDs stay in your browser, but make a Backup first).
 
 A self-hosted, single-file Otome Drama CD collection tracker. No Python, no server, no build step:
@@ -15,9 +15,11 @@ open `index.html` in a browser.
 - Everything is stored in your browser (localStorage); use **Backup / Restore** for JSON backups
 
 ## Versions
-The version lives in one line near the top of `index.html` (`var APP_VERSION = '0.9.0';`). Raise it, and the
+The version lives in one line near the top of `index.html` (`var APP_VERSION = '0.7c';`). Raise it, and the
 "Current version" line above, every time a new `index.html` is published. Backup files also record the version
-that made them. Older copies are kept with the version in the file name, e.g. `otome-cd-database version 2026-10-29-0.5.1.html`.
+that made them. Numbering: each release goes through a, b, c (0.7 → 0.7a → 0.7b → 0.7c) before the next step up (0.8).
+Earlier numbers were renumbered on 2026-11-02: 0.7 custom theme · 0.7a seiyuu & series pages · 0.7b smarter Merge duplicates · 0.7c release calendar.
+Older copies are kept with the version in the file name, e.g. `otome-cd-database version 2026-10-29-0.5.1.html`.
 
 ## Notes
 - Online lookups from a local page go through a free public CORS proxy (editable in the Add CD / Import dialogs).

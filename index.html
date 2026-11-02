@@ -10,7 +10,7 @@
 <script>
 /* APP VERSION — the one place to change it. Shown next to the logo, in the footer and saved into backups.
    Bump it whenever a new index.html goes up, so people who re-download can tell which copy they have. */
-var APP_VERSION = '0.8.0';
+var APP_VERSION = '0.8.1';
 /* CUSTOM THEME — three picked colours (main, accent, background) in, the full variable set out. Lives up here so it can run before first paint. */
 var OtomeTheme = (function(){
   var HEX = /^#[0-9a-f]{6}$/i, KEY = 'otomeCdCustomTheme', keys = [];
@@ -906,6 +906,7 @@ details.more p{margin:8px 0 0;color:var(--ink-faint);font-weight:400;line-height
     <div class="body">
       <h2 id="dupHead">Merge duplicates</h2>
       <p class="alt">The same CD added more than once — matched by title (romaji or Japanese, ignoring “CV.” tags), catalog no., JAN or source page. Each group becomes one entry: the most complete one is kept, its blanks are filled from the others, and nothing is copied twice.</p>
+      <p class="alt">Different editions of the same title (限定盤 / 通常盤 / special) are listed separately and left alone unless you tick them. Near-identical CDs with the same release date and a shared voice actor are listed as possible matches.</p>
       <div id="dupList"></div>
       <div class="actions" id="dupActions" hidden>
         <button type="button" class="pill" id="dupCancel" style="margin-left:auto">Cancel</button>
@@ -1008,6 +1009,9 @@ Object.assign(I18N_ZH, {"Search by title on every site": "在所有网站按标�
 /* 16. Seiyuu & series pages */
 Object.assign(I18N_JA, {"Seiyuu & series": "声優とシリーズ", "Your voice actors and series: how many CDs you have of each, favorites, and what's still missing": "声優とシリーズごとの所持数・お気に入り・足りないCDを見られます", "🎤 Seiyuu & series": "🎤 声優とシリーズ", "Every voice actor and series on your shelf. Open one to see your CDs, what you own, and what you’re still missing.": "本棚にいる声優とシリーズの一覧です。開くと、持っているCDと足りないCDを確認できます。", "Browse by": "表示", "Voice actors": "声優", "Series": "シリーズ", "Search by name…": "名前で検索…", "Favorites only": "お気に入りのみ", "Incomplete only": "未コンプリートのみ", "Nothing matches that.": "該当するものがありません。", "No voice actors on your shelf yet.": "本棚に声優がまだいません。", "No series on your shelf yet.": "本棚にシリーズがまだありません。", "Your shelf is empty.": "本棚は空です。", "← Back": "← 戻る", "Favorite seiyuu": "お気に入りの声優", "{n} wanted": "欲しい {n} 枚", "{n} listened": "視聴済み {n} 枚", "Own {a} of {b} known": "把握済み {b} 枚中 {a} 枚を所持", "Show these on my shelf": "本棚で絞り込む", "Look for more online": "ネットでほかを探す", "Look again online": "もう一度ネットで探す", "On your shelf": "本棚にあるもの", "Couldn’t look online — {e}": "ネットで探せませんでした — {e}", "{n} not on your shelf yet": "本棚にまだない {n} 枚", "Nothing new found online.": "ネット上に新しいものは見つかりませんでした。", "＋ Want": "＋ 欲しい", "＋ Add": "＋ 追加", "Vol. {n}": "第{n}巻", "Not found yet": "まだ見つかっていません", "Added to your shopping list ♡": "買い物リストに追加しました ♡", "Added to your shelf ♡": "本棚に追加しました ♡"});
 Object.assign(I18N_ZH, {"Seiyuu & series": "声优与系列", "Your voice actors and series: how many CDs you have of each, favorites, and what's still missing": "查看每位声优和每个系列的持有数量、收藏以及还缺哪些CD", "🎤 Seiyuu & series": "🎤 声优与系列", "Every voice actor and series on your shelf. Open one to see your CDs, what you own, and what you’re still missing.": "书架上所有的声优和系列。点开可查看已有的CD和还缺的CD。", "Browse by": "浏览方式", "Voice actors": "声优", "Series": "系列", "Search by name…": "按名称搜索…", "Favorites only": "仅收藏", "Incomplete only": "仅未集齐", "Nothing matches that.": "没有匹配的内容。", "No voice actors on your shelf yet.": "书架上还没有声优。", "No series on your shelf yet.": "书架上还没有系列。", "Your shelf is empty.": "书架是空的。", "← Back": "← 返回", "Favorite seiyuu": "收藏的声优", "{n} wanted": "想要 {n} 张", "{n} listened": "已听完 {n} 张", "Own {a} of {b} known": "已知 {b} 张中拥有 {a} 张", "Show these on my shelf": "在书架中筛选", "Look for more online": "在线查找更多", "Look again online": "再次在线查找", "On your shelf": "书架上的", "Couldn’t look online — {e}": "无法在线查找 — {e}", "{n} not on your shelf yet": "书架上还没有的 {n} 张", "Nothing new found online.": "在线没有找到新的条目。", "＋ Want": "＋ 想要", "＋ Add": "＋ 添加", "Vol. {n}": "第{n}卷", "Not found yet": "尚未找到", "Added to your shopping list ♡": "已加入购物清单 ♡", "Added to your shelf ♡": "已添加到书架 ♡"});
+/* 12b. Merge duplicates: editions + possible matches */
+Object.assign(I18N_JA, {"Limited edition": "限定盤", "Regular edition": "通常盤", "Special edition": "特装版", "No edition marked": "盤の表記なし", "Same CD added twice": "同じCDが二重に登録されています", "Possible matches — check these before merging": "同じかもしれないCD — 統合前に確認してください", "Different editions — kept separate unless you tick them": "別の盤 — チェックしない限り別々のままです", "Looks like the same CD — merge these {n} into one": "同じCDのようです — この{n}件を1つに統合", "Merge these {n} editions into one anyway": "それでも、この{n}つの盤を1つに統合", "Different editions of the same title (限定盤 / 通常盤 / special) are listed separately and left alone unless you tick them. Near-identical CDs with the same release date and a shared voice actor are listed as possible matches.": "同じタイトルでも盤が違うもの（限定盤／通常盤／特装版）は別枠で表示し、チェックしない限りそのままにします。発売日が同じで声優が共通し、タイトルがほぼ同じCDは「同じかもしれないCD」として表示します。"});
+Object.assign(I18N_ZH, {"Limited edition": "限定盘", "Regular edition": "通常盘", "Special edition": "特装版", "No edition marked": "未标注版本", "Same CD added twice": "重复添加的同一张CD", "Possible matches — check these before merging": "可能相同的CD — 合并前请确认", "Different editions — kept separate unless you tick them": "不同版本 — 不勾选则保持分开", "Looks like the same CD — merge these {n} into one": "看起来是同一张CD — 将这 {n} 项合并为一", "Merge these {n} editions into one anyway": "仍然将这 {n} 个版本合并为一", "Different editions of the same title (限定盤 / 通常盤 / special) are listed separately and left alone unless you tick them. Near-identical CDs with the same release date and a shared voice actor are listed as possible matches.": "同名但版本不同的CD（限定盘／通常盘／特装版）会单独列出，不勾选就不会改动。发售日相同、有共同声优且标题几乎一样的CD会列为“可能相同”。"});
 const I18N = {ja:I18N_JA, zh:I18N_ZH}, LANG_TAG = {en:'en', ja:'ja', zh:'zh-CN'};
 let LANG = 'en'; try{ const l = localStorage.getItem('otomeCdLang'); LANG = I18N[l] ? l : 'en'; }catch(e){}
 const i18n = (k, v) => { let o = (I18N[LANG] && I18N[LANG][k]) || k; if(v) o = o.replace(/\{(\w+)\}/g, (m, n) => v[n] != null ? v[n] : m); return o; };
@@ -2980,9 +2984,15 @@ el('compare').addEventListener('click', e => { if(e.target.id === 'compare') clo
 const CV_TAG = /[(（]?\bCV\s*[.:．：]\s*[^\s,、/)）]+[)）]?/gi;
 const cleanTitle = t => String(t || '').normalize('NFKC').replace(/【[^】]*】/g, ' ').replace(CV_TAG, ' ').replace(/\s+/g, ' ').trim();
 const dupTitle = t => cmpKey(cleanTitle(t));
+/* Editions: the same title as a 限定盤 and a 通常盤 is two products, so those are told apart (and kept apart unless you tick them) */
+const ED_KINDS = [['limited', /限定盤|限定版|初回限定|完全生産限定|\blimited (?:edition|ver)/i, 'Limited edition'], ['regular', /通常盤|通常版|\b(?:regular|normal|standard) (?:edition|ver)/i, 'Regular edition'], ['special', /特装版|特装盤|豪華版|豪華盤|\bdeluxe\b|\bspecial edition/i, 'Special edition']];
+const ED_ALL = new RegExp(ED_KINDS.map(k => k[1].source).join('|'), 'gi');
+const edOf = c => { const t = [c.title, c.altTitle, c.category, c.releaseNote].join(' ').normalize('NFKC'); return ED_KINDS.filter(k => k[1].test(t)).map(k => k[0]); };
+const edLabel = c => edOf(c).map(k => i18n(ED_KINDS.find(x => x[0] === k)[2])).join(' + ') || i18n('No edition marked');
+const dupTitleV = t => cmpKey(cleanTitle(t).normalize('NFKC').replace(ED_ALL, ' '));   // title with the edition words dropped
 function dupKeys(c){
   const k = [];
-  [c.title, c.altTitle].map(dupTitle).filter(x => x.length >= 6).forEach(x => k.push('t:' + x));
+  [c.title, c.altTitle].map(dupTitleV).filter(x => x.length >= 6).forEach(x => k.push('t:' + x));
   if(pnKey(c.pn).length >= 4) k.push('p:' + pnKey(c.pn));
   if(/^\d{8,14}$/.test(c.jan || '')) k.push('j:' + c.jan);
   if(c.url) k.push('u:' + nu(c.url));
@@ -2994,7 +3004,37 @@ function findDupes(){
   all.forEach((c, i) => dupKeys(c).forEach(k => { if(seen.has(k)) parent[root(i)] = root(seen.get(k)); else seen.set(k, i); }));
   const groups = new Map();
   all.forEach((c, i) => { const r = root(i); groups.set(r, [...(groups.get(r) || []), c]); });
-  return [...groups.values()].filter(g => g.length > 1);
+  const out = [], grouped = new Set();
+  /* same title: copies with the same edition (or the same catalog no./JAN/page) are duplicates; different editions are variants */
+  [...groups.values()].filter(g => g.length > 1).forEach(g => {
+    g.forEach(c => grouped.add(c));
+    const par = g.map((_, i) => i), r = i => par[i] === i ? i : (par[i] = r(par[i])), sig = g.map(c => edOf(c).join('+')), strong = g.map(c => dupKeys(c).filter(k => k[0] !== 't'));
+    g.forEach((_, i) => g.forEach((__, j) => { if(j > i && (sig[i] === sig[j] || strong[i].some(k => strong[j].includes(k)))) par[r(j)] = r(i); }));
+    const comps = new Map(); g.forEach((c, i) => comps.set(r(i), [...(comps.get(r(i)) || []), c]));
+    const parts = [...comps.values()];
+    parts.filter(p => p.length > 1).forEach(p => out.push({kind:'dup', group:p}));
+    if(parts.length > 1) out.push({kind:'variant', group:parts.map(p => [...p].sort((a, b) => richness(b) - richness(a))[0])});
+  });
+  /* near misses among the rest: same release date, a shared voice actor, and a very similar title */
+  const byDate = new Map();
+  all.filter(c => !grouped.has(c) && c.release && (c.cast || []).length).forEach(c => byDate.set(c.release, [...(byDate.get(c.release) || []), c]));
+  byDate.forEach(b => {
+    if(b.length < 2 || b.length > 60) return;
+    const par = b.map((_, i) => i), r = i => par[i] === i ? i : (par[i] = r(par[i]));
+    b.forEach((x, i) => b.forEach((y, j) => { if(j > i && nearSame(x, y)) par[r(j)] = r(i); }));
+    const comps = new Map(); b.forEach((c, i) => comps.set(r(i), [...(comps.get(r(i)) || []), c]));
+    [...comps.values()].filter(g => g.length > 1).forEach(g => out.push({kind:'maybe', group:g}));
+  });
+  return out;
+}
+function nearSame(x, y){
+  if(!x.cast.some(p => Names.pid(p) && y.cast.some(q => Names.pid(p) === Names.pid(q)))) return false;
+  const tx = [x.title, x.altTitle].filter(Boolean).map(dupTitleV).filter(Boolean), ty = [y.title, y.altTitle].filter(Boolean).map(dupTitleV).filter(Boolean);
+  return tx.some(a => ty.some(b => {
+    if((a.match(/\d+/g) || []).join() !== (b.match(/\d+/g) || []).join()) return false;   // Vol.1 vs Vol.2 are different CDs
+    const [sm, lg] = a.length <= b.length ? [a, b] : [b, a];
+    return sm.length >= 6 && (lg.includes(sm) || dice(a, b) >= 0.72);
+  }));
 }
 const DATA_KEYS = ['title', 'altTitle', 'release', 'releaseNote', 'label', 'series', 'seriesRomaji', 'cast', 'scenario', 'illustrator', 'category', 'pn', 'jan', 'synopsis', 'tracks', 'bonuses', 'cover', 'url'];
 const richness = c => DATA_KEYS.filter(k => !isEmpty(c[k])).length * 1000 + (c.tracks || []).length * 10 + (c.synopsis || '').length / 100 + (c.coverData ? 1 : 0);
@@ -3046,16 +3086,21 @@ function applyMerge(plan){
 
 const DUP = { plans:[] };
 const FIELD_LABEL = Object.fromEntries([...CMP_FIELDS.map(([k, l]) => [k, l]), ['notes', 'Notes'], ['coverData', 'Cover'], ['sourceType', 'Source'], ['cnTitle', 'Chinese title (中文)'], ['seriesCn', 'Series (中文)'], ['synopsisCn', 'Synopsis (中文)'], ['localFolder', 'Local folder']]);
+const DUP_KINDS = [['dup', 'Same CD added twice'], ['maybe', 'Possible matches — check these before merging'], ['variant', 'Different editions — kept separate unless you tick them']];
 function openDupes(){
-  DUP.plans = findDupes().map(planMerge);
+  const rank = {dup:0, maybe:1, variant:2};
+  DUP.plans = findDupes().sort((x, y) => rank[x.kind] - rank[y.kind]).map(g => ({kind:g.kind, ids:g.group.map(c => c.id), ...planMerge(g.group)}));
   const m = el('dupes'); m.classList.add('open'); m.setAttribute('aria-hidden', 'false'); document.body.style.overflow = 'hidden';
   el('dupActions').hidden = !DUP.plans.length;
-  el('dupList').innerHTML = DUP.plans.length ? DUP.plans.map((p, i) => `<div class="dgroup">
-      <label class="check"><input type="checkbox" data-i="${i}" checked> ${i18n('Merge these {n} into one', {n:p.rest.length + 1})}</label>
-      <ul>${[p.keep, ...p.rest].map((c, j) => `<li>${thumbHTML({thumb:c.coverData || c.cover})}<span class="t">${esc(c.title)}<br><small class="muted">${esc([(SOURCES.find(s => c.url && s.match(c.url)) || {}).name || (c.url ? hostOf(c.url) : ''), c.pn].filter(Boolean).join(' · ') || i18n('added by hand'))}</small></span>
-        <span class="badge">${j ? i18n('merged in, then removed') : i18n('kept')}</span></li>`).join('')}</ul>
+  const card = (p, i) => `<div class="dgroup">
+      <label class="check"><input type="checkbox" data-i="${i}"${p.kind === 'dup' ? ' checked' : ''}> ${i18n(p.kind === 'dup' ? 'Merge these {n} into one' : p.kind === 'maybe' ? 'Looks like the same CD — merge these {n} into one' : 'Merge these {n} editions into one anyway', {n:p.rest.length + 1})}</label>
+      <ul>${[p.keep, ...p.rest].map((c, j) => `<li>${thumbHTML({thumb:c.coverData || c.cover})}<span class="t">${esc(c.title)}<br><small class="muted">${esc([(SOURCES.find(s => c.url && s.match(c.url)) || {}).name || (c.url ? hostOf(c.url) : ''), c.pn, c.release].filter(Boolean).join(' · ') || i18n('added by hand'))}</small></span>
+        <span class="badge">${p.kind === 'variant' ? esc(edLabel(c)) : j ? i18n('merged in, then removed') : i18n('kept')}</span></li>`).join('')}</ul>
       <p class="gain">${p.gained.length ? i18n('Adds to the kept entry: {f}', {f:p.gained.map(k => i18n(FIELD_LABEL[k] || k)).filter((x, i, a) => a.indexOf(x) === i).join(', ')}) : i18n('The kept entry already has everything; the extra copy is just removed.')}</p>
-    </div>`).join('') : `<p class="lstatus ok">${i18n('No duplicates found ♡')}</p>`;
+    </div>`;
+  el('dupList').innerHTML = DUP.plans.length
+    ? DUP_KINDS.map(([k, h]) => DUP.plans.some(p => p.kind === k) ? `<h3 class="hb-sec">${i18n(h)}</h3>` + DUP.plans.map((p, i) => p.kind === k ? card(p, i) : '').join('') : '').join('')
+    : `<p class="lstatus ok">${i18n('No duplicates found ♡')}</p>`;
   dupCount();
 }
 function closeDupes(){ const m = el('dupes'); m.classList.remove('open'); m.setAttribute('aria-hidden', 'true'); document.body.style.overflow = ''; }
@@ -3065,8 +3110,9 @@ el('dupList').addEventListener('change', dupCount);
 el('dupClose').onclick = el('dupCancel').onclick = closeDupes;
 el('dupes').addEventListener('click', e => { if(e.target.id === 'dupes') closeDupes(); });
 el('dupGo').onclick = () => {
-  const picked = [...el('dupList').querySelectorAll('input:checked')].map(x => DUP.plans[+x.dataset.i]);
-  let removed = 0; picked.forEach(p => { applyMerge(p); removed += p.rest.length; });
+  /* re-plan from the current entries, so two ticked groups that share a CD can't overwrite each other */
+  const picked = [...el('dupList').querySelectorAll('input:checked')].map(x => DUP.plans[+x.dataset.i].ids);
+  let removed = 0; picked.forEach(ids => { const g = ids.map(id => DB.byId(id)).filter(Boolean); if(g.length < 2) return; const p = planMerge(g); applyMerge(p); removed += p.rest.length; });
   closeDupes(); buildFilters(); render();
   toast(i18n(removed === 1 ? 'Merged — 1 duplicate removed ♡' : 'Merged — {n} duplicates removed ♡', {n:removed}));
 };

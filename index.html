@@ -10,7 +10,7 @@
 <script>
 /* APP VERSION — the one place to change it. Shown next to the logo, in the footer and saved into backups.
    Bump it whenever a new index.html goes up, so people who re-download can tell which copy they have. */
-var APP_VERSION = '0.8c';
+var APP_VERSION = '0.9';
 /* CUSTOM THEME — three picked colours (main, accent, background) in, the full variable set out. Lives up here so it can run before first paint. */
 var OtomeTheme = (function(){
   var HEX = /^#[0-9a-f]{6}$/i, KEY = 'otomeCdCustomTheme', keys = [];
@@ -149,10 +149,13 @@ button{cursor:pointer}
 /* Backup / Restore: one ⇅ button with a small pop-up menu */
 .bkmenu{position:relative}
 .bkbtn{font-size:17px;padding:7px 14px}
-.bkpop{position:absolute;top:calc(100% + 8px);right:0;z-index:30;min-width:170px;padding:6px;background:var(--surface);border:2px solid var(--accent-soft);border-radius:20px;box-shadow:var(--shadow-lg);display:grid;gap:2px}
+.bkpop{position:absolute;top:calc(100% + 8px);right:0;z-index:30;min-width:230px;padding:6px;background:var(--surface);border:2px solid var(--accent-soft);border-radius:20px;box-shadow:var(--shadow-lg);display:grid;gap:2px}
 .bkpop button{display:flex;align-items:center;gap:10px;border:0;background:none;border-radius:14px;padding:9px 12px;font-size:14px;text-align:left;color:var(--ink)}
 .bkpop button:hover,.bkpop button:focus-visible{background:var(--accent-faint)}
 .bkpop b{font-weight:400;width:18px;text-align:center}
+.bkpop .bkinfo{padding:6px 12px 4px;font-size:12.5px;color:var(--ink-faint);border-top:1px solid var(--accent-soft);margin-top:4px}
+.bkbanner{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:10px;margin:14px 28px 0;padding:10px 16px;border-radius:18px;background:var(--pink-soft);color:var(--pink-ink);border:2px solid var(--pink-border);font-size:14px}
+.bkbanner[hidden]{display:none}
 .link-btn{border:0;background:none;color:var(--accent);font-weight:400;font-size:13px;text-decoration:underline;text-underline-offset:3px;padding:6px 8px}
 
 /* ---------- grid ---------- */
@@ -707,6 +710,8 @@ details.more p{margin:8px 0 0;color:var(--ink-faint);font-weight:400;line-height
         <button role="menuitem" id="btnExport" title="Download your whole collection as a JSON backup file"><b>⬇</b><span>Backup</span></button>
         <button role="menuitem" id="btnImport" title="Restore a JSON backup file"><b>⬆</b><span>Restore</span></button>
         <button role="menuitem" id="btnCsv" title="Download a spreadsheet (CSV) list of your CDs: titles, DLsite codes, shop links, voice actors, series, release dates"><b>▤</b><span>Spreadsheet (CSV)</span></button>
+        <button role="menuitem" id="btnBkRem"><b>🔔</b><span id="bkRemT"></span></button>
+        <div class="bkinfo" id="bkInfo"></div>
       </div>
     </div>
     <input type="file" id="fileImport" accept=".json,application/json,text/plain" hidden>
@@ -756,6 +761,7 @@ details.more p{margin:8px 0 0;color:var(--ink-faint);font-weight:400;line-height
     <button class="link-btn" id="fReset">Reset</button>
   </div>
 </header>
+<div class="bkbanner" id="bkBanner" role="status" hidden><span id="bkMsg"></span><button type="button" class="pill sm primary" id="bkNow">Back up now</button><button type="button" class="pill sm" id="bkLater">Remind me later</button></div>
 
 <main>
   <div class="meta"><span id="count"></span><span>Click a jacket for details ♡ <button class="pill sm" id="btnSelect" aria-pressed="false" title="Select several CDs to edit them together (or Ctrl/⌘-click and Shift-click jackets)">☑ Select</button></span></div>
@@ -1651,7 +1657,34 @@ $('#btnBackup').onclick = e => { e.stopPropagation(); bkMenu($('#bkPop').hidden)
 $('#bkPop').addEventListener('click', () => bkMenu(false));
 document.addEventListener('click', e => { if(!$('#bkPop').hidden && !e.target.closest('.bkmenu')) bkMenu(false); });
 document.addEventListener('keydown', e => { if(e.key === 'Escape' && !$('#bkPop').hidden){ e.stopImmediatePropagation(); bkMenu(false); $('#btnBackup').focus(); } }, true);
+/* ---- Backup reminder: remembers when you last downloaded a backup and nudges you after a while (14 / 30 / 60 days, or off). The date goes into the backup file too. ---- */
+const BK_CHOICES = [14, 30, 60, 0];
+const bkEvery = () => { const v = DB.setting('bkEvery'); return BK_CHOICES.includes(v) ? v : 30; };
+function bkInfo(){
+  const last = DB.setting('lastBackup'), every = bkEvery();
+  $('#bkInfo').textContent = i18n('Last backup: {t}', {t:ago(last)});
+  $('#bkRemT').textContent = every ? i18n('Remind me every {n} days', {n:every}) : i18n('Backup reminder is off');
+  $('#btnBkRem').title = i18n('Click to change how often you are reminded to back up');
+}
+function bkCheck(){
+  const bar = $('#bkBanner'), every = bkEvery(), n = DB.all.length;
+  let first = DB.setting('bkFirst'); if(!first){ first = Date.now(); DB.setting('bkFirst', first); }   // never backed up: count from the first visit
+  const last = DB.setting('lastBackup') || 0, age = Date.now() - (last || first);
+  const due = !!every && n > 0 && age > every * DAY && Date.now() > (DB.setting('bkSnooze') || 0);
+  bar.hidden = !due; if(!due) return;
+  $('#bkMsg').textContent = last ? i18n('Your last backup was {n} days ago. Your CDs only live in this browser.', {n:Math.floor(age / DAY)}) : i18n('You haven’t backed up yet. Your CDs only live in this browser.');
+}
+$('#btnBkRem').onclick = e => {
+  e.stopPropagation();
+  const v = BK_CHOICES[(BK_CHOICES.indexOf(bkEvery()) + 1) % BK_CHOICES.length];
+  DB.setting('bkEvery', v); bkInfo(); bkCheck();
+  toast(v ? i18n('Remind me every {n} days', {n:v}) : i18n('Backup reminder is off'));
+};
+$('#bkNow').onclick = () => $('#btnExport').click();
+$('#bkLater').onclick = () => { DB.setting('bkSnooze', Date.now() + 7 * DAY); bkCheck(); };
+$('#btnBackup').addEventListener('click', bkInfo);
 $('#btnExport').onclick = () => {
+  DB.setting('lastBackup', Date.now()); DB.setting('bkSnooze', 0); bkCheck();
   const a = document.createElement('a'); a.href = URL.createObjectURL(Store.exportBlob(DB.data));
   a.download = `otome-cd-shelf-${new Date().toISOString().slice(0, 10)}.json`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
   toast(i18n('Backup downloaded ♡'));
@@ -1692,7 +1725,7 @@ async function restoreFile(f){
     applyLabels(DB.setting('labels') !== false);
     F.sort = DB.setting('sort') || 'new'; $('#fSort').value = F.sort;
     F.group = DB.setting('group') || ''; $('#fGroup').value = F.group;
-    buildFilters(); render(); toast(i18n('Imported {n} CDs ♡', {n:cds.length}));
+    buildFilters(); render(); bkCheck(); toast(i18n('Imported {n} CDs ♡', {n:cds.length}));
   }catch(err){ toast(i18n('Import failed: ') + (err instanceof SyntaxError ? i18n('this file isn’t valid JSON') : i18n(err.message))); }
 }
 $('#fileImport').onchange = e => { const f = e.target.files[0]; e.target.value = ''; if(f) restoreFile(f); };
@@ -4363,8 +4396,8 @@ async function shFind(c){
   SH.msg = (SH.found.length ? i18n('Pick the listing that matches to link it.') : i18n('Nothing found — try pasting the link instead.')) + (bad.length ? ' ' + i18n('(Couldn’t search: {s})', {s:bad.join(', ')}) : '');
   shRender();
 }
-Object.assign(I18N_JA, {"Backup": "バックアップ", "Backup / Restore": "バックアップ / 復元", "Spreadsheet (CSV)": "表計算用(CSV)", "Download a spreadsheet (CSV) list of your CDs: titles, DLsite codes, shop links, voice actors, series, release dates": "CDの一覧をCSVでダウンロード(タイトル・DLsiteコード・ショップリンク・声優・シリーズ・発売日)", "Spreadsheet downloaded ♡": "CSVをダウンロードしたよ ♡"});
-Object.assign(I18N_ZH, {"Backup": "备份", "Backup / Restore": "备份 / 恢复", "Spreadsheet (CSV)": "电子表格(CSV)", "Download a spreadsheet (CSV) list of your CDs: titles, DLsite codes, shop links, voice actors, series, release dates": "下载CD清单CSV(标题、DLsite编号、商店链接、声优、系列、发售日)", "Spreadsheet downloaded ♡": "表格已下载 ♡"});
+Object.assign(I18N_JA, {"Backup": "バックアップ", "Backup / Restore": "バックアップ / 復元", "Spreadsheet (CSV)": "表計算用(CSV)", "Download a spreadsheet (CSV) list of your CDs: titles, DLsite codes, shop links, voice actors, series, release dates": "CDの一覧をCSVでダウンロード(タイトル・DLsiteコード・ショップリンク・声優・シリーズ・発売日)", "Spreadsheet downloaded ♡": "CSVをダウンロードしたよ ♡", "Back up now": "今すぐバックアップ", "Remind me later": "あとで知らせて", "Last backup: {t}": "最後のバックアップ: {t}", "Remind me every {n} days": "{n}日ごとにお知らせ", "Backup reminder is off": "バックアップのお知らせはオフ", "Click to change how often you are reminded to back up": "クリックでバックアップのお知らせ頻度を変更", "Your last backup was {n} days ago. Your CDs only live in this browser.": "最後のバックアップは{n}日前です。CDのデータはこのブラウザの中だけにあります。", "You haven’t backed up yet. Your CDs only live in this browser.": "まだバックアップしていません。CDのデータはこのブラウザの中だけにあります。"});
+Object.assign(I18N_ZH, {"Backup": "备份", "Backup / Restore": "备份 / 恢复", "Spreadsheet (CSV)": "电子表格(CSV)", "Download a spreadsheet (CSV) list of your CDs: titles, DLsite codes, shop links, voice actors, series, release dates": "下载CD清单CSV(标题、DLsite编号、商店链接、声优、系列、发售日)", "Spreadsheet downloaded ♡": "表格已下载 ♡", "Back up now": "立即备份", "Remind me later": "稍后提醒", "Last backup: {t}": "上次备份:{t}", "Remind me every {n} days": "每{n}天提醒一次", "Backup reminder is off": "备份提醒已关闭", "Click to change how often you are reminded to back up": "点击更改备份提醒的频率", "Your last backup was {n} days ago. Your CDs only live in this browser.": "上次备份是{n}天前。你的CD数据只保存在这个浏览器中。", "You haven’t backed up yet. Your CDs only live in this browser.": "你还没有备份过。你的CD数据只保存在这个浏览器中。"});
 Object.assign(I18N_JA, {"🛍️ Shopping list": "🛍️ 買い物リスト", "CDs you want to buy, with current prices and sales": "欲しいCDと、今の価格・セール情報", "Want": "欲しい", "CDs on your shopping list": "買い物リストにあるCD",
   "On your shopping list": "買い物リストに入ってるよ", "Want to buy": "欲しい", "🛍️ Open in shopping list": "🛍️ 買い物リストで開く", "Marked as owned. Take “{t}” off your shopping list?": "所持にしたよ。「{t}」を買い物リストから外す?", "Remove": "外す",
   "Nothing to check — link a store to a CD first.": "確認するものがないよ — まずCDにお店をリンクしてね。", "never": "まだ", "{n} min ago": "{n}分前", "{n} h ago": "{n}時間前", "{n} days ago": "{n}日前",
@@ -4934,7 +4967,7 @@ function setLang(l, save){
   LANG = I18N[l] ? l : 'en';
   if(save){ try{ localStorage.setItem('otomeCdLang', LANG); }catch(e){} }
   document.querySelectorAll('.langs button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.l === LANG)));
-  applyStaticLang(); buildFilters(); render();
+  applyStaticLang(); buildFilters(); render(); bkCheck();
   if(openId) openModal(openId);
   if(el('editor').classList.contains('open')) el('eHead').textContent = i18n(ED.id ? 'Edit CD' : 'Add a CD');
   imSync(); imCount(); if(IM.items.length) imRenderList();

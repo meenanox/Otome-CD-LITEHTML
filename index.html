@@ -10,7 +10,7 @@
 <script>
 /* APP VERSION — the one place to change it. Shown next to the logo, in the footer and saved into backups.
    Bump it whenever a new index.html goes up, so people who re-download can tell which copy they have. */
-var APP_VERSION = '0.7.0';
+var APP_VERSION = '0.8.0';
 /* CUSTOM THEME — three picked colours (main, accent, background) in, the full variable set out. Lives up here so it can run before first paint. */
 var OtomeTheme = (function(){
   var HEX = /^#[0-9a-f]{6}$/i, KEY = 'otomeCdCustomTheme', keys = [];
@@ -570,6 +570,41 @@ details.more p{margin:8px 0 0;color:var(--ink-faint);font-weight:400;line-height
 .sh-item{display:grid;grid-template-columns:240px 1fr;gap:26px;align-items:start}
 .sh-item > div{min-width:0}
 @media (max-width:760px){.sh-item{grid-template-columns:minmax(0,1fr)}.sh-item > div:first-child{max-width:260px}}
+/* 16. seiyuu & series pages */
+.hublink{cursor:pointer;text-decoration:underline dotted;text-underline-offset:3px}
+.hublink:hover{color:var(--accent)}
+.hb-bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:14px 0}
+.hb-bar .in{max-width:240px}
+.hb-rows{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}
+.hb-row{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:2px 10px;align-items:center;text-align:left;background:var(--card);border:2px solid var(--accent-faint);border-radius:18px;padding:10px 14px;color:inherit;font:inherit;cursor:pointer;transition:transform .25s var(--spring),border-color .2s}
+.hb-row:hover{transform:translateY(-2px);border-color:var(--accent-2)}
+.hb-row b{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hb-row small{grid-column:2;color:var(--accent);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hb-row .hb-n{grid-row:1;grid-column:3;font-size:12.5px;color:var(--ink-faint)}
+.hb-row .hb-s{grid-row:1 / span 2;grid-column:1;font-size:16px;color:var(--accent-faint);width:18px;text-align:center}
+.hb-row .hb-s.on,.hb-fav.on{color:#f5b301}
+.hb-row .hb-mini{grid-column:2 / span 2;height:6px;margin:5px 0 0}
+.hb-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.hb-head h2{margin:0}
+.hb-fav{border:0;background:none;font-size:26px;line-height:1;color:var(--accent-faint);cursor:pointer;padding:0 4px}
+.hb-chips{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+.hb-sec{margin:22px 0 10px;font-size:15px;font-weight:600}
+.hb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:16px}
+.hb-card{background:none;border:0;padding:0;text-align:left;color:inherit;font:inherit;cursor:pointer}
+.hb-card.ghost,.hb-card.gap{cursor:default}
+.hb-cv{position:relative;aspect-ratio:1;border-radius:18px;overflow:hidden;background:var(--accent-soft);border:2px solid var(--accent-faint);display:grid;place-items:center}
+.hb-cv img,.hb-cv .ph{width:100%;height:100%;object-fit:cover;display:block}
+.hb-card:not(.ghost):not(.gap):hover .hb-cv{border-color:var(--accent-2)}
+.hb-card.miss .hb-cv img{filter:grayscale(.7);opacity:.5}
+.hb-card.ghost .hb-cv,.hb-card.gap .hb-cv{border-style:dashed}
+.hb-card.ghost .hb-cv img{opacity:.8}
+.hb-cv .hb-vol{font-weight:600;color:var(--accent);font-size:15px}
+.hb-st{position:absolute;top:6px;right:6px;min-width:22px;height:22px;border-radius:999px;background:var(--ok);color:#fff;font-size:13px;display:grid;place-items:center;padding:0 4px}
+.hb-st.want{background:rgba(255,255,255,.9);font-size:12px}
+.hb-card h4{margin:7px 2px 0;font-size:12.5px;font-weight:500;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.hb-card p{margin:2px 2px 0;font-size:11.5px;color:var(--ink-faint)}
+.hb-acts{display:flex;gap:6px;margin:6px 0 0;flex-wrap:wrap}
+.hb-acts .pill{padding:4px 10px;font-size:11.5px}
 .sh-item h3.sh-title{margin:0;font-family:var(--font-display);font-weight:400;font-size:22px;line-height:1.25}
 .sh-item .va{margin:4px 0 0;font-size:13px;color:var(--accent)}
 .sh-off{display:grid;grid-template-columns:120px auto 1fr auto;gap:10px;align-items:center;padding:8px 0;border-bottom:1.5px solid var(--accent-faint);font-size:13px}
@@ -617,7 +652,8 @@ details.more p{margin:8px 0 0;color:var(--ink-faint);font-weight:400;line-height
     </button>
     <button class="pill primary" id="btnAdd" title="Add a CD by hand">＋ Add CD</button>
     <button class="pill primary" id="btnShop" title="CDs you want to buy, with current prices and sales"><span>🛍️ Shopping list</span><span class="shn" id="shCount" hidden></span></button>
-    <button class="pill" id="btnImportSrc" title="Import CDs from rukojiDB, HIBIKIFORUM, DLsite Girls or SKiT Dolce">⇩ Import CDs</button>
+    <button class="pill primary" id="btnHub" title="Your voice actors and series: how many CDs you have of each, favorites, and what's still missing">🎤 Seiyuu &amp; series</button>
+    <button class="pill" id="btnImportSrc"title="Import CDs from rukojiDB, HIBIKIFORUM, DLsite Girls or SKiT Dolce">⇩ Import CDs</button>
     <button class="pill" id="btnScan" title="Read the folder names of your local drama CD folders and add or link them — files are never copied or uploaded">📁 Scan folders</button>
     <button class="pill" id="btnDupes" title="Find the same CD added twice (e.g. from different sites) and merge them into one">⧉ Merge duplicates</button>
     <button class="pill" id="btnVA" title="Update the romaji ↔ 日本語 voice actor list (with alias names) from rukojiDB and fill in missing spellings">🎙 VA names</button>
@@ -940,6 +976,12 @@ details.more p{margin:8px 0 0;color:var(--ink-faint);font-weight:400;line-height
     <div class="body" id="shBody"></div>
   </div>
 </div>
+<div class="backdrop" id="hub" aria-hidden="true">
+  <div class="sheet im" role="dialog" aria-modal="true" aria-labelledby="hubHead">
+    <button class="close" id="hubClose" aria-label="Close">✕</button>
+    <div class="body" id="hubBody"></div>
+  </div>
+</div>
 <div class="backdrop ask" id="ask" aria-hidden="true">
   <div class="sheet ask" role="alertdialog" aria-modal="true" aria-describedby="askMsg">
     <div class="body">
@@ -963,6 +1005,9 @@ const I18N_ZH = {"Listening": "收听进度", "Listening progress": "收听进�
 /* 13. Scan local folders */
 Object.assign(I18N_JA, {"Search by title on every site": "すべてのサイトをタイトルで検索", "Search by title": "タイトルで検索", "Search": "検索", "Type a title (or part of one) to search for.": "検索するタイトル(または一部)を入力してね。", "Searching every site for “{t}”…": "すべてのサイトで「{t}」を検索中…", "Nothing found for “{t}”. Try fewer words, the Japanese title, or a voice actor’s name.": "「{t}」は見つかりませんでした。言葉を減らすか、日本語タイトルや声優名で試してね。", "1 result for “{t}” — click it to compare.": "「{t}」の結果1件 — クリックして比較してね。", "{n} results for “{t}” — the closest is loaded; click another to compare with it.": "「{t}」の結果{n}件 — いちばん近いものを読み込みました。ほかをクリックすると比較できます。", "Or paste a CD page link from any of the sites (or an RJ code)": "または各サイトのCDページのリンク(またはRJ番号)を貼り付け", "Paste a CD page link from rukoji.com, DLsite, HIBIKIFORUM, SKiT Dolce or STELLA PLAYER — or an RJ code.": "rukoji.com・DLsite・HIBIKIFORUM・SKiT Dolce・ステラプレイヤーのCDページのリンク、またはRJ番号を貼り付けてね。", "Sites to search": "検索するサイト", "Nothing matched on the sites searched. Try Compare metadata with a link, or rename the folder and scan again.": "検索したサイトで一致するものがありませんでした。「メタデータを比較」でリンクを貼るか、フォルダ名を直してもう一度スキャンしてね。", "Looking for this CD on rukojiDB, DLsite, HIBIKIFORUM, SKiT Dolce and STELLA PLAYER…": "rukojiDB・DLsite・HIBIKIFORUM・SKiT Dolce・ステラプレイヤーでこのCDを検索中…", "No match found on any of the sites.": "どのサイトでも見つかりませんでした。", "📁 Scan folders": "📁 フォルダをスキャン", "Read the folder names of your local drama CD folders and add or link them — files are never copied or uploaded": "パソコン内のドラマCDフォルダの名前を読み取って、棚に追加・ひも付けします(ファイルのコピーやアップロードは一切しません)", "On disk": "手元にある", "CDs linked to a folder by Scan folders": "フォルダスキャンでフォルダとひも付いたCD", "Scan local folders": "ローカルフォルダをスキャン", "Pick the folder where your drama CDs live. Only folder and file names (and sizes) are read — no files are opened, copied or uploaded, and nothing changes on your shelf until you press Apply.": "ドラマCDを保存しているフォルダを選んでね。読み取るのはフォルダ名・ファイル名(とサイズ)だけ。ファイルを開いたりコピー・アップロードしたりはしません。「適用」を押すまで棚は変わりません。", "📁 Choose folder…": "📁 フォルダを選ぶ…", "Folder layout": "フォルダ構成", "Find CD folders automatically": "CDフォルダを自動で見つける", "Each subfolder is one CD": "サブフォルダ1つ = CD1枚", "Series folders → CD folders": "シリーズフォルダ → CDフォルダ", "…or drag a folder here": "…またはここにフォルダをドラッグ", "Mark CDs found on disk as Owned": "見つかったCDを「所持」にする", "Look up DLsite codes (RJ…) online for new CDs — slower": "新しいCDのDLsite作品番号(RJ…)をネットで調べる(時間がかかります)", "Apply": "適用", "Apply ({n})": "適用({n})", "Local folder": "ローカルフォルダ", "Files on disk": "手元のファイル", "1 audio file": "音声ファイル1個", "{n} audio files": "音声ファイル{n}個", "scanned {d}": "{d}にスキャン", "{n} discs": "{n}枚組", "scans": "スキャン画像あり", "1 archive (still packed)": "圧縮ファイル1個(未解凍)", "{n} archives (still packed)": "圧縮ファイル{n}個(未解凍)", "Reading folder names… {n} files": "フォルダ名を読み取り中… {n}ファイル", "Couldn’t read that folder: {e}": "そのフォルダを読み取れませんでした: {e}", "the dropped folders": "ドロップしたフォルダ", "No CD folders found in “{f}”. Try another folder layout.": "「{f}」にCDフォルダが見つかりませんでした。別のフォルダ構成を試してね。", "Found 1 CD folder in “{f}”. Untick any you don’t want, then apply.": "「{f}」でCDフォルダが1個見つかりました。不要なものはチェックを外して適用してね。", "Found {n} CD folders in “{f}”. Untick any you don’t want, then apply.": "「{f}」でCDフォルダが{n}個見つかりました。不要なものはチェックを外して適用してね。", "Matched to your shelf": "棚のCDと一致", "Possible matches — check these": "一致しているかも — 確認してね", "Not ticked yet: pick the right CD (or “add as new”) and tick the ones you’re sure about.": "まだチェックされていません。正しいCDを選んで(または「新しいCDとして追加」)、確かなものにチェックしてね。", "New CDs": "新しいCD", "Added as new shelf entries from the folder name. You can fix the title here or edit it later.": "フォルダ名から新しいCDとして追加します。タイトルはここで直すか、あとで編集できます。", "Already linked — refresh file info": "ひも付け済み — ファイル情報を更新", "Not found in this scan": "今回のスキャンで見つからなかったもの", "These CDs were linked to a folder here that is gone now (moved or renamed?). Tick one to clear its folder link — the CD itself stays.": "これらのCDはこの中のフォルダとひも付いていましたが、今は見つかりません(移動・名前変更?)。チェックするとフォルダとのひも付けだけを解除します(CDは残ります)。", "Which CD is this?": "どのCDですか?", "Link to: {t}": "ひも付け先: {t}", "Add as a new CD instead": "新しいCDとして追加", "Title for the new CD": "新しいCDのタイトル", "Clear the folder link": "フォルダとのひも付けを解除", "Looking up {c} on DLsite… ({i} of {n})": "DLsiteで{c}を検索中…({i}/{n})", "Done — {a} linked, {b} added": "完了 — {a}件ひも付け、{b}件追加", "{n} folder links cleared": "{n}件のひも付けを解除", "This browser can’t pick folders — try dragging a folder into the box instead.": "このブラウザはフォルダを選べません。枠の中にフォルダをドラッグしてみてね。", "Scanned before: {f}. Pick the same folder again to re-scan — new folders, missing ones and file changes show up below.": "以前のスキャン: {f}。同じフォルダをもう一度選ぶと再スキャンでき、新しいフォルダ・見つからないフォルダ・ファイルの変化が下に表示されます。", "Your browser blocked the folder picker — click Choose folder again to use the standard one.": "ブラウザがフォルダ選択をブロックしました。もう一度「フォルダを選ぶ」を押すと標準の方法で開きます。", "Drop a folder, not single files ♡": "ファイルではなくフォルダをドロップしてね ♡", "Fill in missing details (cover, cast, tracks, synopsis…) from these sites — slower": "足りない情報(ジャケット・キャスト・トラック・あらすじ…)を以下のサイトから補う(時間がかかります)", "Looking up missing details online… {i} of {n}": "足りない情報をネットで検索中… {i}/{n}", "Not sure — please check": "自信なし — 確認してね", "A close but uncertain match was found. Open Compare metadata to pick it (or another) and tick what to fill in.": "近い候補は見つかりましたが確実ではありません。「メタデータを比較」を開いて正しいものを選び、補う項目にチェックしてね。", "Not found online": "ネットで見つからなかったもの", "Nothing matched on rukojiDB or DLsite. Try Compare metadata with a link, or rename the folder and scan again.": "rukojiDBにもDLsiteにも一致するものがありませんでした。「メタデータを比較」でリンクを貼るか、フォルダ名を直してもう一度スキャンしてね。", "Filled in from online": "ネットから補ったもの", "Closest: {t} ({src})": "いちばん近い候補: {t}({src})", "online: {a} filled in, {b} to check, {c} not found": "ネット: {a}件補完、{b}件要確認、{c}件見つからず", "changed since last scan (was {n} audio files)": "前回のスキャンから変化あり(以前は音声ファイル{n}個)"});
 Object.assign(I18N_ZH, {"Search by title on every site": "在所有网站按标题搜索", "Search by title": "按标题搜索", "Search": "搜索", "Type a title (or part of one) to search for.": "请输入要搜索的标题(或其中一部分)。", "Searching every site for “{t}”…": "正在所有网站搜索“{t}”…", "Nothing found for “{t}”. Try fewer words, the Japanese title, or a voice actor’s name.": "没有找到“{t}”。请试试更少的关键词、日文标题或声优名。", "1 result for “{t}” — click it to compare.": "“{t}”有1个结果——点击进行对比。", "{n} results for “{t}” — the closest is loaded; click another to compare with it.": "“{t}”有{n}个结果——已载入最接近的一个；点击其他结果可进行对比。", "Or paste a CD page link from any of the sites (or an RJ code)": "或粘贴任一网站的CD页面链接(或RJ编号)", "Paste a CD page link from rukoji.com, DLsite, HIBIKIFORUM, SKiT Dolce or STELLA PLAYER — or an RJ code.": "请粘贴rukoji.com、DLsite、HIBIKIFORUM、SKiT Dolce或STELLA PLAYER的CD页面链接，或RJ编号。", "Sites to search": "要搜索的网站", "Nothing matched on the sites searched. Try Compare metadata with a link, or rename the folder and scan again.": "搜索的网站上都没有匹配结果。可在“对比元数据”中粘贴链接，或修改文件夹名后重新扫描。", "Looking for this CD on rukojiDB, DLsite, HIBIKIFORUM, SKiT Dolce and STELLA PLAYER…": "正在rukojiDB、DLsite、HIBIKIFORUM、SKiT Dolce和STELLA PLAYER上查找这张CD…", "No match found on any of the sites.": "所有网站都没有找到匹配结果。", "📁 Scan folders": "📁 扫描文件夹", "Read the folder names of your local drama CD folders and add or link them — files are never copied or uploaded": "读取本地广播剧CD文件夹的名称并添加或关联到收藏——绝不会复制或上传文件", "On disk": "本地已有", "CDs linked to a folder by Scan folders": "通过“扫描文件夹”关联了文件夹的CD", "Scan local folders": "扫描本地文件夹", "Pick the folder where your drama CDs live. Only folder and file names (and sizes) are read — no files are opened, copied or uploaded, and nothing changes on your shelf until you press Apply.": "选择存放广播剧CD的文件夹。只读取文件夹名、文件名(和大小)——不会打开、复制或上传任何文件，在按下“应用”之前收藏不会有任何变化。", "📁 Choose folder…": "📁 选择文件夹…", "Folder layout": "文件夹结构", "Find CD folders automatically": "自动查找CD文件夹", "Each subfolder is one CD": "每个子文件夹是一张CD", "Series folders → CD folders": "系列文件夹 → CD文件夹", "…or drag a folder here": "…或将文件夹拖到这里", "Mark CDs found on disk as Owned": "将找到的CD标记为已拥有", "Look up DLsite codes (RJ…) online for new CDs — slower": "在线查询新CD的DLsite编号(RJ…)——较慢", "Apply": "应用", "Apply ({n})": "应用({n})", "Local folder": "本地文件夹", "Files on disk": "本地文件", "1 audio file": "1个音频文件", "{n} audio files": "{n}个音频文件", "scanned {d}": "扫描于{d}", "{n} discs": "{n}碟", "scans": "有扫描图", "1 archive (still packed)": "1个压缩包(未解压)", "{n} archives (still packed)": "{n}个压缩包(未解压)", "Reading folder names… {n} files": "正在读取文件夹名称… {n}个文件", "Couldn’t read that folder: {e}": "无法读取该文件夹:{e}", "the dropped folders": "拖入的文件夹", "No CD folders found in “{f}”. Try another folder layout.": "在“{f}”中没有找到CD文件夹。请试试其他文件夹结构。", "Found 1 CD folder in “{f}”. Untick any you don’t want, then apply.": "在“{f}”中找到1个CD文件夹。取消勾选不需要的，然后应用。", "Found {n} CD folders in “{f}”. Untick any you don’t want, then apply.": "在“{f}”中找到{n}个CD文件夹。取消勾选不需要的，然后应用。", "Matched to your shelf": "与收藏匹配", "Possible matches — check these": "可能匹配——请确认", "Not ticked yet: pick the right CD (or “add as new”) and tick the ones you’re sure about.": "尚未勾选：请选择正确的CD(或“作为新CD添加”)，并勾选确定的项目。", "New CDs": "新CD", "Added as new shelf entries from the folder name. You can fix the title here or edit it later.": "根据文件夹名作为新CD添加。可以在这里修改标题，或稍后编辑。", "Already linked — refresh file info": "已关联——更新文件信息", "Not found in this scan": "本次扫描未找到", "These CDs were linked to a folder here that is gone now (moved or renamed?). Tick one to clear its folder link — the CD itself stays.": "这些CD曾关联到此处的文件夹，但现在找不到了(已移动或重命名?)。勾选后只会解除文件夹关联——CD本身会保留。", "Which CD is this?": "这是哪张CD?", "Link to: {t}": "关联到:{t}", "Add as a new CD instead": "作为新CD添加", "Title for the new CD": "新CD的标题", "Clear the folder link": "解除文件夹关联", "Looking up {c} on DLsite… ({i} of {n})": "正在DLsite查询{c}…({i}/{n})", "Done — {a} linked, {b} added": "完成——关联{a}个，添加{b}个", "{n} folder links cleared": "已解除{n}个文件夹关联", "This browser can’t pick folders — try dragging a folder into the box instead.": "此浏览器无法选择文件夹——请将文件夹拖进框内。", "Scanned before: {f}. Pick the same folder again to re-scan — new folders, missing ones and file changes show up below.": "之前扫描过:{f}。再次选择同一文件夹即可重新扫描——新文件夹、缺失的文件夹和文件变化会显示在下方。", "Your browser blocked the folder picker — click Choose folder again to use the standard one.": "浏览器阻止了文件夹选择器——再次点击“选择文件夹”将使用标准方式。", "Drop a folder, not single files ♡": "请拖入文件夹，而不是单个文件 ♡", "Fill in missing details (cover, cast, tracks, synopsis…) from these sites — slower": "从以下网站补全缺少的信息(封面、声优、曲目、简介…)——较慢", "Looking up missing details online… {i} of {n}": "正在在线查找缺少的信息… {i}/{n}", "Not sure — please check": "不确定——请确认", "A close but uncertain match was found. Open Compare metadata to pick it (or another) and tick what to fill in.": "找到了接近但不确定的结果。请打开“对比元数据”选择正确的结果，并勾选要补全的项目。", "Not found online": "在线未找到", "Nothing matched on rukojiDB or DLsite. Try Compare metadata with a link, or rename the folder and scan again.": "rukojiDB和DLsite上都没有匹配结果。可在“对比元数据”中粘贴链接，或修改文件夹名后重新扫描。", "Filled in from online": "已从在线补全", "Closest: {t} ({src})": "最接近:{t}({src})", "online: {a} filled in, {b} to check, {c} not found": "在线:补全{a}个，待确认{b}个，未找到{c}个", "changed since last scan (was {n} audio files)": "自上次扫描后有变化(之前为{n}个音频文件)"});
+/* 16. Seiyuu & series pages */
+Object.assign(I18N_JA, {"Seiyuu & series": "声優とシリーズ", "Your voice actors and series: how many CDs you have of each, favorites, and what's still missing": "声優とシリーズごとの所持数・お気に入り・足りないCDを見られます", "🎤 Seiyuu & series": "🎤 声優とシリーズ", "Every voice actor and series on your shelf. Open one to see your CDs, what you own, and what you’re still missing.": "本棚にいる声優とシリーズの一覧です。開くと、持っているCDと足りないCDを確認できます。", "Browse by": "表示", "Voice actors": "声優", "Series": "シリーズ", "Search by name…": "名前で検索…", "Favorites only": "お気に入りのみ", "Incomplete only": "未コンプリートのみ", "Nothing matches that.": "該当するものがありません。", "No voice actors on your shelf yet.": "本棚に声優がまだいません。", "No series on your shelf yet.": "本棚にシリーズがまだありません。", "Your shelf is empty.": "本棚は空です。", "← Back": "← 戻る", "Favorite seiyuu": "お気に入りの声優", "{n} wanted": "欲しい {n} 枚", "{n} listened": "視聴済み {n} 枚", "Own {a} of {b} known": "把握済み {b} 枚中 {a} 枚を所持", "Show these on my shelf": "本棚で絞り込む", "Look for more online": "ネットでほかを探す", "Look again online": "もう一度ネットで探す", "On your shelf": "本棚にあるもの", "Couldn’t look online — {e}": "ネットで探せませんでした — {e}", "{n} not on your shelf yet": "本棚にまだない {n} 枚", "Nothing new found online.": "ネット上に新しいものは見つかりませんでした。", "＋ Want": "＋ 欲しい", "＋ Add": "＋ 追加", "Vol. {n}": "第{n}巻", "Not found yet": "まだ見つかっていません", "Added to your shopping list ♡": "買い物リストに追加しました ♡", "Added to your shelf ♡": "本棚に追加しました ♡"});
+Object.assign(I18N_ZH, {"Seiyuu & series": "声优与系列", "Your voice actors and series: how many CDs you have of each, favorites, and what's still missing": "查看每位声优和每个系列的持有数量、收藏以及还缺哪些CD", "🎤 Seiyuu & series": "🎤 声优与系列", "Every voice actor and series on your shelf. Open one to see your CDs, what you own, and what you’re still missing.": "书架上所有的声优和系列。点开可查看已有的CD和还缺的CD。", "Browse by": "浏览方式", "Voice actors": "声优", "Series": "系列", "Search by name…": "按名称搜索…", "Favorites only": "仅收藏", "Incomplete only": "仅未集齐", "Nothing matches that.": "没有匹配的内容。", "No voice actors on your shelf yet.": "书架上还没有声优。", "No series on your shelf yet.": "书架上还没有系列。", "Your shelf is empty.": "书架是空的。", "← Back": "← 返回", "Favorite seiyuu": "收藏的声优", "{n} wanted": "想要 {n} 张", "{n} listened": "已听完 {n} 张", "Own {a} of {b} known": "已知 {b} 张中拥有 {a} 张", "Show these on my shelf": "在书架中筛选", "Look for more online": "在线查找更多", "Look again online": "再次在线查找", "On your shelf": "书架上的", "Couldn’t look online — {e}": "无法在线查找 — {e}", "{n} not on your shelf yet": "书架上还没有的 {n} 张", "Nothing new found online.": "在线没有找到新的条目。", "＋ Want": "＋ 想要", "＋ Add": "＋ 添加", "Vol. {n}": "第{n}卷", "Not found yet": "尚未找到", "Added to your shopping list ♡": "已加入购物清单 ♡", "Added to your shelf ♡": "已添加到书架 ♡"});
 const I18N = {ja:I18N_JA, zh:I18N_ZH}, LANG_TAG = {en:'en', ja:'ja', zh:'zh-CN'};
 let LANG = 'en'; try{ const l = localStorage.getItem('otomeCdLang'); LANG = I18N[l] ? l : 'en'; }catch(e){}
 const i18n = (k, v) => { let o = (I18N[LANG] && I18N[LANG][k]) || k; if(v) o = o.replace(/\{(\w+)\}/g, (m, n) => v[n] != null ? v[n] : m); return o; };
@@ -1343,7 +1388,7 @@ function openModal(id){
     <h2 id="mTitle">${esc(shownTitle(c))}</h2>
     <p class="alt">${esc(otherTitle(c))}</p>
     <div class="tagrow">
-      ${seriesName(c) ? `<span class="tag">${esc(shownSeries(c))}</span>` : ''}
+      ${seriesName(c) ? `<span class="tag hublink" role="link" tabindex="0" data-hublink="series" data-key="${esc(seriesName(c))}">${esc(shownSeries(c))}</span>` : ''}
       ${c.label ? `<span class="tag pink">${esc(c.label)}</span>` : ''}
     </div>
     <dl class="info">${info.map(([k, v, html]) => `<div><dt>${esc(k)}</dt><dd>${html ? v : esc(v)}</dd></div>`).join('')}</dl>
@@ -1424,6 +1469,7 @@ $('#mClose').onclick = closeModal;
 document.addEventListener('keydown', e => {
   if(e.key !== 'Escape') return;
   if($('#coverFind').classList.contains('open')) closeCoverFind();
+  else if($('#hub').classList.contains('open')) closeHub();
   else if($('#shop').classList.contains('open')){ if(SH.item){ SH.item = null; shRender(); } else closeShop(); }
   else if($('#compare').classList.contains('open')) closeCompare();
   else if($('#scan').classList.contains('open')) closeScan();
@@ -1523,7 +1569,7 @@ const castLabel = c => (c.cast || []).map(personName).join(', ');
 const castAlt = c => (c.cast || []).map(personAlt).filter(Boolean).join(', ');
 function castHTML(p){
   const alt = personAlt(p), main = Names.mainOf(p);
-  return `<span class="nm">${esc(personName(p))}</span>${alt ? ` <span class="nm-alt">(${esc(alt)})</span>` : ''}${main ? ` <span class="aka">${esc(i18n('alias of {n}', {n:personName(main)}))}</span>` : ''}`;
+  return `<span class="nm hublink" role="link" tabindex="0" data-hublink="va" data-key="${esc(Names.pid(p))}">${esc(personName(p))}</span>${alt ? ` <span class="nm-alt">(${esc(alt)})</span>` : ''}${main ? ` <span class="aka">${esc(i18n('alias of {n}', {n:personName(main)}))}</span>` : ''}`;
 }
 const seriesName = c => c.series || c.seriesRomaji || '';
 /* card/detail title follows the 日本・EN toggle: Japanese original in ja mode, romaji in en mode */
@@ -4173,6 +4219,166 @@ el('shBody').addEventListener('click', async e => {
   }
 });
 
+/* =====================================================================
+   16. SEIYUU & SERIES PAGES
+   A list of every voice actor / series on the shelf, and a page for each: your CDs, how many you own, favorites,
+   and (from rukojiDB, on request) the ones you don't have yet, which can go straight onto the shopping list.
+   Favorite seiyuu = setting 'favVA' (list of Names.pid keys). No prices here — those stay in the shopping list.
+   ===================================================================== */
+const HUB = { kind:'va', key:'', q:'', only:false, online:new Map() };   // online: "kind|key" → {busy, items, err}
+const hubFavs = () => DB.setting('favVA') || [];
+function hubPeople(){
+  const m = new Map();
+  DB.all.forEach(c => c.cast.forEach(p => {
+    const k = Names.pid(p); if(!k) return;
+    let e = m.get(k); if(!e) m.set(k, e = {k, p:{en:'', ja:''}, cds:[]});
+    if(!e.p.en && p.en) e.p.en = p.en; if(!e.p.ja && p.ja) e.p.ja = p.ja;
+    if(!e.cds.includes(c)) e.cds.push(c);
+  }));
+  return m;
+}
+function hubSeries(){
+  const m = new Map();
+  DB.all.forEach(c => { const k = seriesName(c); if(!k) return; if(!m.has(k)) m.set(k, {k, cds:[]}); m.get(k).cds.push(c); });
+  return m;
+}
+/* volume number from a title: "Vol.3", "第3巻", "3巻", "#3" */
+function volOf(c){
+  const t = [c.title, c.altTitle].join(' ');
+  const m = t.match(/(?:vol(?:ume)?\.?\s*|第\s*|#\s*)(\d{1,3})(?!\d)/i) || t.match(/(\d{1,3})\s*巻/);
+  return m ? +m[1] : 0;
+}
+/* how complete a series looks: shelf CDs + online finds + volume numbers missing between 1 and the highest one you have */
+function serInfo(cds, online){
+  const vols = new Set(cds.map(volOf).filter(Boolean)), have = new Set([...vols, ...(online || []).map(f => f.vol).filter(Boolean)]);
+  const max = Math.min(Math.max(0, ...vols), 60), gaps = [];
+  if(vols.size >= 2) for(let n = 1; n <= max; n++) if(!have.has(n)) gaps.push(n);
+  return {own:cds.filter(c => c.owned).length, known:cds.length + (online || []).length + gaps.length, gaps};
+}
+const hubName = e => personName(e.p);
+const hubSerName = e => shownSeries(e.cds[0]);
+function hubOpen(kind, key){
+  HUB.kind = kind; HUB.key = key || ''; HUB.q = '';
+  const m = el('hub'); m.classList.add('open'); m.setAttribute('aria-hidden', 'false'); document.body.style.overflow = 'hidden';
+  hubRender(); el('hubBody').scrollTop = 0;
+}
+function closeHub(){ const m = el('hub'); m.classList.remove('open'); m.setAttribute('aria-hidden', 'true'); document.body.style.overflow = ''; }
+function hubCardHTML(c){
+  const st = c.owned ? `<span class="hb-st" title="${esc(i18n('Owned'))}">✓</span>` : c.want ? `<span class="hb-st want" title="${esc(i18n('On your shopping list'))}">🛍️</span>` : '';
+  return `<button type="button" class="hb-card${c.owned ? '' : ' miss'}" data-hb="cd" data-id="${esc(c.id)}"><div class="hb-cv">${coverHTML(c)}${st}</div>
+    <h4>${esc(shownTitle(c))}</h4><p>${esc(c.release ? c.release.slice(0, 4) : '')}</p></button>`;
+}
+function hubListHTML(){
+  const q = searchNorm(HUB.q), va = HUB.kind === 'va', favs = hubFavs();
+  let rows = [...(va ? hubPeople() : hubSeries()).values()].map(e => ({e, name:va ? hubName(e) : hubSerName(e), alt:va ? personAlt(e.p) : '', ...serInfo(e.cds)}));
+  rows = rows.filter(r => (!q || searchNorm(r.name + ' ' + r.alt + ' ' + (va ? '' : r.e.k)).includes(q)) && (!HUB.only || (va ? favs.includes(r.e.k) : r.own < r.known)));
+  if(!rows.length) return `<p class="muted">${i18n(HUB.q || HUB.only ? 'Nothing matches that.' : va ? 'No voice actors on your shelf yet.' : 'No series on your shelf yet.')}</p>`;
+  rows.sort((a, b) => va ? (favs.includes(b.e.k) - favs.includes(a.e.k)) || b.e.cds.length - a.e.cds.length || a.name.localeCompare(b.name, LANG_TAG[LANG]) : a.name.localeCompare(b.name, LANG_TAG[LANG]));
+  return `<div class="hb-rows">${rows.map(r => `<button type="button" class="hb-row" data-hb="open" data-key="${esc(r.e.k)}">
+    ${va ? `<span class="hb-s${favs.includes(r.e.k) ? ' on' : ''}">${favs.includes(r.e.k) ? '★' : '☆'}</span>` : '<span class="hb-s"></span>'}
+    <b>${esc(r.name)}</b><span class="hb-n">${va ? i18n(r.e.cds.length === 1 ? '{n} CD' : '{n} CDs', {n:r.e.cds.length}) + ' · ' + i18n('{n} owned', {n:r.own}) : `${r.own} / ${r.known}`}</span>
+    ${va ? (r.alt ? `<small>${esc(r.alt)}</small>` : '') : '<div class="prog hb-mini"><div style="width:' + (r.known ? Math.round(100 * r.own / r.known) : 0) + '%"></div></div>'}</button>`).join('')}</div>`;
+}
+function hubRender(){
+  const body = el('hubBody'), va = HUB.kind === 'va';
+  if(HUB.key){
+    const e = (va ? hubPeople() : hubSeries()).get(HUB.key);
+    if(!e){ HUB.key = ''; return hubRender(); }
+    const ck = HUB.kind + '|' + HUB.key, on = HUB.online.get(ck), found = on && on.items || [];
+    const cds = [...e.cds].sort(va ? (a, b) => (b.release || '').localeCompare(a.release || '') : (a, b) => (volOf(a) || 999) - (volOf(b) || 999) || (a.release || '').localeCompare(b.release || ''));
+    const info = serInfo(cds, found), owned = info.own, wanted = cds.filter(c => c.want && !c.owned).length;
+    const rated = cds.filter(c => c.rating), avg = rated.length ? (rated.reduce((s, c) => s + c.rating, 0) / rated.length).toFixed(1) : '';
+    const fav = va && hubFavs().includes(e.k), name = va ? hubName(e) : hubSerName(e), alt = va ? personAlt(e.p) : '';
+    const ghost = (f, i) => `<div class="hb-card ghost"><div class="hb-cv">${f.thumb ? `<img src="${esc(f.thumb)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : '💿'}</div>
+      <h4>${esc(f.title)}</h4><p>${esc([f.vol ? i18n('Vol. {n}', {n:f.vol}) : '', f.meta.release ? f.meta.release.slice(0, 4) : ''].filter(Boolean).join(' · '))}</p>
+      <div class="hb-acts"><button type="button" class="pill sm primary" data-hb="want" data-i="${i}">${i18n('＋ Want')}</button><button type="button" class="pill sm" data-hb="add" data-i="${i}">${i18n('＋ Add')}</button></div></div>`;
+    /* missing volume numbers: one card each, or ranges ("1–11") on one card when there are many */
+    const gapCards = gaps => {
+      const runs = []; gaps.forEach(n => { const r = runs[runs.length - 1]; r && r[1] === n - 1 ? r[1] = n : runs.push([n, n]); });
+      const card = t => `<div class="hb-card gap"><div class="hb-cv"><span class="hb-vol">${esc(t)}</span></div><h4>${i18n('Not found yet')}</h4></div>`;
+      return (gaps.length <= 4 ? gaps.map(n => i18n('Vol. {n}', {n})) : runs.map(([a, b]) => a === b ? i18n('Vol. {n}', {n:a}) : i18n('Vol. {n}', {n:a + '–' + b}))).map(card).join('');
+    };
+    body.innerHTML = `
+      <button type="button" class="link-btn" data-hb="back">${i18n('← Back')}</button>
+      <div class="hb-head"><h2 id="hubHead">${esc(name)}</h2>${va ? `<button type="button" class="hb-fav${fav ? ' on' : ''}" data-hb="fav" title="${esc(i18n('Favorite seiyuu'))}" aria-label="${esc(i18n('Favorite seiyuu'))}" aria-pressed="${fav}">${fav ? '★' : '☆'}</button>` : ''}</div>
+      ${alt ? `<p class="alt">${esc(alt)}</p>` : ''}
+      <div class="hb-chips"><span class="tag">${i18n(cds.length === 1 ? '{n} CD' : '{n} CDs', {n:cds.length})}</span><span class="tag">${i18n('{n} owned', {n:owned})}</span>
+        ${wanted ? `<span class="tag pink">${i18n('{n} wanted', {n:wanted})}</span>` : ''}${cds.some(c => c.listen === 'listened') ? `<span class="tag">${i18n('{n} listened', {n:cds.filter(c => c.listen === 'listened').length})}</span>` : ''}${avg ? `<span class="tag">♥ ${avg}</span>` : ''}</div>
+      ${va ? '' : `<p>${i18n('Own {a} of {b} known', {a:info.own, b:info.known})}</p><div class="prog" style="margin:6px 0 4px"><div style="width:${info.known ? Math.round(100 * info.own / info.known) : 0}%"></div></div>`}
+      <div class="hb-bar"><button type="button" class="pill sm" data-hb="filter">${i18n('Show these on my shelf')}</button><button type="button" class="pill sm primary" data-hb="online"${on && on.busy ? ' disabled' : ''}>${on && on.busy ? spin : '🔎 '}${i18n(on && on.items ? 'Look again online' : 'Look for more online')}</button></div>
+      <h3 class="hb-sec">${i18n('On your shelf')}</h3>
+      <div class="hb-grid">${cds.map(hubCardHTML).join('')}${va ? '' : gapCards(info.gaps)}</div>
+      ${on && on.err ? `<p class="muted">${i18n('Couldn’t look online — {e}', {e:esc(on.err)})}</p>` : ''}
+      ${on && !on.busy && !on.err ? (found.length ? `<h3 class="hb-sec">${i18n('{n} not on your shelf yet', {n:found.length})}</h3><div class="hb-grid">${found.map(ghost).join('')}</div>` : `<p class="muted">${i18n('Nothing new found online.')}</p>`) : ''}`;
+  } else {
+    const n = DB.all.length;
+    body.innerHTML = `
+      <h2 id="hubHead">${i18n('Seiyuu & series')}</h2>
+      <p class="alt">${i18n('Every voice actor and series on your shelf. Open one to see your CDs, what you own, and what you’re still missing.')}</p>
+      <div class="hb-bar"><div class="seg" role="group" aria-label="${esc(i18n('Browse by'))}"><button type="button" data-hb="kind" data-k="va" aria-pressed="${va}">${i18n('Voice actors')}</button><button type="button" data-hb="kind" data-k="series" aria-pressed="${!va}">${i18n('Series')}</button></div>
+        <input class="in" id="hubQ" type="search" autocomplete="off" placeholder="${esc(i18n('Search by name…'))}" value="${esc(HUB.q)}" aria-label="${esc(i18n('Search by name…'))}">
+        <label class="check"><input type="checkbox" id="hubOnly"${HUB.only ? ' checked' : ''}> ${i18n(va ? 'Favorites only' : 'Incomplete only')}</label></div>
+      <div id="hubList">${n ? hubListHTML() : `<p class="muted">${i18n('Your shelf is empty.')}</p>`}</div>`;
+  }
+}
+async function hubFind(){
+  const {kind, key} = HUB, ck = kind + '|' + key, va = kind === 'va', e = (va ? hubPeople() : hubSeries()).get(key); if(!e) return;
+  HUB.online.set(ck, {busy:true, items:[]}); hubRender();
+  const st = {busy:false, items:[], err:''};
+  try{
+    let term, ok;
+    if(va){ term = e.p.en || e.p.ja; ok = m => (m.cast || []).some(p => Names.pid(p) === key); }
+    else{
+      const c0 = e.cds[0], keys = new Set(e.cds.flatMap(c => [c.series, c.seriesRomaji]).filter(Boolean).map(searchNorm));
+      term = c0.seriesRomaji || c0.series;
+      ok = m => [m.series, m.seriesRomaji].filter(Boolean).some(s => keys.has(searchNorm(s))) || searchNorm(m.title).includes(searchNorm(term));
+    }
+    const posts = await Rukoji.api(`posts?search=${encodeURIComponent(term)}&per_page=50&_fields=slug,link,title,content`), seen = new Set();
+    st.items = posts.map(x => Rukoji.fromPost(x)).filter(Boolean).map(f => ({...f, meta:normMeta(f.meta)}))
+      .filter(f => ok(f.meta) && !findExisting(f.meta) && !seen.has(f.url) && seen.add(f.url))
+      .map(f => ({...f, vol:volOf(f.meta)})).sort((a, b) => (a.vol || 999) - (b.vol || 999) || (a.meta.release || '').localeCompare(b.meta.release || ''));
+  }catch(err){ st.err = err.message; }
+  HUB.online.set(ck, st);
+  if(el('hub').classList.contains('open') && HUB.kind + '|' + HUB.key === ck) hubRender();
+}
+function hubAdd(i, want){
+  const ck = HUB.kind + '|' + HUB.key, st = HUB.online.get(ck), f = st && st.items[i]; if(!f) return;
+  addOrMerge(f.meta);
+  const ex = findExisting(f.meta); if(ex && want) DB.update(ex.id, {want:true});
+  st.items.splice(i, 1); DB.touch(); buildFilters(); render(); hubRender();
+  toast(i18n(want ? 'Added to your shopping list ♡' : 'Added to your shelf ♡'));
+}
+el('btnHub').onclick = () => hubOpen(HUB.kind, '');
+el('hubClose').onclick = closeHub;
+el('hub').addEventListener('mousedown', e => { if(e.target === el('hub')) closeHub(); });
+el('hubBody').addEventListener('input', e => {
+  if(e.target.id === 'hubQ'){ HUB.q = e.target.value; el('hubList').innerHTML = hubListHTML(); }
+  if(e.target.id === 'hubOnly'){ HUB.only = e.target.checked; el('hubList').innerHTML = hubListHTML(); }
+});
+el('hubBody').addEventListener('click', e => {
+  const b = e.target.closest('[data-hb]'); if(!b) return;
+  switch(b.dataset.hb){
+    case 'kind': HUB.kind = b.dataset.k; HUB.q = ''; HUB.only = false; hubRender(); break;
+    case 'open': HUB.key = b.dataset.key; hubRender(); el('hubBody').scrollTop = 0; break;
+    case 'back': HUB.key = ''; hubRender(); break;
+    case 'cd': closeHub(); openModal(b.dataset.id); break;
+    case 'fav': { const f = hubFavs(), k = HUB.key; DB.setting('favVA', f.includes(k) ? f.filter(x => x !== k) : [...f, k]); hubRender(); break; }
+    case 'filter': {
+      Object.assign(F, {q:'', label:'', va:'', series:'', aud:'', listen:'', status:'all'});
+      ['fLabel', 'fVA', 'fSeries', 'fAud', 'fListen'].forEach(id => { el(id).value = ''; }); el('q').value = '';
+      document.querySelectorAll('#fStatus button').forEach(x => x.setAttribute('aria-pressed', String(x.dataset.v === 'all')));
+      if(HUB.kind === 'va'){ F.va = HUB.key; el('fVA').value = HUB.key; } else { F.series = HUB.key; el('fSeries').value = HUB.key; }
+      closeHub(); render(); window.scrollTo({top:0, behavior:'smooth'}); break; }
+    case 'online': hubFind(); break;
+    case 'want': hubAdd(+b.dataset.i, true); break;
+    case 'add': hubAdd(+b.dataset.i, false); break;
+  }
+});
+/* cast names and the series tag in a CD's detail open these pages */
+const hubLink = e => { const a = e.target.closest && e.target.closest('[data-hublink]'); if(!a) return; e.preventDefault(); closeModal(); hubOpen(a.dataset.hublink, a.dataset.key); };
+document.addEventListener('click', hubLink);
+document.addEventListener('keydown', e => { if(e.key === 'Enter') hubLink(e); });
+
 /* ---------- language switcher (EN ・ 日本 ・ 中文) ---------- */
 /* flips the voice actor names whenever the toggle moves them between romaji (EN) and Japanese (日本・中文) */
 function nameFlip(){
@@ -4189,7 +4395,7 @@ function setLang(l, save){
   if(el('editor').classList.contains('open')) el('eHead').textContent = i18n(ED.id ? 'Edit CD' : 'Add a CD');
   imSync(); imCount(); if(IM.items.length) imRenderList();
   selSync(); if(el('bulk').classList.contains('open')) openBulk();
-  shRender();
+  shRender(); if(el('hub').classList.contains('open')) hubRender();
   if(SC.rows.length) scRender(); else if(SC.res && el('scan').classList.contains('open')) scSummary(SC.msg, SC.res);
   if(save && (was === 'en') !== (LANG === 'en')) nameFlip();
 }

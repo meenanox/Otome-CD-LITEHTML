@@ -10,7 +10,7 @@
 <script>
 /* APP VERSION — the one place to change it. Shown next to the logo, in the footer and saved into backups.
    Bump it whenever a new index.html goes up, so people who re-download can tell which copy they have. */
-var APP_VERSION = '0.7c';
+var APP_VERSION = '0.8';
 /* CUSTOM THEME — three picked colours (main, accent, background) in, the full variable set out. Lives up here so it can run before first paint. */
 var OtomeTheme = (function(){
   var HEX = /^#[0-9a-f]{6}$/i, KEY = 'otomeCdCustomTheme', keys = [];
@@ -555,6 +555,7 @@ details.more p{margin:8px 0 0;color:var(--ink-faint);font-weight:400;line-height
   border:1.5px solid rgb(var(--ng));background:rgba(20,8,30,.45);-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px);
   box-shadow:inset 0 0 5px 1px rgba(var(--ng),.8),0 0 4px 1px rgb(var(--ng)),0 0 12px 2px rgba(var(--ng),.55);animation:shglow 2.6s ease-in-out infinite}
 .sh-neon.low{--ng:16,185,129}
+@keyframes roupop{from{opacity:0;transform:scale(.94)}}
 @keyframes shglow{50%{box-shadow:inset 0 0 5px 1px rgba(var(--ng),.6),0 0 2px 1px rgb(var(--ng)),0 0 7px 1px rgba(var(--ng),.35)}}
 .sh-bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:6px 0 4px}
 .sh-bar .sel{max-width:220px}
@@ -570,6 +571,17 @@ details.more p{margin:8px 0 0;color:var(--ink-faint);font-weight:400;line-height
 .sh-item{display:grid;grid-template-columns:240px 1fr;gap:26px;align-items:start}
 .sh-item > div{min-width:0}
 @media (max-width:760px){.sh-item{grid-template-columns:minmax(0,1fr)}.sh-item > div:first-child{max-width:260px}}
+/* 18. backlog roulette + mood tags */
+.tagblock{margin:12px 0 4px}.tagblock label{display:block;font-size:13px;margin-bottom:6px}
+.tagedit{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.tagedit input{flex:1;min-width:90px;border:2px solid var(--accent-faint);border-radius:999px;padding:5px 12px;font:inherit;font-size:12.5px;background:var(--card);color:inherit}
+.tagsug{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+.tagbtn{border:1px dashed var(--accent-faint);background:none;color:var(--accent);border-radius:999px;padding:2px 9px;font:inherit;font-size:11.5px;cursor:pointer}
+.rou-card{display:grid;grid-template-columns:minmax(150px,230px) minmax(0,1fr);gap:24px;align-items:start;margin-top:14px;animation:roupop .35s var(--spring)}
+.rou-cv{aspect-ratio:1;border-radius:22px;overflow:hidden;background:var(--accent-soft);border:2px solid var(--accent-faint)}
+.rou-cv img,.rou-cv .ph{width:100%;height:100%;object-fit:cover;display:block}
+.rou-card h3{margin:0 0 4px;font-size:20px}
+@media (max-width:620px){.rou-card{grid-template-columns:minmax(0,1fr)}.rou-cv{max-width:240px}}
 /* 17. release calendar */
 .rel-pubs{margin:6px 0 14px;border:2px solid var(--accent-faint);border-radius:18px;padding:8px 14px;background:var(--card)}
 .rel-pubs summary{cursor:pointer;font-weight:600;font-size:14px}
@@ -672,6 +684,7 @@ details.more p{margin:8px 0 0;color:var(--ink-faint);font-weight:400;line-height
     </button>
     <button class="pill primary" id="btnAdd" title="Add a CD by hand">＋ Add CD</button>
     <button class="pill primary" id="btnShop" title="CDs you want to buy, with current prices and sales"><span>🛍️ Shopping list</span><span class="shn" id="shCount" hidden></span></button>
+    <button class="pill primary" id="btnRou" title="Can't decide what to listen to? Draws an unlistened CD, filtered by mood, length or favorite seiyuu">🎲 Pick for me</button>
     <button class="pill primary" id="btnRel" title="Upcoming and new drama CDs from the publishers you follow">📅 Releases</button>
     <button class="pill primary" id="btnHub" title="Your voice actors and series: how many CDs you have of each, favorites, and what's still missing">🎤 Seiyuu &amp; series</button>
     <button class="pill" id="btnImportSrc"title="Import CDs from rukojiDB, HIBIKIFORUM, DLsite Girls or SKiT Dolce">⇩ Import CDs</button>
@@ -1021,6 +1034,24 @@ details.more p{margin:8px 0 0;color:var(--ink-faint);font-weight:400;line-height
     </div>
   </div>
 </div>
+<div class="backdrop" id="rou" aria-hidden="true">
+  <div class="sheet im" role="dialog" aria-modal="true" aria-labelledby="rouHead">
+    <button class="close" id="rouClose" aria-label="Close">✕</button>
+    <div class="body">
+      <h2 id="rouHead">Pick something for me</h2>
+      <p class="alt">Draws one CD you haven’t started listening to. Add mood tags (cozy, angsty, sleep…) to a CD in its detail panel to filter by them.</p>
+      <div class="hb-bar">
+        <select class="sel" id="rouMood" aria-label="Mood"></select>
+        <select class="sel" id="rouLen" aria-label="Length"></select>
+        <select class="sel" id="rouWho" aria-label="Voice actor"></select>
+        <label class="check"><input type="checkbox" id="rouOwn" checked> Only CDs I own</label>
+      </div>
+      <div class="lstatus" id="rouCount" role="status"></div>
+      <div class="hb-bar"><button type="button" class="pill primary" id="rouGo">🎲 Pick</button></div>
+      <div id="rouOut"></div>
+    </div>
+  </div>
+</div>
 <div class="backdrop ask" id="ask" aria-hidden="true">
   <div class="sheet ask" role="alertdialog" aria-modal="true" aria-describedby="askMsg">
     <div class="body">
@@ -1053,6 +1084,9 @@ Object.assign(I18N_ZH, {"Limited edition": "限定盘", "Regular edition": "通�
 /* 17. Release calendar */
 Object.assign(I18N_JA, {"Release calendar": "発売カレンダー", "📅 Releases": "📅 発売情報", "Upcoming and new drama CDs from the publishers you follow": "フォロー中の出版社の発売予定・新作ドラマCD", "Upcoming drama CDs from Stellaworth and the newest releases on DLsite, limited to the publishers you follow. No prices here — those stay in the shopping list.": "ステラワースの発売予定のドラマCDと、DLsiteの最新作を、フォロー中の出版社に絞って表示します。価格はここには出ません（買い物リストのみ）。", "↻ Check for new releases": "↻ 新着を確認", "Only my favorite seiyuu & series": "お気に入りの声優・シリーズのみ", "Hide publishers that use AI": "AIを使う出版社を非表示", "Publishers": "出版社", "Checking Stellaworth and DLsite…": "ステラワースとDLsiteを確認中…", "{s}: {n} items read": "{s}：{n}件を取得", "{s}: couldn’t read it — {e}": "{s}：読み込めませんでした — {e}", "Looked up the follower counts of {n} publishers": "{n}社のフォロワー数を取得しました", "{n} more next time": "残り{n}社は次回", "Last checked {t}": "最終確認 {t}", "Remove": "削除", "Add": "追加", "Add a publisher…": "出版社を追加…", "Hide a publisher…": "非表示にする出版社…", "Publishers you follow": "フォロー中の出版社", "Also show publishers with at least this many DLsite followers": "DLsiteのフォロワーがこの人数以上の出版社も表示", "Always hidden": "常に非表示", "None": "なし", "Hidden because their works are marked AI-generated or AI-assisted": "作品にAI生成／AI利用の表示があるため非表示", "Show anyway": "それでも表示", "Shown despite AI labels": "AI表示があっても表示", "Release date not set yet": "発売日未定", "Just released on DLsite": "DLsiteの新着", "Nothing from your publishers right now.": "今のところフォロー中の出版社の作品はありません。", "Press “Check for new releases” to load the calendar.": "「新着を確認」を押してカレンダーを読み込みます。", "On your shopping list": "買い物リストに入っています", "On your shelf": "本棚にあります", "Open ↗": "開く ↗"});
 Object.assign(I18N_ZH, {"Release calendar": "发售日历", "📅 Releases": "📅 发售信息", "Upcoming and new drama CDs from the publishers you follow": "关注的出版社的即将发售和新发售的广播剧CD", "Upcoming drama CDs from Stellaworth and the newest releases on DLsite, limited to the publishers you follow. No prices here — those stay in the shopping list.": "显示 Stellaworth 的即将发售广播剧CD和 DLsite 的最新作品，仅限你关注的出版社。这里不显示价格，价格只在购物清单中。", "↻ Check for new releases": "↻ 检查新发售", "Only my favorite seiyuu & series": "仅显示收藏的声优和系列", "Hide publishers that use AI": "隐藏使用AI的出版社", "Publishers": "出版社", "Checking Stellaworth and DLsite…": "正在检查 Stellaworth 和 DLsite…", "{s}: {n} items read": "{s}：读取了 {n} 项", "{s}: couldn’t read it — {e}": "{s}：无法读取 — {e}", "Looked up the follower counts of {n} publishers": "已查询 {n} 家出版社的关注人数", "{n} more next time": "其余 {n} 家下次查询", "Last checked {t}": "上次检查 {t}", "Remove": "移除", "Add": "添加", "Add a publisher…": "添加出版社…", "Hide a publisher…": "隐藏出版社…", "Publishers you follow": "你关注的出版社", "Also show publishers with at least this many DLsite followers": "同时显示 DLsite 关注人数不少于此数的出版社", "Always hidden": "始终隐藏", "None": "无", "Hidden because their works are marked AI-generated or AI-assisted": "因作品被标记为AI生成或AI辅助而隐藏", "Show anyway": "仍然显示", "Shown despite AI labels": "尽管有AI标记仍显示", "Release date not set yet": "发售日未定", "Just released on DLsite": "DLsite 新发售", "Nothing from your publishers right now.": "目前没有你关注的出版社的作品。", "Press “Check for new releases” to load the calendar.": "点击“检查新发售”以加载日历。", "On your shopping list": "在你的购物清单中", "On your shelf": "在你的书架上", "Open ↗": "打开 ↗"});
+/* 18. Backlog roulette */
+Object.assign(I18N_JA, {"Mood tags": "ムードタグ", "Mood tags (comma-separated)": "ムードタグ（カンマ区切り）", "add a tag…": "タグを追加…", "🎲 Pick for me": "🎲 おまかせ", "Pick something for me": "おまかせで選ぶ", "Draws one CD you haven’t started listening to. Add mood tags (cozy, angsty, sleep…) to a CD in its detail panel to filter by them.": "まだ聴き始めていないCDを1枚選びます。CDの詳細でムードタグ（癒し・切ない・睡眠…）を付けると、絞り込みに使えます。", "Only CDs I own": "持っているCDのみ", "🎲 Pick": "🎲 選ぶ", "Any mood": "すべてのムード", "Any length": "すべての長さ", "Short — under 30 min": "短め — 30分未満", "Medium — 30 to 60 min": "普通 — 30〜60分", "Long — over 60 min": "長め — 60分以上", "Any voice actor": "すべての声優", "My favorite seiyuu": "お気に入りの声優", "{n} CD matches": "{n}枚が該当", "{n} CDs match": "{n}枚が該当", "Nothing fits those filters — loosen one of them.": "条件に合うCDがありません。条件をゆるめてください。", "{h} h {m} min": "{h}時間{m}分", "{m} min": "{m}分", "▶ Start listening": "▶ 聴き始める", "Open details": "詳細を開く", "🎲 Another one": "🎲 もう一度", "Enjoy! Marked as “Listening to” ♡": "楽しんで！「視聴中」にしました ♡"});
+Object.assign(I18N_ZH, {"Mood tags": "心情标签", "Mood tags (comma-separated)": "心情标签（逗号分隔）", "add a tag…": "添加标签…", "🎲 Pick for me": "🎲 帮我选", "Pick something for me": "帮我选一张", "Draws one CD you haven’t started listening to. Add mood tags (cozy, angsty, sleep…) to a CD in its detail panel to filter by them.": "从还没开始听的CD中抽一张。在CD详情里添加心情标签（治愈、虐心、助眠…）即可用来筛选。", "Only CDs I own": "仅限我拥有的CD", "🎲 Pick": "🎲 抽取", "Any mood": "任意心情", "Any length": "任意时长", "Short — under 30 min": "较短 — 30分钟以内", "Medium — 30 to 60 min": "中等 — 30到60分钟", "Long — over 60 min": "较长 — 60分钟以上", "Any voice actor": "任意声优", "My favorite seiyuu": "我收藏的声优", "{n} CD matches": "{n} 张符合", "{n} CDs match": "{n} 张符合", "Nothing fits those filters — loosen one of them.": "没有符合条件的CD，请放宽条件。", "{h} h {m} min": "{h}小时{m}分钟", "{m} min": "{m}分钟", "▶ Start listening": "▶ 开始听", "Open details": "打开详情", "🎲 Another one": "🎲 再抽一次", "Enjoy! Marked as “Listening to” ♡": "听得愉快！已标记为“正在听” ♡"});
 const I18N = {ja:I18N_JA, zh:I18N_ZH}, LANG_TAG = {en:'en', ja:'ja', zh:'zh-CN'};
 let LANG = 'en'; try{ const l = localStorage.getItem('otomeCdLang'); LANG = I18N[l] ? l : 'en'; }catch(e){}
 const i18n = (k, v) => { let o = (I18N[LANG] && I18N[LANG][k]) || k; if(v) o = o.replace(/\{(\w+)\}/g, (m, n) => v[n] != null ? v[n] : m); return o; };
@@ -1122,7 +1156,7 @@ const USER_DEFAULTS = { owned:false, fav:false, sourceType:'', rating:0, listen:
   want:false, wantMax:0, shop:null, addedAt:0 };   // shopping list (section 15): wantMax = yen you'd pay (0 = none), shop = linked stores + last prices
 const hydrate = cd => {
   const o = Object.assign({}, USER_DEFAULTS, cd, {
-    cast:(cd.cast||[]).map(parsePerson).filter(p => p.en || p.ja), scenario:cd.scenario||[], bonuses:cd.bonuses||[],
+    cast:(cd.cast||[]).map(parsePerson).filter(p => p.en || p.ja), scenario:cd.scenario||[], bonuses:cd.bonuses||[], tags:Array.isArray(cd.tags) ? cd.tags : [],
     tracks:(cd.tracks||[]).map(t => Array.isArray(t) ? {t:t[0], d:t[1]||''} : t)
   });
   delete o.enTL;
@@ -1245,10 +1279,10 @@ function searchNorm(s){
 }
 const hayCache = new WeakMap();
 function searchHay(c){
-  const key = JSON.stringify([c.title, c.altTitle, c.cnTitle, c.label, c.series, c.seriesRomaji, c.seriesCn, c.pn, c.jan, c.notes, c.localFolder, c.cast, c.scenario, c.tracks]);
+  const key = JSON.stringify([c.title, c.altTitle, c.cnTitle, c.label, c.series, c.seriesRomaji, c.seriesCn, c.pn, c.jan, c.notes, c.localFolder, c.cast, c.scenario, c.tracks, c.tags]);
   const hit = hayCache.get(c);
   if(hit && hit.key === key) return hit.hay;
-  const hay = searchNorm([c.title, c.altTitle, c.cnTitle, c.label, c.series, c.seriesRomaji, c.seriesCn, c.pn, c.jan, c.notes, c.localFolder, ...c.cast.flatMap(p => { const m = Names.mainOf(p); return [p.en, p.ja, m && m.en, m && m.ja]; }), ...c.scenario, ...(c.tracks || []).map(t => t && t.t)].join(' '));
+  const hay = searchNorm([c.title, c.altTitle, c.cnTitle, c.label, c.series, c.seriesRomaji, c.seriesCn, c.pn, c.jan, c.notes, c.localFolder, ...(c.tags || []), ...c.cast.flatMap(p => { const m = Names.mainOf(p); return [p.en, p.ja, m && m.en, m && m.ja]; }), ...c.scenario, ...(c.tracks || []).map(t => t && t.t)].join(' '));
   hayCache.set(c, {key, hay});
   return hay;
 }
@@ -1459,6 +1493,10 @@ function renderPanel(c){
       <select class="sel" id="pSrc">${['', 'CD RIP', 'WEB RIP'].map(v => `<option value="${v}" ${c.sourceType === v ? 'selected' : ''}>${v || i18n('Not set')}</option>`).join('')}</select></div>
     <div class="field"><label>${i18n('Rating')}</label><div class="stars" id="pStars">${[1,2,3,4,5].map(n => `<button class="${n <= c.rating ? 'on' : ''}" data-n="${n}" aria-label="${i18n('{n} of 5', {n})}">♥</button>`).join('')}</div></div>
     <div class="field"><label>${i18n('Listening')}</label><div class="lsnpick" id="pListen">${Object.keys(LISTEN).map(k => `<button class="${c.listen === k ? 'on' : ''}" data-k="${k}" style="${listenVars(k)}" title="${esc(i18n(LISTEN[k].t))}" aria-label="${esc(i18n(LISTEN[k].t))}" aria-pressed="${c.listen === k}">${listenSVG(k)}</button>`).join('')}</div></div>
+    <div class="tagblock"><label>${i18n('Mood tags')}</label>
+      <div class="tagedit" id="pTags">${(c.tags || []).map(t => `<span class="rel-chip">${esc(t)}<button type="button" data-tag="${esc(t)}" data-act="del" aria-label="${esc(i18n('Remove'))}">✕</button></span>`).join('')}<input id="pTagIn" list="tagList" autocomplete="off" placeholder="${esc(i18n('add a tag…'))}" aria-label="${esc(i18n('Mood tags'))}"></div>
+      <div class="tagsug">${tagSuggest(c).map(t => `<button type="button" class="tagbtn" data-tag="${esc(t)}" data-act="add">+ ${esc(t)}</button>`).join('')}</div>
+      <datalist id="tagList">${knownTags().map(([t]) => `<option value="${esc(t)}">`).join('')}</datalist></div>
     <textarea id="pNotes" placeholder="${i18n('Notes, impressions, where the files live…')}" aria-label="${i18n('Notes')}">${esc(c.notes)}</textarea>
     <div class="btnrow"><button class="pill sm" id="pEdit">${i18n('✎ Edit')}</button><button class="pill sm" id="pCompare" title="${i18n('Look this CD up on rukoji.com and DLsite and pick what to fill in')}">${i18n('⇄ Compare metadata')}</button>${c.want ? `<button class="pill sm" id="pShop">${i18n('🛍️ Open in shopping list')}</button>` : ''}</div>`;
   $('#pEdit').onclick = () => { closeModal(); openEditor({id:c.id, returnTo:c.id}); };
@@ -1471,7 +1509,18 @@ function renderPanel(c){
   $('#pStars').onclick = e => { const b = e.target.closest('button'); if(!b) return; const n = +b.dataset.n; DB.update(c.id, {rating: DB.byId(c.id).rating === n ? 0 : n}); renderPanel(DB.byId(c.id)); render(); };
   $('#pListen').onclick = e => { const b = e.target.closest('button'); if(!b) return; DB.update(c.id, {listen: DB.byId(c.id).listen === b.dataset.k ? '' : b.dataset.k}); renderPanel(DB.byId(c.id)); render(); };
   $('#pNotes').oninput = e => DB.update(c.id, {notes:e.target.value});
+  const setTags = tags => { DB.update(c.id, {tags}); renderPanel(DB.byId(c.id)); const i = $('#pTagIn'); if(i) i.focus(); };
+  const addTag = v => { const t = tagNorm(v); const cur = DB.byId(c.id).tags || []; if(t && !cur.includes(t)) setTags([...cur, t]); else if(t){ $('#pTagIn').value = ''; } };
+  $('#pTags').onclick = e => { const b = e.target.closest('[data-act=del]'); if(b) setTags((DB.byId(c.id).tags || []).filter(t => t !== b.dataset.tag)); };
+  $('#pTagIn').onkeydown = e => { if(e.key === 'Enter' || e.key === ','){ e.preventDefault(); addTag(e.target.value); } };
+  $('#pTagIn').onchange = e => { if(e.target.value.trim()) addTag(e.target.value); };
+  $('#mPanel').querySelector('.tagsug').onclick = e => { const b = e.target.closest('[data-act=add]'); if(b) addTag(b.dataset.tag); };
 }
+/* mood tags: free-form, lower-case, stored on the CD (c.tags); the quick buttons are only suggestions */
+const QUICK_TAGS = ['cozy', 'angsty', 'sleep', 'sweet', 'funny', 'sad', 'spicy', 'intense'];
+const tagNorm = t => String(t || '').trim().toLowerCase().replace(/\s+/g, ' ').slice(0, 24);
+function knownTags(){ const m = new Map(); DB.all.forEach(c => (c.tags || []).forEach(t => m.set(t, (m.get(t) || 0) + 1))); return [...m].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])); }
+const tagSuggest = c => [...new Set([...knownTags().map(x => x[0]), ...QUICK_TAGS])].filter(t => !(c.tags || []).includes(t)).slice(0, 8);
 function setFav(id, v){ DB.update(id, {fav:v}); render(); if(openId === id) renderPanel(DB.byId(id)); }
 /* marking a wanted CD as owned offers to take it off the shopping list */
 async function setOwned(id, v){
@@ -1514,6 +1563,7 @@ $('#mClose').onclick = closeModal;
 document.addEventListener('keydown', e => {
   if(e.key !== 'Escape') return;
   if($('#coverFind').classList.contains('open')) closeCoverFind();
+  else if($('#rou').classList.contains('open')) closeRou();
   else if($('#rel').classList.contains('open')) closeRel();
   else if($('#hub').classList.contains('open')) closeHub();
   else if($('#shop').classList.contains('open')){ if(SH.item){ SH.item = null; shRender(); } else closeShop(); }
@@ -3112,7 +3162,7 @@ function planMerge(group){
     }
     if(!m.localFolder && o.localFolder){ LOCAL_KEYS.forEach(k => m[k] = o[k]); gained.add('localFolder'); }
     const cast = mergeCast(m.cast || [], o.cast || []); if(JSON.stringify(cast) !== JSON.stringify(m.cast)){ m.cast = cast; gained.add('cast'); }
-    for(const k of ['scenario', 'bonuses']){ const u = unionList(m[k] || [], o[k] || []); if(u.length !== (m[k] || []).length){ m[k] = u; gained.add(k); } }
+    for(const k of ['scenario', 'bonuses', 'tags']){ const u = unionList(m[k] || [], o[k] || []); if(u.length !== (m[k] || []).length){ m[k] = u; gained.add(k); } }
     if((o.tracks || []).length > (m.tracks || []).length){ m.tracks = o.tracks; gained.add('tracks'); }   // never interleave two tracklists
     m.owned = m.owned || o.owned; m.rating = Math.max(m.rating || 0, o.rating || 0); m.listen = m.listen || o.listen || '';
     m.want = !!(m.want || o.want); m.wantMax = m.wantMax || o.wantMax || 0; if(!(m.shop && m.shop.links && m.shop.links.length) && o.shop) m.shop = o.shop;
@@ -3196,7 +3246,7 @@ const BULK_FIELDS = [
   ['label', 'Label', 'text'], ['category', 'Category', 'category'], ['illustrator', 'Illustration', 'text'],
   ['scenario', 'Scenario (comma-separated)', 'list'], ['cast', 'Voice cast — one per line: Romaji / 日本語', 'cast'],
   ['release', 'Release date', 'date'], ['releaseNote', 'Release note', 'text'],
-  ['sourceType', 'Source', 'source'], ['owned', 'Owned', 'bool'], ['fav', 'Favorite', 'bool'], ['want', 'Want to buy', 'bool'], ['rating', 'Rating', 'rating'], ['listen', 'Listening', 'listen']
+  ['tags', 'Mood tags (comma-separated)', 'list'], ['sourceType', 'Source', 'source'], ['owned', 'Owned', 'bool'], ['fav', 'Favorite', 'bool'], ['want', 'Want to buy', 'bool'], ['rating', 'Rating', 'rating'], ['listen', 'Listening', 'listen']
 ];
 const bulkText = (c, k, kind) => kind === 'list' ? (c[k] || []).join(', ') : kind === 'cast' ? castToText(c[k]) : kind === 'bool' ? (c[k] ? '1' : '0') : String(c[k] ?? '');
 const bulkRead = (v, kind) => kind === 'list' ? splitList(v) : kind === 'cast' ? parseCast(v) : kind === 'bool' ? v === '1' : kind === 'rating' ? +v : v.trim();
@@ -4656,6 +4706,64 @@ el('rel').addEventListener('click', e => {
 });
 el('rel').addEventListener('keydown', e => { if(e.key === 'Enter' && (e.target.id === 'relAddIn' || e.target.id === 'relBlockIn')){ e.preventDefault(); const b = el('relPubs').querySelector(`[data-rel="${e.target.id === 'relAddIn' ? 'add' : 'block'}"]`); if(b) b.click(); } });
 
+/* =====================================================================
+   18. BACKLOG ROULETTE — draws one CD you haven't started (listen = ''), filtered by mood tag, length and seiyuu
+   Mood tags are the free-form `tags` list on each CD. Length = the sum of the tracklist durations (CDs without them don't pass a length filter).
+   ===================================================================== */
+const ROU = { mood:'', len:'', who:'', own:true, cur:null, seen:new Set() };
+const ROU_LEN = [['', 'Any length'], ['short', 'Short — under 30 min'], ['medium', 'Medium — 30 to 60 min'], ['long', 'Long — over 60 min']];
+const cdMinutes = c => { let t = 0; (c.tracks || []).forEach(x => { const m = String(x.d || '').match(/^(?:(\d+):)?(\d{1,3}):(\d{2})$/); if(m) t += (+m[1] || 0) * 60 + +m[2] + +m[3] / 60; }); return Math.round(t); };
+function rouPool(){
+  const favs = hubFavs();
+  return DB.all.filter(c => {
+    if(c.listen || (ROU.own && !c.owned)) return false;
+    if(ROU.mood && !(c.tags || []).includes(ROU.mood)) return false;
+    if(ROU.len){ const m = cdMinutes(c); if(!m || (ROU.len === 'short' ? m >= 30 : ROU.len === 'medium' ? m < 30 || m > 60 : m <= 60)) return false; }
+    if(ROU.who === 'fav') return c.cast.some(p => favs.includes(Names.pid(p)));
+    if(ROU.who) return c.cast.some(p => Names.pid(p) === ROU.who);
+    return true;
+  });
+}
+const minLabel = m => m >= 60 ? i18n('{h} h {m} min', {h:Math.floor(m / 60), m:m % 60}) : i18n('{m} min', {m});
+function rouSetup(){
+  const cfg = DB.setting('rouCfg'); if(cfg && !ROU.loaded){ Object.assign(ROU, cfg); ROU.loaded = true; }
+  fillSelect(el('rouMood'), i18n('Any mood'), knownTags().map(([t, n]) => [t, `${t} (${n})`]));
+  el('rouMood').value = ROU.mood; ROU.mood = el('rouMood').value;
+  el('rouLen').innerHTML = ROU_LEN.map(([v, t]) => `<option value="${v}">${esc(i18n(t))}</option>`).join(''); el('rouLen').value = ROU.len;
+  const favs = hubFavs(), people = [...hubPeople().values()].filter(e => e.cds.some(c => !c.listen)).sort((a, b) => (favs.includes(b.k) - favs.includes(a.k)) || personName(a.p).localeCompare(personName(b.p), LANG_TAG[LANG]));
+  fillSelect(el('rouWho'), i18n('Any voice actor'), [['fav', '★ ' + i18n('My favorite seiyuu')], ...people.map(e => [e.k, (favs.includes(e.k) ? '★ ' : '') + personName(e.p)])]);
+  el('rouWho').value = ROU.who; ROU.who = el('rouWho').value; el('rouOwn').checked = ROU.own;
+  rouCount();
+}
+function rouCount(){ const n = rouPool().length; el('rouCount').textContent = i18n(n === 1 ? '{n} CD matches' : '{n} CDs match', {n}); el('rouGo').disabled = !n; }
+function rouDraw(){
+  const pool = rouPool(); if(!pool.length){ ROU.cur = null; el('rouOut').innerHTML = `<p class="muted">${i18n('Nothing fits those filters — loosen one of them.')}</p>`; return; }
+  let fresh = pool.filter(c => !ROU.seen.has(c.id)); if(!fresh.length){ ROU.seen.clear(); fresh = pool; }
+  const c = fresh[Math.floor(Math.random() * fresh.length)]; ROU.cur = c.id; ROU.seen.add(c.id);
+  const m = cdMinutes(c);
+  el('rouOut').innerHTML = `<div class="rou-card"><div class="rou-cv">${coverHTML(c)}</div><div>
+    <h3>${esc(shownTitle(c))}</h3><p class="alt">${esc(castLabel(c) || i18n('Cast unknown'))}</p>
+    <div class="hb-chips">${m ? `<span class="tag">${esc(minLabel(m))}</span>` : ''}${c.label ? `<span class="tag pink">${esc(c.label)}</span>` : ''}${seriesName(c) ? `<span class="tag">${esc(shownSeries(c))}</span>` : ''}${(c.tags || []).map(t => `<span class="tag">#${esc(t)}</span>`).join('')}</div>
+    <div class="hb-bar"><button type="button" class="pill primary" data-rou="start">${i18n('▶ Start listening')}</button><button type="button" class="pill" data-rou="open">${i18n('Open details')}</button><button type="button" class="pill" data-rou="again">${i18n('🎲 Another one')}</button></div></div></div>`;
+}
+function rouOpen(){ const m = el('rou'); m.classList.add('open'); m.setAttribute('aria-hidden', 'false'); document.body.style.overflow = 'hidden'; el('rouOut').innerHTML = ''; ROU.cur = null; rouSetup(); }
+function closeRou(){ const m = el('rou'); m.classList.remove('open'); m.setAttribute('aria-hidden', 'true'); document.body.style.overflow = ''; }
+el('btnRou').onclick = rouOpen;
+el('rouClose').onclick = closeRou;
+el('rou').addEventListener('mousedown', e => { if(e.target === el('rou')) closeRou(); });
+el('rouGo').onclick = rouDraw;
+el('rou').addEventListener('change', e => {
+  if(!/^rou(Mood|Len|Who|Own)$/.test(e.target.id)) return;
+  ROU.mood = el('rouMood').value; ROU.len = el('rouLen').value; ROU.who = el('rouWho').value; ROU.own = el('rouOwn').checked; ROU.seen.clear();
+  DB.setting('rouCfg', {mood:ROU.mood, len:ROU.len, who:ROU.who, own:ROU.own}); el('rouOut').innerHTML = ''; rouCount();
+});
+el('rouOut').addEventListener('click', e => {
+  const b = e.target.closest('[data-rou]'); if(!b || !ROU.cur) return; const id = ROU.cur;
+  if(b.dataset.rou === 'again') rouDraw();
+  else if(b.dataset.rou === 'open'){ closeRou(); openModal(id); }
+  else { DB.update(id, {listen:'listening'}); render(); toast(i18n('Enjoy! Marked as “Listening to” ♡')); rouCount(); el('rouOut').innerHTML = ''; ROU.cur = null; }
+});
+
 /* ---------- language switcher (EN ・ 日本 ・ 中文) ---------- */
 /* flips the voice actor names whenever the toggle moves them between romaji (EN) and Japanese (日本・中文) */
 function nameFlip(){
@@ -4672,7 +4780,7 @@ function setLang(l, save){
   if(el('editor').classList.contains('open')) el('eHead').textContent = i18n(ED.id ? 'Edit CD' : 'Add a CD');
   imSync(); imCount(); if(IM.items.length) imRenderList();
   selSync(); if(el('bulk').classList.contains('open')) openBulk();
-  shRender(); if(el('hub').classList.contains('open')) hubRender(); if(el('rel').classList.contains('open')) relRender();
+  shRender(); if(el('hub').classList.contains('open')) hubRender(); if(el('rel').classList.contains('open')) relRender(); if(el('rou').classList.contains('open')) rouSetup();
   if(SC.rows.length) scRender(); else if(SC.res && el('scan').classList.contains('open')) scSummary(SC.msg, SC.res);
   if(save && (was === 'en') !== (LANG === 'en')) nameFlip();
 }

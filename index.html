@@ -10,7 +10,7 @@
 <script>
 /* APP VERSION — the one place to change it. Shown next to the logo, in the footer and saved into backups.
    Bump it whenever a new index.html goes up, so people who re-download can tell which copy they have. */
-var APP_VERSION = '0.8.1';
+var APP_VERSION = '0.9.0';
 /* CUSTOM THEME — three picked colours (main, accent, background) in, the full variable set out. Lives up here so it can run before first paint. */
 var OtomeTheme = (function(){
   var HEX = /^#[0-9a-f]{6}$/i, KEY = 'otomeCdCustomTheme', keys = [];
@@ -570,6 +570,26 @@ details.more p{margin:8px 0 0;color:var(--ink-faint);font-weight:400;line-height
 .sh-item{display:grid;grid-template-columns:240px 1fr;gap:26px;align-items:start}
 .sh-item > div{min-width:0}
 @media (max-width:760px){.sh-item{grid-template-columns:minmax(0,1fr)}.sh-item > div:first-child{max-width:260px}}
+/* 17. release calendar */
+.rel-pubs{margin:6px 0 14px;border:2px solid var(--accent-faint);border-radius:18px;padding:8px 14px;background:var(--card)}
+.rel-pubs summary{cursor:pointer;font-weight:600;font-size:14px}
+.rel-pubs h4{margin:14px 0 6px;font-size:13px;font-weight:600}
+.rel-chips{display:flex;flex-wrap:wrap;gap:6px}
+.rel-chip{display:inline-flex;align-items:center;gap:4px;background:var(--accent-soft);border-radius:999px;padding:4px 10px;font-size:12.5px}
+.rel-chip button{border:0;background:none;color:inherit;cursor:pointer;font-size:12px;padding:0 0 0 2px;opacity:.7}
+.rel-chip.ai{background:var(--pink-soft)}
+.rel-add{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;align-items:center}
+.rel-add .in{max-width:220px}
+.rel-mo{margin:22px 0 8px;font-size:16px;font-weight:600}
+.rel-row{display:grid;grid-template-columns:64px minmax(0,1fr) auto;gap:12px;align-items:center;padding:8px 10px;border-radius:16px;background:var(--card);border:2px solid var(--accent-faint);margin-bottom:8px}
+.rel-row .rel-cv{width:64px;height:64px;border-radius:12px;overflow:hidden;background:var(--accent-soft);display:grid;place-items:center}
+.rel-row .rel-cv img{width:100%;height:100%;object-fit:cover}
+.rel-row b{display:block;font-weight:600;font-size:14px;line-height:1.3}
+.rel-row small{display:block;color:var(--ink-faint);font-size:12px;margin-top:2px}
+.rel-row .rel-tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:5px}
+.rel-row .rel-acts{display:flex;flex-direction:column;gap:6px;align-items:flex-end}
+.rel-day{color:var(--accent);font-weight:600}
+@media (max-width:560px){.rel-row{grid-template-columns:52px minmax(0,1fr)}.rel-row .rel-cv{width:52px;height:52px}.rel-row .rel-acts{grid-column:1 / -1;flex-direction:row}}
 /* 16. seiyuu & series pages */
 .hublink{cursor:pointer;text-decoration:underline dotted;text-underline-offset:3px}
 .hublink:hover{color:var(--accent)}
@@ -652,6 +672,7 @@ details.more p{margin:8px 0 0;color:var(--ink-faint);font-weight:400;line-height
     </button>
     <button class="pill primary" id="btnAdd" title="Add a CD by hand">＋ Add CD</button>
     <button class="pill primary" id="btnShop" title="CDs you want to buy, with current prices and sales"><span>🛍️ Shopping list</span><span class="shn" id="shCount" hidden></span></button>
+    <button class="pill primary" id="btnRel" title="Upcoming and new drama CDs from the publishers you follow">📅 Releases</button>
     <button class="pill primary" id="btnHub" title="Your voice actors and series: how many CDs you have of each, favorites, and what's still missing">🎤 Seiyuu &amp; series</button>
     <button class="pill" id="btnImportSrc"title="Import CDs from rukojiDB, HIBIKIFORUM, DLsite Girls or SKiT Dolce">⇩ Import CDs</button>
     <button class="pill" id="btnScan" title="Read the folder names of your local drama CD folders and add or link them — files are never copied or uploaded">📁 Scan folders</button>
@@ -983,6 +1004,23 @@ details.more p{margin:8px 0 0;color:var(--ink-faint);font-weight:400;line-height
     <div class="body" id="hubBody"></div>
   </div>
 </div>
+<div class="backdrop" id="rel" aria-hidden="true">
+  <div class="sheet im" role="dialog" aria-modal="true" aria-labelledby="relHead">
+    <button class="close" id="relClose" aria-label="Close">✕</button>
+    <div class="body">
+      <h2 id="relHead">Release calendar</h2>
+      <p class="alt">Upcoming drama CDs from Stellaworth and the newest releases on DLsite, limited to the publishers you follow. No prices here — those stay in the shopping list.</p>
+      <div class="hb-bar">
+        <button type="button" class="pill primary" id="relGo">↻ Check for new releases</button>
+        <label class="check"><input type="checkbox" id="relMine"> Only my favorite seiyuu &amp; series</label>
+        <label class="check"><input type="checkbox" id="relAI" checked> Hide publishers that use AI</label>
+      </div>
+      <div class="lstatus" id="relStatus" role="status"></div>
+      <details class="rel-pubs" id="relPubsBox"><summary>Publishers</summary><div id="relPubs"></div></details>
+      <div id="relList"></div>
+    </div>
+  </div>
+</div>
 <div class="backdrop ask" id="ask" aria-hidden="true">
   <div class="sheet ask" role="alertdialog" aria-modal="true" aria-describedby="askMsg">
     <div class="body">
@@ -1012,6 +1050,9 @@ Object.assign(I18N_ZH, {"Seiyuu & series": "声优与系列", "Your voice actors
 /* 12b. Merge duplicates: editions + possible matches */
 Object.assign(I18N_JA, {"Limited edition": "限定盤", "Regular edition": "通常盤", "Special edition": "特装版", "No edition marked": "盤の表記なし", "Same CD added twice": "同じCDが二重に登録されています", "Possible matches — check these before merging": "同じかもしれないCD — 統合前に確認してください", "Different editions — kept separate unless you tick them": "別の盤 — チェックしない限り別々のままです", "Looks like the same CD — merge these {n} into one": "同じCDのようです — この{n}件を1つに統合", "Merge these {n} editions into one anyway": "それでも、この{n}つの盤を1つに統合", "Different editions of the same title (限定盤 / 通常盤 / special) are listed separately and left alone unless you tick them. Near-identical CDs with the same release date and a shared voice actor are listed as possible matches.": "同じタイトルでも盤が違うもの（限定盤／通常盤／特装版）は別枠で表示し、チェックしない限りそのままにします。発売日が同じで声優が共通し、タイトルがほぼ同じCDは「同じかもしれないCD」として表示します。"});
 Object.assign(I18N_ZH, {"Limited edition": "限定盘", "Regular edition": "通常盘", "Special edition": "特装版", "No edition marked": "未标注版本", "Same CD added twice": "重复添加的同一张CD", "Possible matches — check these before merging": "可能相同的CD — 合并前请确认", "Different editions — kept separate unless you tick them": "不同版本 — 不勾选则保持分开", "Looks like the same CD — merge these {n} into one": "看起来是同一张CD — 将这 {n} 项合并为一", "Merge these {n} editions into one anyway": "仍然将这 {n} 个版本合并为一", "Different editions of the same title (限定盤 / 通常盤 / special) are listed separately and left alone unless you tick them. Near-identical CDs with the same release date and a shared voice actor are listed as possible matches.": "同名但版本不同的CD（限定盘／通常盘／特装版）会单独列出，不勾选就不会改动。发售日相同、有共同声优且标题几乎一样的CD会列为“可能相同”。"});
+/* 17. Release calendar */
+Object.assign(I18N_JA, {"Release calendar": "発売カレンダー", "📅 Releases": "📅 発売情報", "Upcoming and new drama CDs from the publishers you follow": "フォロー中の出版社の発売予定・新作ドラマCD", "Upcoming drama CDs from Stellaworth and the newest releases on DLsite, limited to the publishers you follow. No prices here — those stay in the shopping list.": "ステラワースの発売予定のドラマCDと、DLsiteの最新作を、フォロー中の出版社に絞って表示します。価格はここには出ません（買い物リストのみ）。", "↻ Check for new releases": "↻ 新着を確認", "Only my favorite seiyuu & series": "お気に入りの声優・シリーズのみ", "Hide publishers that use AI": "AIを使う出版社を非表示", "Publishers": "出版社", "Checking Stellaworth and DLsite…": "ステラワースとDLsiteを確認中…", "{s}: {n} items read": "{s}：{n}件を取得", "{s}: couldn’t read it — {e}": "{s}：読み込めませんでした — {e}", "Looked up the follower counts of {n} publishers": "{n}社のフォロワー数を取得しました", "{n} more next time": "残り{n}社は次回", "Last checked {t}": "最終確認 {t}", "Remove": "削除", "Add": "追加", "Add a publisher…": "出版社を追加…", "Hide a publisher…": "非表示にする出版社…", "Publishers you follow": "フォロー中の出版社", "Also show publishers with at least this many DLsite followers": "DLsiteのフォロワーがこの人数以上の出版社も表示", "Always hidden": "常に非表示", "None": "なし", "Hidden because their works are marked AI-generated or AI-assisted": "作品にAI生成／AI利用の表示があるため非表示", "Show anyway": "それでも表示", "Shown despite AI labels": "AI表示があっても表示", "Release date not set yet": "発売日未定", "Just released on DLsite": "DLsiteの新着", "Nothing from your publishers right now.": "今のところフォロー中の出版社の作品はありません。", "Press “Check for new releases” to load the calendar.": "「新着を確認」を押してカレンダーを読み込みます。", "On your shopping list": "買い物リストに入っています", "On your shelf": "本棚にあります", "Open ↗": "開く ↗"});
+Object.assign(I18N_ZH, {"Release calendar": "发售日历", "📅 Releases": "📅 发售信息", "Upcoming and new drama CDs from the publishers you follow": "关注的出版社的即将发售和新发售的广播剧CD", "Upcoming drama CDs from Stellaworth and the newest releases on DLsite, limited to the publishers you follow. No prices here — those stay in the shopping list.": "显示 Stellaworth 的即将发售广播剧CD和 DLsite 的最新作品，仅限你关注的出版社。这里不显示价格，价格只在购物清单中。", "↻ Check for new releases": "↻ 检查新发售", "Only my favorite seiyuu & series": "仅显示收藏的声优和系列", "Hide publishers that use AI": "隐藏使用AI的出版社", "Publishers": "出版社", "Checking Stellaworth and DLsite…": "正在检查 Stellaworth 和 DLsite…", "{s}: {n} items read": "{s}：读取了 {n} 项", "{s}: couldn’t read it — {e}": "{s}：无法读取 — {e}", "Looked up the follower counts of {n} publishers": "已查询 {n} 家出版社的关注人数", "{n} more next time": "其余 {n} 家下次查询", "Last checked {t}": "上次检查 {t}", "Remove": "移除", "Add": "添加", "Add a publisher…": "添加出版社…", "Hide a publisher…": "隐藏出版社…", "Publishers you follow": "你关注的出版社", "Also show publishers with at least this many DLsite followers": "同时显示 DLsite 关注人数不少于此数的出版社", "Always hidden": "始终隐藏", "None": "无", "Hidden because their works are marked AI-generated or AI-assisted": "因作品被标记为AI生成或AI辅助而隐藏", "Show anyway": "仍然显示", "Shown despite AI labels": "尽管有AI标记仍显示", "Release date not set yet": "发售日未定", "Just released on DLsite": "DLsite 新发售", "Nothing from your publishers right now.": "目前没有你关注的出版社的作品。", "Press “Check for new releases” to load the calendar.": "点击“检查新发售”以加载日历。", "On your shopping list": "在你的购物清单中", "On your shelf": "在你的书架上", "Open ↗": "打开 ↗"});
 const I18N = {ja:I18N_JA, zh:I18N_ZH}, LANG_TAG = {en:'en', ja:'ja', zh:'zh-CN'};
 let LANG = 'en'; try{ const l = localStorage.getItem('otomeCdLang'); LANG = I18N[l] ? l : 'en'; }catch(e){}
 const i18n = (k, v) => { let o = (I18N[LANG] && I18N[LANG][k]) || k; if(v) o = o.replace(/\{(\w+)\}/g, (m, n) => v[n] != null ? v[n] : m); return o; };
@@ -1473,6 +1514,7 @@ $('#mClose').onclick = closeModal;
 document.addEventListener('keydown', e => {
   if(e.key !== 'Escape') return;
   if($('#coverFind').classList.contains('open')) closeCoverFind();
+  else if($('#rel').classList.contains('open')) closeRel();
   else if($('#hub').classList.contains('open')) closeHub();
   else if($('#shop').classList.contains('open')){ if(SH.item){ SH.item = null; shRender(); } else closeShop(); }
   else if($('#compare').classList.contains('open')) closeCompare();
@@ -4425,6 +4467,195 @@ const hubLink = e => { const a = e.target.closest && e.target.closest('[data-hub
 document.addEventListener('click', hubLink);
 document.addEventListener('keydown', e => { if(e.key === 'Enter') hubLink(e); });
 
+/* =====================================================================
+   17. RELEASE CALENDAR
+   Upcoming drama CDs (Stellaworth's pre-order list: it shows maker + release date) and the newest DLsite audio releases,
+   limited to publishers you follow: a built-in list + the ones you add + any DLsite publisher with enough followers.
+   Publishers on your blocklist are hidden; so are publishers whose works carry DLsite's AI-generated labels (AIG/AIP),
+   unless you say "show anyway". No prices on this page — those stay in the shopping list.
+   SKiT Dolce's list pages carry no release dates, so it isn't read here.
+   Settings: relCfg {add, block, allowAI, min, hideAI}, relMine, relMakers {id:{name, n, at}}, relAI {key:name}, relCache {at, items}.
+   ===================================================================== */
+const REL_PUBS = ['淫とろだくしょん', 'ラミナプラネット', 'あにまるぷらねっと', 'ヤミ病みメンズ', 'HoneyParfum', 'GOLD', 'Rejet', '偏愛カタルシス', 'おふとんハムスター', '深夜テンション株式会社', '端紙堂', 'あまちゅーん', 'Miel Douce', 'がるまにオリジナル(乙女)', 'Pil Vamp', 'Chouchou', 'Chocolat blanc', 'Bitter Princess Labal', 'Bitter Princess Label'];
+const REL = { items:[], at:0, busy:false, msgs:[], view:[] };
+const relCfg = () => ({add:[], block:[], allowAI:[], min:300, hideAI:true, ...(DB.setting('relCfg') || {})});
+const relSave = c => DB.setting('relCfg', c);
+const pubKey = s => cmpKey(String(s || '').normalize('NFKC').replace(/[(（][^)）]*[)）]/g, ''));
+function pubHas(list, name){
+  const k = pubKey(name); if(!k) return false;
+  return list.some(p => { const q = pubKey(p); return q && (q === k || (Math.min(q.length, k.length) >= 5 && (q.includes(k) || k.includes(q)))); });
+}
+const relDate = t => { const m = String(t).match(/(\d{4})\D+(\d{1,2})(?:\D+(\d{1,2}))?/); return m ? m[1] + '-' + m[2].padStart(2, '0') + (m[3] ? '-' + m[3].padStart(2, '0') : '') : ''; };
+const relToday = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+
+/* Stellaworth "ドラマCD" list, newest release date first: pre-orders come first, then it runs into the past, where we stop */
+async function relStella(){
+  const out = [], today = relToday();
+  for(let p = 1; p <= 12; p++){
+    const url = `https://www.stellaworth.co.jp/shop/item_list.php?category_id=25L0W0BWsWL&pageID=${p}`;
+    const {text} = await Net.text(url, t => /listItem/.test(t)), doc = htmlDoc(text); let ahead = 0;
+    doc.querySelectorAll('ul.listItem > li').forEach(li => {
+      const a = li.querySelector('strong a'); if(!a) return;
+      const ps = [...li.querySelectorAll('dd p')].map(x => x.textContent.replace(/\s+/g, ' ').trim());
+      const date = relDate((ps.find(x => /発売日/.test(x)) || '').replace(/^.*?：/, '')), mk = li.querySelector('dd p a[href*="bid="]');
+      if(date && date < today.slice(0, date.length)) return;       // already out
+      ahead++;
+      const href = absUrl(a.getAttribute('href'), url), im = li.querySelector('dt span img'), src = im ? absUrl(im.getAttribute('src') || '', url) : '';
+      const iid = (href.match(/item_id=([^&]+)/) || [])[1] || href;
+      out.push({src:'Stellaworth', id:'stellaworth-' + iid.toLowerCase(), code:'', title:a.textContent.replace(/\s+/g, ' ').trim(), maker:mk ? mk.textContent.trim() : '', makerId:'', date, url:href, thumb:/noimg/.test(src) ? '' : src, ai:'', kind:date ? 'soon' : 'tba'});
+    });
+    if(!ahead) break;
+  }
+  return out;
+}
+/* newest DLsite voice works (3 pages × 100): publisher id, title, cover, and the AI option codes (AIG / AIP) */
+async function relDL(){
+  const out = [];
+  for(let p = 1; p <= 3; p++){
+    const url = 'https://www.dlsite.com/girls/fsr/ajax/=/language/jp/sex_category%5B0%5D/female/work_category%5B0%5D/girls/work_type_category%5B0%5D/audio/order%5B0%5D/release_d/per_page/100' + (p > 1 ? '/page/' + p : '');
+    const {text} = await Net.text(url, t => t.trim().startsWith('{') && /search_result/.test(t), {readerFormat:'text'});
+    htmlDoc(JSON.parse(text).search_result || '').querySelectorAll('li[data-list_item_product_id]').forEach(li => {
+      const code = li.getAttribute('data-list_item_product_id'); if(!code || out.some(x => x.code === code)) return;
+      const nm = li.querySelector('.work_name a'), mk = li.querySelector('.maker_name a'), at = (li.querySelector('.__product_attributes') || {}).value || '';
+      const thumb = ((li.innerHTML.match(/\/\/img\.dlsite\.jp\/[^'"\s]+?\.(?:jpg|webp|png)/) || [])[0] || '').replace(/^\/\//, 'https://');
+      out.push({src:'DLsite', id:'dlsite-' + code.toLowerCase(), code, title:nm ? (nm.getAttribute('title') || nm.textContent).replace(/\s+/g, ' ').trim() : code, maker:mk ? mk.textContent.trim() : '',
+        makerId:mk ? ((mk.getAttribute('href') || '').match(/maker_id\/([A-Z]{2}\d+)/) || [])[1] || '' : '', date:'', url:DLsite.workUrl(code), thumb, ai:/\bAIG\b/.test(at) ? 'AIG' : /\bAIP\b/.test(at) ? 'AIP' : '', kind:'new'});
+    });
+  }
+  return out;
+}
+/* follower counts: DLsite's own follow-button endpoint answers {"follower_count":"187"}; remembered for two weeks, up to 40 new publishers per check */
+async function relFollowers(items, cfg){
+  const known = {...(DB.setting('relMakers') || {})}, need = [];
+  items.forEach(it => {
+    if(!it.makerId || need.includes(it.makerId) || it.ai || pubHas([...REL_PUBS, ...cfg.add, ...cfg.block], it.maker)) return;
+    const k = known[it.makerId]; if(k && Date.now() - k.at < 14 * 864e5) return;
+    need.push(it.makerId);
+  });
+  const todo = need.slice(0, 40); let n = 0;
+  for(let i = 0; i < todo.length; i += 8) await Promise.all(todo.slice(i, i + 8).map(async id => {
+    try{
+      const {text} = await Net.text(`https://www.dlsite.com/girls/load/followlist/ajax?follow_key=${id}&cdn_cache_min=1`, t => /follower_count/.test(t), {readerFormat:'text'});
+      known[id] = {n:+(JSON.parse(text.slice(text.indexOf('{'), text.lastIndexOf('}') + 1)).follower_count) || 0, at:Date.now()}; n++;
+    }catch(e){ /* try again next time */ }
+  }));
+  DB.setting('relMakers', known);
+  return {checked:n, left:Math.max(0, need.length - 40)};
+}
+async function relRefresh(){
+  if(REL.busy) return; REL.busy = true; REL.msgs = []; el('relGo').disabled = true; relStatus(spin + i18n('Checking Stellaworth and DLsite…'));
+  const cfg = relCfg(), items = [];
+  const [a, b] = await Promise.allSettled([relStella(), relDL()]);
+  [[a, 'Stellaworth'], [b, 'DLsite']].forEach(([r, n]) => {
+    if(r.status === 'fulfilled'){ items.push(...r.value); REL.msgs.push(i18n('{s}: {n} items read', {s:n, n:r.value.length})); }
+    else REL.msgs.push(i18n('{s}: couldn’t read it — {e}', {s:n, e:r.reason && r.reason.message}));
+  });
+  const ai = {...(DB.setting('relAI') || {})}; items.forEach(it => { if(it.ai && it.maker) ai[pubKey(it.maker)] = it.maker; }); DB.setting('relAI', ai);
+  try{ const f = await relFollowers(items, cfg); if(f.checked) REL.msgs.push(i18n('Looked up the follower counts of {n} publishers', {n:f.checked}) + (f.left ? ' — ' + i18n('{n} more next time', {n:f.left}) : '')); }catch(e){ /* counts are optional */ }
+  if(items.length){ REL.items = items; REL.at = Date.now(); DB.setting('relCache', {at:REL.at, items:items.slice(0, 400)}); }
+  REL.busy = false; el('relGo').disabled = false; relRender();
+}
+const relStatus = h => { el('relStatus').innerHTML = h; };
+
+/* what to show: blocked → hidden; not listed / added / popular → skipped; AI-flagged → hidden (unless allowed) */
+function relWhy(it, cfg, aiNames){
+  if(pubHas(cfg.block, it.maker)) return 'blocked';
+  const m = it.makerId && (DB.setting('relMakers') || {})[it.makerId];
+  if(!pubHas([...REL_PUBS, ...cfg.add], it.maker) && !(m && m.n != null && m.n >= cfg.min)) return 'unlisted';
+  if(cfg.hideAI && !pubHas(cfg.allowAI, it.maker) && (it.ai || pubHas(aiNames, it.maker))) return 'ai';
+  return '';
+}
+function relCtx(){
+  const ppl = hubPeople();
+  return {people:hubFavs().map(k => ppl.get(k)).filter(Boolean).map(e => e.p),
+    series:[...hubSeries().values()].map(e => ({label:shownSeries(e.cds[0]), keys:[e.cds[0].series, e.cds[0].seriesRomaji].filter(x => x && x.length >= 4).map(searchNorm)}))};
+}
+function relFollowed(it, ctx){
+  const t = searchNorm(it.title), flat = it.title.normalize('NFKC').replace(/\s+/g, ''), out = [];
+  ctx.people.forEach(p => { if((p.ja && flat.includes(p.ja)) || (p.en && p.en.length >= 4 && t.includes(searchNorm(p.en)))) out.push('♥ ' + personName(p)); });
+  ctx.series.forEach(s => { if(s.keys.some(k => k && t.includes(k))) out.push(s.label); });
+  return out;
+}
+const relShelf = it => DB.all.find(c => c.id === it.id || (it.code && c.pn && pnKey(c.pn) === pnKey(it.code)) || (c.url && nu(c.url) === nu(it.url)));
+function relPubsHTML(cfg, hiddenAI){
+  const chip = (n, x, cls) => `<span class="rel-chip${cls ? ' ' + cls : ''}">${esc(n)}${x ? `<button type="button" data-rel="${x[0]}" data-n="${esc(x[1])}" title="${esc(i18n('Remove'))}" aria-label="${esc(i18n('Remove'))}">✕</button>` : ''}</span>`;
+  const add = (id, ph, act) => `<div class="rel-add"><input class="in" id="${id}" placeholder="${esc(i18n(ph))}" autocomplete="off"><button type="button" class="pill sm" data-rel="${act}">${i18n('Add')}</button></div>`;
+  return `<h4>${i18n('Publishers you follow')}</h4><div class="rel-chips">${REL_PUBS.slice(0, 18).map(n => chip(n)).join('')}${cfg.add.map(n => chip(n, ['unadd', n])).join('')}</div>
+    ${add('relAddIn', 'Add a publisher…', 'add')}
+    <h4>${i18n('Also show publishers with at least this many DLsite followers')}</h4>
+    <div class="rel-add"><input class="in" id="relMin" type="number" min="0" step="50" value="${cfg.min}" style="max-width:110px"></div>
+    <h4>${i18n('Always hidden')}</h4><div class="rel-chips">${cfg.block.length ? cfg.block.map(n => chip(n, ['unblock', n])).join('') : `<span class="muted">${i18n('None')}</span>`}</div>
+    ${add('relBlockIn', 'Hide a publisher…', 'block')}
+    ${hiddenAI.length ? `<h4>${i18n('Hidden because their works are marked AI-generated or AI-assisted')}</h4><div class="rel-chips">${hiddenAI.map(n => `<span class="rel-chip ai">${esc(n)}<button type="button" data-rel="allow" data-n="${esc(n)}" title="${esc(i18n('Show anyway'))}">${i18n('Show anyway')}</button></span>`).join('')}</div>` : ''}
+    ${cfg.allowAI.length ? `<h4>${i18n('Shown despite AI labels')}</h4><div class="rel-chips">${cfg.allowAI.map(n => chip(n, ['disallow', n])).join('')}</div>` : ''}`;
+}
+function relRender(){
+  const cfg = relCfg(), ctx = relCtx(), mine = el('relMine').checked, today = relToday();
+  const aiNames = Object.values(DB.setting('relAI') || {}), hiddenAI = new Set(), view = [];
+  el('relAI').checked = cfg.hideAI;
+  REL.items.forEach(it => {
+    if(it.kind === 'soon' && it.date < today.slice(0, it.date.length)) return;
+    const why = relWhy(it, cfg, aiNames);
+    if(why === 'ai'){ hiddenAI.add(it.maker); return; }
+    if(why) return;
+    const fol = relFollowed(it, ctx); if(mine && !fol.length) return;
+    view.push({...it, fol});
+  });
+  REL.view = [...view.filter(x => x.kind === 'soon').sort((x, y) => x.date.localeCompare(y.date) || x.title.localeCompare(y.title)), ...view.filter(x => x.kind === 'tba'), ...view.filter(x => x.kind === 'new')];
+  el('relPubs').innerHTML = relPubsHTML(cfg, [...hiddenAI]);
+  const loc = LANG_TAG[LANG], card = (it, i) => {
+    const on = relShelf(it), d = it.date.length === 10 ? new Date(+it.date.slice(0, 4), +it.date.slice(5, 7) - 1, +it.date.slice(8)).toLocaleDateString(loc, {month:'short', day:'numeric', weekday:'short'}) : '';
+    return `<div class="rel-row"><div class="rel-cv">${it.thumb ? `<img src="${esc(it.thumb)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : '💿'}</div>
+      <div><b>${esc(it.title)}</b><small>${d ? `<span class="rel-day">${esc(d)}</span> · ` : ''}${esc(it.maker)} · ${esc(it.src)}</small>
+        <div class="rel-tags">${it.fol.map(f => `<span class="tag pink">${esc(f)}</span>`).join('')}${on ? `<span class="tag">${i18n(on.owned ? 'Owned' : on.want ? 'On your shopping list' : 'On your shelf')}</span>` : ''}</div></div>
+      <div class="rel-acts">${on ? '' : `<button type="button" class="pill sm primary" data-rel="want" data-i="${i}">${i18n('＋ Want')}</button>`}<a class="pill sm" href="${esc(it.url)}" target="_blank" rel="noopener noreferrer">${i18n('Open ↗')}</a></div></div>`;
+  };
+  let html = '', lastMo = '';
+  REL.view.forEach((it, i) => {
+    const mo = it.kind === 'soon' ? it.date.slice(0, 7) : it.kind;
+    if(mo !== lastMo){ lastMo = mo; html += `<h3 class="rel-mo">${it.kind === 'soon' ? esc(new Date(+it.date.slice(0, 4), +it.date.slice(5, 7) - 1, 1).toLocaleDateString(loc, {year:'numeric', month:'long'})) : i18n(it.kind === 'tba' ? 'Release date not set yet' : 'Just released on DLsite')}</h3>`; }
+    html += card(it, i);
+  });
+  el('relList').innerHTML = html || `<p class="muted">${i18n(REL.items.length ? 'Nothing from your publishers right now.' : 'Press “Check for new releases” to load the calendar.')}</p>`;
+  relStatus(esc([...REL.msgs, REL.at ? i18n('Last checked {t}', {t:new Date(REL.at).toLocaleString(loc)}) : ''].filter(Boolean).join(' · ')));
+}
+function relOpen(){
+  const c = DB.setting('relCache'); if(!REL.items.length && c && c.items){ REL.items = c.items; REL.at = c.at; }
+  const m = el('rel'); m.classList.add('open'); m.setAttribute('aria-hidden', 'false'); document.body.style.overflow = 'hidden';
+  el('relMine').checked = !!DB.setting('relMine'); el('relPubsBox').open = !!REL.pubsOpen; relRender();
+  if(!REL.items.length) relRefresh();
+}
+function closeRel(){ const m = el('rel'); m.classList.remove('open'); m.setAttribute('aria-hidden', 'true'); document.body.style.overflow = ''; }
+function relWant(i){
+  const it = REL.view[i]; if(!it) return;
+  const meta = {id:it.id, title:it.title, cover:it.thumb, url:it.url, pn:it.code, label:it.maker, release:it.date.length === 10 ? it.date : '', releaseNote:it.date.length === 7 ? it.date : '', source:it.src};
+  addOrMerge(meta); const ex = findExisting(meta); if(ex) DB.update(ex.id, {want:true});
+  DB.touch(); buildFilters(); render(); relRender(); toast(i18n('Added to your shopping list ♡'));
+}
+el('btnRel').onclick = relOpen;
+el('relClose').onclick = closeRel;
+el('relGo').onclick = relRefresh;
+el('rel').addEventListener('mousedown', e => { if(e.target === el('rel')) closeRel(); });
+el('relPubsBox').addEventListener('toggle', () => { REL.pubsOpen = el('relPubsBox').open; });
+el('relMine').onchange = () => { DB.setting('relMine', el('relMine').checked); relRender(); };
+el('relAI').onchange = () => { relSave({...relCfg(), hideAI:el('relAI').checked}); relRender(); };
+el('relPubs').addEventListener('change', e => { if(e.target.id === 'relMin'){ relSave({...relCfg(), min:Math.max(0, +e.target.value || 0)}); relRender(); } });
+el('rel').addEventListener('click', e => {
+  const b = e.target.closest('[data-rel]'); if(!b) return;
+  const cfg = relCfg(), n = b.dataset.n, val = id => el(id) && el(id).value.trim(), drop = (k) => cfg[k].filter(x => x !== n);
+  switch(b.dataset.rel){
+    case 'want': relWant(+b.dataset.i); return;
+    case 'add': if(val('relAddIn')) relSave({...cfg, add:[...cfg.add, val('relAddIn')]}); break;
+    case 'unadd': relSave({...cfg, add:drop('add')}); break;
+    case 'block': if(val('relBlockIn')) relSave({...cfg, block:[...cfg.block, val('relBlockIn')]}); break;
+    case 'unblock': relSave({...cfg, block:drop('block')}); break;
+    case 'allow': relSave({...cfg, allowAI:[...cfg.allowAI, n]}); break;
+    case 'disallow': relSave({...cfg, allowAI:drop('allowAI')}); break;
+  }
+  relRender();
+});
+el('rel').addEventListener('keydown', e => { if(e.key === 'Enter' && (e.target.id === 'relAddIn' || e.target.id === 'relBlockIn')){ e.preventDefault(); const b = el('relPubs').querySelector(`[data-rel="${e.target.id === 'relAddIn' ? 'add' : 'block'}"]`); if(b) b.click(); } });
+
 /* ---------- language switcher (EN ・ 日本 ・ 中文) ---------- */
 /* flips the voice actor names whenever the toggle moves them between romaji (EN) and Japanese (日本・中文) */
 function nameFlip(){
@@ -4441,7 +4672,7 @@ function setLang(l, save){
   if(el('editor').classList.contains('open')) el('eHead').textContent = i18n(ED.id ? 'Edit CD' : 'Add a CD');
   imSync(); imCount(); if(IM.items.length) imRenderList();
   selSync(); if(el('bulk').classList.contains('open')) openBulk();
-  shRender(); if(el('hub').classList.contains('open')) hubRender();
+  shRender(); if(el('hub').classList.contains('open')) hubRender(); if(el('rel').classList.contains('open')) relRender();
   if(SC.rows.length) scRender(); else if(SC.res && el('scan').classList.contains('open')) scSummary(SC.msg, SC.res);
   if(save && (was === 'en') !== (LANG === 'en')) nameFlip();
 }

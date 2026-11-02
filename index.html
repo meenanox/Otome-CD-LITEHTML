@@ -10,7 +10,7 @@
 <script>
 /* APP VERSION — the one place to change it. Shown next to the logo, in the footer and saved into backups.
    Bump it whenever a new index.html goes up, so people who re-download can tell which copy they have. */
-var APP_VERSION = '0.8b';
+var APP_VERSION = '0.8c';
 /* CUSTOM THEME — three picked colours (main, accent, background) in, the full variable set out. Lives up here so it can run before first paint. */
 var OtomeTheme = (function(){
   var HEX = /^#[0-9a-f]{6}$/i, KEY = 'otomeCdCustomTheme', keys = [];
@@ -706,6 +706,7 @@ details.more p{margin:8px 0 0;color:var(--ink-faint);font-weight:400;line-height
       <div class="bkpop" id="bkPop" role="menu" hidden>
         <button role="menuitem" id="btnExport" title="Download your whole collection as a JSON backup file"><b>⬇</b><span>Backup</span></button>
         <button role="menuitem" id="btnImport" title="Restore a JSON backup file"><b>⬆</b><span>Restore</span></button>
+        <button role="menuitem" id="btnCsv" title="Download a spreadsheet (CSV) list of your CDs: titles, DLsite codes, shop links, voice actors, series, release dates"><b>▤</b><span>Spreadsheet (CSV)</span></button>
       </div>
     </div>
     <input type="file" id="fileImport" accept=".json,application/json,text/plain" hidden>
@@ -1654,6 +1655,29 @@ $('#btnExport').onclick = () => {
   const a = document.createElement('a'); a.href = URL.createObjectURL(Store.exportBlob(DB.data));
   a.download = `otome-cd-shelf-${new Date().toISOString().slice(0, 10)}.json`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
   toast(i18n('Backup downloaded ♡'));
+};
+/* ---- CSV list: one row per CD for a spreadsheet. No covers, prices or notes. A BOM up front so Excel reads the Japanese; headers stay English. ---- */
+const CSV_HEAD = ['Title (English / romaji)', 'Title (日本語)', 'DLsite code', 'Shop link', 'Source page', 'Voice actors (romaji)', 'Voice actors (日本語)', 'Series (日本語)', 'Series (romaji)', 'Release date', 'Label', 'Catalog no.', 'Status', 'Listening', 'Rating', 'Tags'];
+function csvCell(v){
+  let t = String(v == null ? '' : v);
+  if(/^([=+@\t\r]|-[\d(])/.test(t)) t = "'" + t;   // a leading = + - @ would be run as a formula by Excel
+  return /[",\r\n]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t;
+}
+function csvRow(c){
+  const titles = [c.title, c.altTitle].filter(Boolean);
+  const links = ((c.shop && c.shop.links) || []).map(l => l.url).filter(Boolean);
+  if(!links.length) autoLinks(c).forEach(l => links.push(l.url));
+  return [titles.find(x => !hasCJK(x)) || '', titles.find(hasCJK) || '', DLsite.code(c.pn || '') || DLsite.code(c.url || ''), links.join(' '), c.url || '',
+    (c.cast || []).map(p => p.en).filter(Boolean).join('; '), (c.cast || []).map(p => p.ja).filter(Boolean).join('; '),
+    c.series || '', c.seriesRomaji || '', c.release || '', c.label || '', c.pn || '',
+    c.owned ? 'Owned' : c.want ? 'Wishlist' : '', c.listen && LISTEN[c.listen] ? LISTEN[c.listen].t : '', c.rating || '', (c.tags || []).join('; ')];
+}
+$('#btnCsv').onclick = () => {
+  if(!DB.all.length){ toast(i18n('Your shelf is empty.')); return; }
+  const text = '\ufeff' + [CSV_HEAD, ...DB.all.map(csvRow)].map(r => r.map(csvCell).join(',')).join('\r\n') + '\r\n';
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], {type:'text/csv;charset=utf-8'}));
+  a.download = `otome-cd-shelf-${new Date().toISOString().slice(0, 10)}.csv`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  toast(i18n('Spreadsheet downloaded ♡'));
 };
 $('#btnImport').onclick = () => $('#fileImport').click();
 async function restoreFile(f){
@@ -4339,8 +4363,8 @@ async function shFind(c){
   SH.msg = (SH.found.length ? i18n('Pick the listing that matches to link it.') : i18n('Nothing found — try pasting the link instead.')) + (bad.length ? ' ' + i18n('(Couldn’t search: {s})', {s:bad.join(', ')}) : '');
   shRender();
 }
-Object.assign(I18N_JA, {"Backup": "バックアップ", "Backup / Restore": "バックアップ / 復元"});
-Object.assign(I18N_ZH, {"Backup": "备份", "Backup / Restore": "备份 / 恢复"});
+Object.assign(I18N_JA, {"Backup": "バックアップ", "Backup / Restore": "バックアップ / 復元", "Spreadsheet (CSV)": "表計算用(CSV)", "Download a spreadsheet (CSV) list of your CDs: titles, DLsite codes, shop links, voice actors, series, release dates": "CDの一覧をCSVでダウンロード(タイトル・DLsiteコード・ショップリンク・声優・シリーズ・発売日)", "Spreadsheet downloaded ♡": "CSVをダウンロードしたよ ♡"});
+Object.assign(I18N_ZH, {"Backup": "备份", "Backup / Restore": "备份 / 恢复", "Spreadsheet (CSV)": "电子表格(CSV)", "Download a spreadsheet (CSV) list of your CDs: titles, DLsite codes, shop links, voice actors, series, release dates": "下载CD清单CSV(标题、DLsite编号、商店链接、声优、系列、发售日)", "Spreadsheet downloaded ♡": "表格已下载 ♡"});
 Object.assign(I18N_JA, {"🛍️ Shopping list": "🛍️ 買い物リスト", "CDs you want to buy, with current prices and sales": "欲しいCDと、今の価格・セール情報", "Want": "欲しい", "CDs on your shopping list": "買い物リストにあるCD",
   "On your shopping list": "買い物リストに入ってるよ", "Want to buy": "欲しい", "🛍️ Open in shopping list": "🛍️ 買い物リストで開く", "Marked as owned. Take “{t}” off your shopping list?": "所持にしたよ。「{t}」を買い物リストから外す?", "Remove": "外す",
   "Nothing to check — link a store to a CD first.": "確認するものがないよ — まずCDにお店をリンクしてね。", "never": "まだ", "{n} min ago": "{n}分前", "{n} h ago": "{n}時間前", "{n} days ago": "{n}日前",

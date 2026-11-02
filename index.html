@@ -10,7 +10,7 @@
 <script>
 /* APP VERSION — the one place to change it. Shown next to the logo, in the footer and saved into backups.
    Bump it whenever a new index.html goes up, so people who re-download can tell which copy they have. */
-var APP_VERSION = '0.8a';
+var APP_VERSION = '0.8b';
 /* CUSTOM THEME — three picked colours (main, accent, background) in, the full variable set out. Lives up here so it can run before first paint. */
 var OtomeTheme = (function(){
   var HEX = /^#[0-9a-f]{6}$/i, KEY = 'otomeCdCustomTheme', keys = [];
@@ -48,7 +48,8 @@ var OtomeTheme = (function(){
     r.setAttribute('data-theme', 'custom'); if(p.dark) r.setAttribute('data-mode', 'dark'); return p; }
   function load(){ try{ var o = JSON.parse(localStorage.getItem(KEY)); if(o && norm(o.main)) return {main: norm(o.main), accent: norm(o.accent), bg: norm(o.bg)}; }catch(e){} return null; }
   function save(c){ try{ localStorage.setItem(KEY, JSON.stringify(c)); }catch(e){} }
-  return {norm: norm, h2hsl: h2hsl, hsl: hsl, lum: lum, derive: derive, apply: apply, clear: clear, load: load, save: save};
+  function remove(){ try{ localStorage.removeItem(KEY); }catch(e){} }
+  return {remove: remove, norm: norm, h2hsl: h2hsl, hsl: hsl, lum: lum, derive: derive, apply: apply, clear: clear, load: load, save: save};
 })();
 /* apply the saved theme before first paint (no flash) */
 try{ var _th = localStorage.getItem('otomeCdTheme'); if(_th === 'custom'){ var _cc = OtomeTheme.load(); if(_cc) OtomeTheme.apply(_cc); else _th = null; } if(_th) document.documentElement.setAttribute('data-theme', _th); }catch(e){}
@@ -677,7 +678,6 @@ details.more p{margin:8px 0 0;color:var(--ink-faint);font-weight:400;line-height
       <button data-l="en" aria-pressed="true" title="English">EN</button><span class="dot">・</span><button data-l="ja" aria-pressed="false" title="日本語">日本</button><span class="dot">・</span><button data-l="zh" aria-pressed="false" title="简体中文">中文</button>
     </div>
     <div class="themes" role="group" aria-label="Colour theme">
-      <span class="tlabel">Theme</span>
       <button class="swatch" data-t="lavender" title="Lavender" aria-label="Lavender theme" aria-pressed="true"></button>
       <button class="swatch" data-t="ocean" title="Ocean (blue &amp; sea-green)" aria-label="Ocean theme" aria-pressed="false"></button>
       <button class="swatch" data-t="midnight" title="Midnight (dark mode)" aria-label="Midnight dark theme" aria-pressed="false"></button>
@@ -872,7 +872,7 @@ details.more p{margin:8px 0 0;color:var(--ink-faint);font-weight:400;line-height
       <div class="th-err" id="thErr" role="alert"></div>
       <div class="th-demo"><button type="button" class="pill primary" tabindex="-1">Add CD</button><span class="pill">Filter</span><span class="heart">♥</span><span class="tg">Owned</span></div>
       <div class="th-chips" id="thChips" aria-hidden="true"></div>
-      <div class="actions"><button type="button" class="pill" id="thCancel">Cancel</button><button type="button" class="pill primary" id="thSave">Save theme</button></div>
+      <div class="actions"><button type="button" class="pill" id="thDel" hidden>Delete my theme</button><button type="button" class="pill" id="thCancel">Cancel</button><button type="button" class="pill primary" id="thSave">Save theme</button></div>
     </div>
   </div>
 </div>
@@ -1129,6 +1129,8 @@ Object.assign(I18N_ZH, {"Mood tags": "心情标签", "Mood tags (comma-separated
 /* 19. Print / share shelf */
 Object.assign(I18N_JA, {"🖨 Share shelf": "🖨 本棚を共有", "Make a printable or shareable page of your shelf or wishlist": "本棚やほしい物リストを印刷・共有用のページにします", "Print or share your shelf": "本棚を印刷・共有", "Makes a clean page of your jackets — print it, save it as a web page, or copy it as text for a post. Prices, notes and file locations are never included.": "ジャケットをきれいなページにまとめます。印刷、Webページとして保存、投稿用のテキストコピーができます。価格・メモ・ファイルの場所は含まれません。", "What’s on screen now (current filters)": "今の表示内容（現在の絞り込み）", "Every CD": "すべてのCD", "Owned CDs": "持っているCD", "My wishlist": "ほしい物リスト", "Favorites": "お気に入り", "Jacket grid": "ジャケット一覧", "List with details": "詳細つきリスト", "Titles": "タイトル", "Voice actors": "声優", "Ratings": "評価", "Mark the ones I own": "持っているものに印をつける", "🖨 Print": "🖨 印刷", "⬇ Save as web page": "⬇ Webページとして保存", "📋 Copy as text": "📋 テキストをコピー", "My drama CD shelf": "わたしのドラマCD本棚", "My drama CD wishlist": "わたしのドラマCDほしい物リスト", "No CDs to show for that choice.": "この条件に合うCDはありません。", "Saved — open it in any browser or send it to a friend ♡": "保存しました。どのブラウザでも開けて、友だちにも送れます ♡", "Copied — paste it into your post ♡": "コピーしました。投稿に貼り付けてください ♡", "Select the text and copy it": "テキストを選択してコピーしてください"});
 Object.assign(I18N_ZH, {"🖨 Share shelf": "🖨 分享书架", "Make a printable or shareable page of your shelf or wishlist": "把书架或愿望清单做成可打印、可分享的页面", "Print or share your shelf": "打印或分享书架", "Makes a clean page of your jackets — print it, save it as a web page, or copy it as text for a post. Prices, notes and file locations are never included.": "把封面整理成一个干净的页面——可打印、保存为网页，或复制为文字发帖。不会包含价格、笔记和文件位置。", "What’s on screen now (current filters)": "当前屏幕显示的内容（当前筛选）", "Every CD": "所有CD", "Owned CDs": "已拥有的CD", "My wishlist": "我的愿望清单", "Favorites": "收藏", "Jacket grid": "封面网格", "List with details": "带详情的列表", "Titles": "标题", "Voice actors": "声优", "Ratings": "评分", "Mark the ones I own": "标出我已拥有的", "🖨 Print": "🖨 打印", "⬇ Save as web page": "⬇ 保存为网页", "📋 Copy as text": "📋 复制为文字", "My drama CD shelf": "我的广播剧CD书架", "My drama CD wishlist": "我的广播剧CD愿望清单", "No CDs to show for that choice.": "该选项下没有可显示的CD。", "Saved — open it in any browser or send it to a friend ♡": "已保存——可用任何浏览器打开，也可发给朋友 ♡", "Copied — paste it into your post ♡": "已复制——粘贴到你的帖子里吧 ♡", "Select the text and copy it": "请选中文字并复制"});
+Object.assign(I18N_JA, {"Delete my theme": "マイテーマを削除", "Tap again to delete": "もう一度押すと削除"});
+Object.assign(I18N_ZH, {"Delete my theme": "删除我的主题", "Tap again to delete": "再点一次即删除"});
 const I18N = {ja:I18N_JA, zh:I18N_ZH}, LANG_TAG = {en:'en', ja:'ja', zh:'zh-CN'};
 let LANG = 'en'; try{ const l = localStorage.getItem('otomeCdLang'); LANG = I18N[l] ? l : 'en'; }catch(e){}
 const i18n = (k, v) => { let o = (I18N[LANG] && I18N[LANG][k]) || k; if(v) o = o.replace(/\{(\w+)\}/g, (m, n) => v[n] != null ? v[n] : m); return o; };
@@ -3933,7 +3935,7 @@ el('btnVA').onclick = () => vaSync(true);
     prev = {theme: cur}; opener = document.activeElement;
     fill(custom || {main: '#E0457B', accent: '', bg: ''});
     ['#thVibe', '#thPaste'].forEach(s => $(s).value = ''); $('#thPals').innerHTML = ''; $('#thMsg').textContent = '';
-    ed.classList.add('open'); ed.setAttribute('aria-hidden', 'false'); document.addEventListener('keydown', key, true); H[0].focus();
+    resetDel(); ed.classList.add('open'); ed.setAttribute('aria-hidden', 'false'); document.addEventListener('keydown', key, true); H[0].focus();
   }
   function closeThemeEd(save){
     const c = read();
@@ -3941,6 +3943,14 @@ el('btnVA').onclick = () => vaSync(true);
     ed.classList.remove('open'); ed.setAttribute('aria-hidden', 'true'); document.removeEventListener('keydown', key, true);
     if(opener && opener.focus) opener.focus();
   }
+  const del = $('#thDel');
+  function resetDel(){ del.hidden = !custom; del.textContent = i18n('Delete my theme'); del.dataset.sure = ''; }
+  del.onclick = () => {
+    if(!del.dataset.sure){ del.dataset.sure = '1'; del.textContent = i18n('Tap again to delete'); return; }
+    custom = null; OT.remove(); paintSwatch(); prev.theme = 'lavender';
+    try{ localStorage.setItem('otomeCdTheme', 'lavender'); }catch(e){}
+    closeThemeEd(false);
+  };
   $('#thSave').onclick = () => closeThemeEd(true);
   $('#thCancel').onclick = $('#thClose').onclick = () => closeThemeEd(false);
   ed.addEventListener('mousedown', e => { if(e.target === ed) closeThemeEd(false); });
